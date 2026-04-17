@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { hashPassword, isValidEmail, isValidPassword } from '@/lib/auth';
+import { sendEmail, getWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,6 +62,14 @@ export async function POST(request: NextRequest) {
     session.displayName = user.displayName;
     session.isLoggedIn = true;
     await session.save();
+
+    // Send welcome email (fire-and-forget, don't block response)
+    const welcomeContent = getWelcomeEmail(user.displayName);
+    void sendEmail({
+      to: user.email,
+      subject: welcomeContent.subject,
+      html: welcomeContent.html,
+    });
 
     return NextResponse.json({
       success: true,

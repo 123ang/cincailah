@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     };
 
     // 2. Apply filters
-    const { budgetFilter, selectedTags = [], walkTimeMax, halal, vegOptions } = filters || {};
+    const { budgetFilter, selectedTags = [], walkTimeMax, halal, vegOptions, favoritesOnly } = filters || {};
 
     // Budget filter
     if (budgetFilter === 'kering') {
@@ -76,6 +76,16 @@ export async function POST(request: NextRequest) {
         ];
         return selectedTags.some((tag: string) => allTags.includes(tag));
       });
+    }
+
+    // Favorites filter
+    if (favoritesOnly) {
+      const userFavorites = await prisma.userFavorite.findMany({
+        where: { userId: session.userId },
+        select: { restaurantId: true },
+      });
+      const favIds = new Set(userFavorites.map((f) => f.restaurantId));
+      candidates = candidates.filter((r) => favIds.has(r.id));
     }
 
     // 3. Anti-Repeat Protection

@@ -59,6 +59,7 @@ export default function DecidePage({
   const [walkTimeMax, setWalkTimeMax] = useState<number>(30);
   const [halal, setHalal] = useState<boolean>(false);
   const [vegOptions, setVegOptions] = useState<boolean>(false);
+  const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
 
   const handleDecide = () => {
     const filters = {
@@ -67,6 +68,7 @@ export default function DecidePage({
       walkTimeMax,
       halal,
       vegOptions,
+      favoritesOnly,
     };
     
     if (mode === 'you_pick') {
@@ -88,6 +90,7 @@ export default function DecidePage({
     setWalkTimeMax(30);
     setHalal(false);
     setVegOptions(false);
+    setFavoritesOnly(false);
   };
 
   return (
@@ -210,7 +213,7 @@ export default function DecidePage({
         </div>
 
         {/* Walk Time */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-base">🚶</span>
@@ -230,6 +233,30 @@ export default function DecidePage({
             <span>5 min</span>
             <span>30 min</span>
           </div>
+        </div>
+
+        {/* Favorites Only */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+          <button
+            onClick={() => setFavoritesOnly(!favoritesOnly)}
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">❤️</span>
+              <span className="text-sm font-bold text-gray-700">My Favorites Only</span>
+            </div>
+            <div
+              className={`w-12 h-6 rounded-full flex items-center px-0.5 transition ${
+                favoritesOnly ? 'bg-sambal' : 'bg-gray-300'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full shadow-sm transition transform ${
+                  favoritesOnly ? 'translate-x-6' : ''
+                }`}
+              />
+            </div>
+          </button>
         </div>
       </div>
 

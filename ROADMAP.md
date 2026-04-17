@@ -22,16 +22,27 @@ Legend: `[x]` done · `[~]` partial · `[ ]` not started
 - [x] **`excludeIds` support in `/api/decide`** — prevents the same restaurant appearing twice in a reroll session
 - [x] **Food images + sound asset ported** — `public/foods/*`, `public/sounds/winner.mp3`
 - [x] **TypeScript hygiene** — excluded `mobile/`, `backup/`, `.next/` from web tsconfig
+- [x] **Real email via Resend** — password reset + welcome emails, graceful dev fallback, `.env.example` documented
+- [x] **Personal favorites** — heart button on restaurant list, toggle via `/api/favorites`, "❤️ My Favorites Only" filter on decide screen, DB migration for `user_favorites` table
+
+### API/Backend
+- [x] **Email service** — `lib/email.ts` with Resend SDK, branded HTML templates (password reset, welcome, verification placeholder)
+- [x] **`POST /api/favorites`** — toggle favorite (add/remove)
+- [x] **`GET /api/favorites`** — fetch user's favorite restaurant IDs
+- [x] **`favoritesOnly` filter in `/api/decide`** — respects user's favorites when enabled
+
+### Dev/Infra
+- [x] **Git repository initialized** — (user confirmed)
 
 ---
 
 ## 1 · Web — High Priority (next up)
 
 ### 1.1 Real email sending
-- [ ] Integrate **Resend** (or SendGrid/AWS SES) for password-reset emails
-- [ ] Wire `app/api/auth/forgot-password/route.ts` to actually deliver mail
+- [x] Integrate **Resend** (or SendGrid/AWS SES) for password-reset emails
+- [x] Wire `app/api/auth/forgot-password/route.ts` to actually deliver mail
 - [ ] Add email verification flow on `/register` (token email + `/verify/[token]` route)
-- [ ] Add welcome email on first signup
+- [x] Add welcome email on first signup
 
 ### 1.2 Rate limiting
 - [ ] Install `@upstash/ratelimit` (or simple in-memory fallback)
@@ -47,11 +58,11 @@ Legend: `[x]` done · `[~]` partial · `[ ]` not started
 - [ ] API: `/api/groups/[id]` DELETE / PATCH, `/api/groups/[id]/members/[userId]` DELETE
 
 ### 1.4 Personal favorites (❤️ at user level)
-- [ ] Prisma: new `UserFavorite { userId, restaurantId, createdAt }` table
-- [ ] Heart icon on `RestaurantsPage` cards
+- [x] Prisma: new `UserFavorite { userId, restaurantId, createdAt }` table
+- [x] Heart icon on `RestaurantsPage` cards
 - [ ] `/favorites` page listing cross-group favorites
-- [ ] Filter option on `DecidePage`: "Spin only my favorites"
-- [ ] API: `/api/favorites` GET/POST/DELETE
+- [x] Filter option on `DecidePage`: "Spin only my favorites"
+- [x] API: `/api/favorites` GET/POST/DELETE
 
 ### 1.5 Restaurant photos
 - [ ] Prisma: add `photoUrl` field to `Restaurant`
@@ -283,7 +294,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` not started
 - [x] Production deploy docs (`V2_MIGRATION_GUIDE.md`, `LOCAL_TEST_AND_DEPLOY.md`)
 
 ### 6.2 To do
-- [ ] `git init` — this isn't a git repo yet (!)
+- [x] `git init` — (user completed)
 - [ ] `.gitignore` additions: `.next/`, `node_modules/`, `.env`, `mobile/*/node_modules`
 - [ ] Delete `.next/` and `backup/` from repo
 - [ ] CI/CD: GitHub Actions running `tsc --noEmit` + `npm run build`
@@ -292,7 +303,7 @@ Legend: `[x]` done · `[~]` partial · `[ ]` not started
 - [ ] Production logging (Pino / Winston)
 - [ ] Backup strategy for Postgres
 - [ ] Monitoring (uptime, response times)
-- [ ] Documented env var matrix
+- [ ] Documented env var matrix (update: now documented in `.env.example`)
 
 ---
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateResetToken } from '@/lib/auth';
+import { sendEmail, getPasswordResetEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,17 +43,27 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // In production, send email here
-    // For now, we'll log the reset link
+    // Send password reset email
     const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-    
-    console.log('='.repeat(60));
-    console.log('PASSWORD RESET REQUEST');
-    console.log('='.repeat(60));
-    console.log(`Email: ${user.email}`);
-    console.log(`Reset URL: ${resetUrl}`);
-    console.log(`Token expires: ${resetTokenExpires.toLocaleString()}`);
-    console.log('='.repeat(60));
+    const emailContent = getPasswordResetEmail(resetUrl, user.displayName);
+
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    });
+
+    // Log for development
+    if (process.env.NODE_ENV === 'development' || emailResult.devMode) {
+      console.log('='.repeat(60));
+      console.log('PASSWORD RESET REQUEST');
+      console.log('='.repeat(60));
+      console.log(`Email: ${user.email}`);
+      console.log(`Reset URL: ${resetUrl}`);
+      console.log(`Token expires: ${resetTokenExpires.toLocaleString()}`);
+      console.log('Email sent:', emailResult.success ? '✓' : '✗ (dev mode)');
+      console.log('='.repeat(60));
+    }
 
     return NextResponse.json({
       success: true,
