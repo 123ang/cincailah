@@ -47,8 +47,16 @@ export default function WinnerScreen({ route, navigation }) {
     }).start();
 
     // Sound + haptics
-    try { player.play(); } catch {}
-    try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+    try {
+      player.play();
+    } catch (error) {
+      console.debug('Winner sound playback unavailable', error);
+    }
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      console.debug('Winner haptics unavailable', error);
+    }
   }, [winner, player, scale]);
 
   const handleReroll = async () => {

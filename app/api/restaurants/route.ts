@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { requireGroupMembership } from '@/lib/group-access';
+import { reportError } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Group ID required' }, { status: 400 });
     }
 
-    const membership = await requireGroupMembership(session.userId, groupId);
+    const membership = await requireGroupMembership(userId, groupId);
     if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ restaurants });
   } catch (error) {
-    console.error('Get restaurants error:', error);
+    reportError(error, { route: 'restaurants/get' });
     return NextResponse.json(
       { error: 'Failed to fetch restaurants' },
       { status: 500 }
@@ -40,9 +40,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -70,8 +69,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user is member of the group
-    const membership = await requireGroupMembership(session.userId, groupId);
+    const membership = await requireGroupMembership(userId, groupId);
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this group' }, { status: 403 });
@@ -92,13 +90,13 @@ export async function POST(request: NextRequest) {
         photoUrl: photoUrl || null,
         latitude: typeof latitude === 'number' ? latitude : null,
         longitude: typeof longitude === 'number' ? longitude : null,
-        createdBy: session.userId,
+        createdBy: userId,
       },
     });
 
     return NextResponse.json({ success: true, restaurant });
   } catch (error) {
-    console.error('Create restaurant error:', error);
+    reportError(error, { route: 'restaurants/create' });
     return NextResponse.json(
       { error: 'Failed to create restaurant' },
       { status: 500 }

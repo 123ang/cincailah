@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { resolveUserIdWithSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/ratelimit';
 import { trackEvent } from '@/lib/analytics';
 import { JoinGroupSchema, zodError } from '@/lib/schemas';
+import { reportError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-
-    if (session?.userId) {
-      const rl = rateLimit(`join:${session.userId}`, 10);
-      if (!rl.success) {
-        return NextResponse.json(
-          { error: 'Too many join attempts. Please try again in a minute.' },
-          { status: 429 }
-        );
-      }
+    const { userId, session } = await resolveUserIdWithSession(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    if (!session?.isLoggedIn || !session?.userId) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const rl = rateLimit(`join:${userId}`, 10);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Too many join attempts. Please try again in a minute.' },
+        { status: 429 }
+      );
     }
 
     const parsed = JoinGroupSchema.safeParse(await request.json());
@@ -30,7 +28,6 @@ export async function POST(request: NextRequest) {
 
     const codeUpper = parsed.data.makanCode.trim().toUpperCase();
 
-    // Find group
     const group = await prisma.group.findUnique({
       where: { makanCode: codeUpper },
     });
@@ -42,12 +39,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if already a member
     const existingMembership = await prisma.groupMember.findFirst({
-      where: {
-        userId: session.userId,
-        groupId: group.id,
-      },
+      where: { userId, groupId: group.id },
     });
 
     if (existingMembership) {
@@ -57,20 +50,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Add user as member
     await prisma.groupMember.create({
-      data: {
-        userId: session.userId,
-        groupId: group.id,
-        role: 'member',
-      },
+      data: { userId, groupId: group.id, role: 'member' },
     });
 
-    // Update session
-    session.activeGroupId = group.id;
-    await session.save();
+    if (session) {
+      session.activeGroupId = group.id;
+      await session.save();
+    }
 
-    void trackEvent(session.userId, 'group_join', {
+    void trackEvent(userId, 'group_join', {
       groupId: group.id,
       makanCode: group.makanCode,
     });
@@ -84,7 +73,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Join group error:', error);
+    reportError(error, { route: 'groups/join' });
     return NextResponse.json(
       { error: 'Failed to join group' },
       { status: 500 }

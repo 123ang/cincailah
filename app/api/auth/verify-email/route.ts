@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { reportError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Verify email error:', error);
+    reportError(error, { route: 'auth/verify-email' });
     return NextResponse.json({ error: 'Failed to verify email' }, { status: 500 });
   }
 }

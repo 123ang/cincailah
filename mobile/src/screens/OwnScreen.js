@@ -102,7 +102,9 @@ export default function OwnScreen() {
           },
         });
       }
-    } catch {}
+    } catch (error) {
+      console.debug('Failed to save solo spin history', error);
+    }
   };
 
   const startSpin = () => {
@@ -146,7 +148,11 @@ export default function OwnScreen() {
       setResult(final);
       setIsShuffling(false);
       await saveToHistory(final);
-      try { await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
+      try {
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        console.debug('Haptics unavailable on this device', error);
+      }
     }, 2800);
   };
 

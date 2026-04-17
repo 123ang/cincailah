@@ -63,19 +63,21 @@ export const CreateRestaurantSchema = z.object({
 });
 
 // Decisions
+export const DecisionFiltersSchema = z.object({
+  budgetFilter: z.enum(['kering', 'ok', 'belanja']).optional(),
+  selectedTags: z.array(z.string()).optional(),
+  walkTimeMax: z.number().optional(),
+  halal: z.boolean().optional(),
+  vegOptions: z.boolean().optional(),
+  favoritesOnly: z.boolean().optional(),
+  maxDistanceKm: z.number().min(0.1).max(50).optional(),
+  userLat: z.number().min(-90).max(90).optional(),
+  userLng: z.number().min(-180).max(180).optional(),
+});
+
 export const DecideSchema = z.object({
   groupId: z.string().uuid(),
-  filters: z.object({
-    budgetFilter: z.string().optional(),
-    selectedTags: z.array(z.string()).optional(),
-    walkTimeMax: z.number().optional(),
-    halal: z.boolean().optional(),
-    vegOptions: z.boolean().optional(),
-    favoritesOnly: z.boolean().optional(),
-    maxDistanceKm: z.number().min(0.1).max(50).optional(),
-    userLat: z.number().min(-90).max(90).optional(),
-    userLng: z.number().min(-180).max(180).optional(),
-  }).optional(),
+  filters: DecisionFiltersSchema.optional(),
   excludeIds: z.array(z.string().uuid()).optional(),
 });
 
@@ -86,7 +88,7 @@ export const ConfirmDecisionSchema = z.object({
 // Votes
 export const StartVoteSchema = z.object({
   groupId: z.string().uuid(),
-  filters: z.record(z.unknown()).optional(),
+  filters: DecisionFiltersSchema.optional(),
 });
 
 export const CastVoteSchema = z.object({

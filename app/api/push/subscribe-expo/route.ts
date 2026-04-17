@@ -5,14 +5,14 @@
  * endpoint and auth key (web-push fields used for Expo tokens too).
  */
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
-import { logger } from '@/lib/logger';
+import { reportError } from '@/lib/logger';
 import { z } from 'zod';
 
 export async function POST(request: Request) {
-  const session = await getSession();
-  if (!session?.userId) {
+  const userId = await resolveUserId(request);
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -34,19 +34,21 @@ export async function POST(request: Request) {
     await prisma.pushSubscription.upsert({
       where: { endpoint: token },
       create: {
-        userId: session.userId,
+        userId,
         endpoint: token,
         // Expo tokens don't use p256dh/auth keys — store the token string in both
         p256dhKey: token,
         authKey: token,
+        platform: 'expo',
       },
       update: {
-        userId: session.userId,
+        userId,
+        platform: 'expo',
       },
     });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    logger.error({ err }, 'Failed to save Expo push token');
+    reportError(err, { route: 'push/subscribe-expo' });
     return NextResponse.json({ error: 'Failed to save token' }, { status: 500 });
   }
 }

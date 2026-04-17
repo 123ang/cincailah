@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { generateResetToken } from '@/lib/auth';
 import { sendEmail, getVerificationEmail } from '@/lib/email';
+import { reportError } from '@/lib/logger';
 
 export async function POST() {
   try {
@@ -46,7 +47,7 @@ export async function POST() {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Send verification error:', error);
+    reportError(error, { route: 'auth/send-verification' });
     return NextResponse.json({ error: 'Failed to send verification email' }, { status: 500 });
   }
 }

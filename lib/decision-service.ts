@@ -1,5 +1,18 @@
 import { prisma } from '@/lib/prisma';
 import { haversineKm } from '@/lib/utils';
+import type { Prisma } from '@prisma/client';
+
+export type DecisionFilters = {
+  budgetFilter?: 'kering' | 'ok' | 'belanja';
+  selectedTags?: string[];
+  walkTimeMax?: number;
+  halal?: boolean;
+  vegOptions?: boolean;
+  favoritesOnly?: boolean;
+  maxDistanceKm?: number;
+  userLat?: number;
+  userLng?: number;
+};
 
 export async function getEligibleRestaurants({
   groupId,
@@ -8,12 +21,12 @@ export async function getEligibleRestaurants({
 }: {
   groupId: string;
   userId: string;
-  filters?: Record<string, any>;
+  filters?: DecisionFilters;
 }) {
   const group = await prisma.group.findUnique({ where: { id: groupId } });
   if (!group) return { group: null, candidates: [] };
 
-  let query: any = {
+  const query: Prisma.RestaurantWhereInput = {
     groupId,
     isActive: true,
   };
@@ -54,7 +67,7 @@ export async function getEligibleRestaurants({
         ...(Array.isArray(r.cuisineTags) ? r.cuisineTags : []),
         ...(Array.isArray(r.vibeTags) ? r.vibeTags : []),
       ];
-      return selectedTags.some((tag: string) => allTags.includes(tag));
+      return selectedTags.some((tag: string) => allTags.includes(tag as never));
     });
   }
 

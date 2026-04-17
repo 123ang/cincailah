@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { ensureRestaurantAccessible } from '@/lib/group-access';
+import { reportError } from '@/lib/logger';
 
 // POST /api/ratings — submit or update a thumbs up/down for a restaurant
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'thumbs must be "up" or "down"' }, { status: 400 });
     }
 
-    const restaurant = await ensureRestaurantAccessible(restaurantId, session.userId);
+    const restaurant = await ensureRestaurantAccessible(restaurantId, userId);
     if (restaurant === null) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
@@ -33,14 +34,14 @@ export async function POST(request: NextRequest) {
     const rating = await prisma.rating.upsert({
       where: {
         userId_restaurantId_decisionId: {
-          userId: session.userId,
+          userId,
           restaurantId,
           decisionId: decisionId ?? null,
         },
       },
       update: { thumbs },
       create: {
-        userId: session.userId,
+        userId,
         restaurantId,
         decisionId: decisionId ?? null,
         thumbs,
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, rating });
   } catch (error) {
-    console.error('Rating error:', error);
+    reportError(error, { route: 'ratings/post' });
     return NextResponse.json({ error: 'Failed to save rating' }, { status: 500 });
   }
 }
@@ -57,8 +58,8 @@ export async function POST(request: NextRequest) {
 // GET /api/ratings?restaurantId=... — get current user's rating for a restaurant
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -66,8 +67,8 @@ export async function GET(request: NextRequest) {
     const restaurantId = searchParams.get('restaurantId');
 
     const where = restaurantId
-      ? { userId: session.userId, restaurantId }
-      : { userId: session.userId };
+      ? { userId, restaurantId }
+      : { userId };
 
     const ratings = await prisma.rating.findMany({
       where,
@@ -80,14 +81,14 @@ export async function GET(request: NextRequest) {
 
     const accessible = await Promise.all(
       ratings.map(async (rating) => {
-        const restaurant = await ensureRestaurantAccessible(rating.restaurantId, session.userId!);
+        const restaurant = await ensureRestaurantAccessible(rating.restaurantId, userId);
         return restaurant ? rating : null;
       })
     );
 
     return NextResponse.json({ ratings: accessible.filter(Boolean) });
   } catch (error) {
-    console.error('Get ratings error:', error);
+    reportError(error, { route: 'ratings/get' });
     return NextResponse.json({ error: 'Failed to fetch ratings' }, { status: 500 });
   }
 }

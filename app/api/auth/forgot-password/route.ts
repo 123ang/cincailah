@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { generateResetToken } from '@/lib/auth';
 import { sendEmail, getPasswordResetEmail } from '@/lib/email';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
+import { logger, reportError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -63,16 +64,16 @@ export async function POST(request: NextRequest) {
       html: emailContent.html,
     });
 
-    // Log for development
     if (process.env.NODE_ENV === 'development' || emailResult.devMode) {
-      console.log('='.repeat(60));
-      console.log('PASSWORD RESET REQUEST');
-      console.log('='.repeat(60));
-      console.log(`Email: ${user.email}`);
-      console.log(`Reset URL: ${resetUrl}`);
-      console.log(`Token expires: ${resetTokenExpires.toLocaleString()}`);
-      console.log('Email sent:', emailResult.success ? '✓' : '✗ (dev mode)');
-      console.log('='.repeat(60));
+      logger.info(
+        {
+          email: user.email,
+          resetUrl,
+          tokenExpires: resetTokenExpires.toISOString(),
+          emailSent: emailResult.success,
+        },
+        'password reset issued (dev)'
+      );
     }
 
     return NextResponse.json({
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       ...(process.env.NODE_ENV === 'development' && { resetUrl }),
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
+    reportError(error, { route: 'auth/forgot-password' });
     return NextResponse.json(
       { error: 'Failed to process request' },
       { status: 500 }

@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
-import { verifyMobileToken } from '@/app/api/auth/token/route';
-
-async function resolveUserId(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice('Bearer '.length).trim();
-    const payload = verifyMobileToken(token);
-    if (payload?.sub) return payload.sub;
-  }
-
-  const session = await getSession();
-  if (session?.isLoggedIn && session.userId) return session.userId;
-
-  return null;
-}
+import { resolveUserId } from '@/lib/session';
+import { reportError } from '@/lib/logger';
 
 // GET /api/decisions?groupId=<uuid>&limit=30
 // - with groupId: group decision history
@@ -83,7 +69,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ decisions: normalized });
   } catch (error) {
-    console.error('Get decisions error:', error);
+    reportError(error, { route: 'decisions/get' });
     return NextResponse.json({ error: 'Failed to fetch decisions' }, { status: 500 });
   }
 }
@@ -126,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, id: created.id });
   } catch (error) {
-    console.error('Create solo decision error:', error);
+    reportError(error, { route: 'decisions/create' });
     return NextResponse.json({ error: 'Failed to save solo decision' }, { status: 500 });
   }
 }

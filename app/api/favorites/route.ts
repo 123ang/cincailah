@@ -1,27 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { ensureRestaurantAccessible } from '@/lib/group-access';
+import { reportError } from '@/lib/logger';
 
 // GET /api/favorites — fetch user's favorite restaurant IDs
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const favorites = await prisma.userFavorite.findMany({
-      where: { userId: session.userId },
+      where: { userId },
       select: { restaurantId: true },
     });
 
     const restaurantIds = favorites.map((f) => f.restaurantId);
 
-    return NextResponse.json({ restaurantIds });
+    return NextResponse.json({ restaurantIds, favorites: restaurantIds });
   } catch (error) {
-    console.error('Get favorites error:', error);
+    reportError(error, { route: 'favorites/get' });
     return NextResponse.json(
       { error: 'Failed to fetch favorites' },
       { status: 500 }
@@ -32,9 +32,8 @@ export async function GET() {
 // POST /api/favorites — toggle favorite (add or remove)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -48,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const restaurant = await ensureRestaurantAccessible(restaurantId, session.userId);
+    const restaurant = await ensureRestaurantAccessible(restaurantId, userId);
 
     if (restaurant === null) {
       return NextResponse.json(
@@ -58,42 +57,29 @@ export async function POST(request: NextRequest) {
     }
 
     if (restaurant === false) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Check if already favorited
     const existing = await prisma.userFavorite.findUnique({
       where: {
         userId_restaurantId: {
-          userId: session.userId,
+          userId,
           restaurantId,
         },
       },
     });
 
     if (existing) {
-      // Remove favorite
-      await prisma.userFavorite.delete({
-        where: { id: existing.id },
-      });
-
+      await prisma.userFavorite.delete({ where: { id: existing.id } });
       return NextResponse.json({ favorited: false });
-    } else {
-      // Add favorite
-      await prisma.userFavorite.create({
-        data: {
-          userId: session.userId,
-          restaurantId,
-        },
-      });
-
-      return NextResponse.json({ favorited: true });
     }
+
+    await prisma.userFavorite.create({
+      data: { userId, restaurantId },
+    });
+    return NextResponse.json({ favorited: true });
   } catch (error) {
-    console.error('Toggle favorite error:', error);
+    reportError(error, { route: 'favorites/toggle' });
     return NextResponse.json(
       { error: 'Failed to toggle favorite' },
       { status: 500 }

@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { DecideSchema, zodError } from '@/lib/schemas';
 import { trackEvent } from '@/lib/analytics';
 import { requireGroupMembership } from '@/lib/group-access';
 import { getEligibleRestaurants } from '@/lib/decision-service';
+import { reportError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,14 +25,14 @@ export async function POST(request: NextRequest) {
       : [];
     const isReroll = excludeList.length > 0;
 
-    const membership = await requireGroupMembership(session.userId, groupId);
+    const membership = await requireGroupMembership(userId, groupId);
     if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { group, candidates: eligibleCandidates } = await getEligibleRestaurants({
       groupId,
-      userId: session.userId,
+      userId: userId,
       filters,
     });
 
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       const recent = await prisma.lunchDecision.findFirst({
         where: {
           groupId,
-          createdBy: session.userId,
+          createdBy: userId,
           modeUsed: 'you_pick',
           createdAt: { gte: new Date(Date.now() - 10 * 60_000) },
         },
@@ -135,13 +135,13 @@ export async function POST(request: NextRequest) {
           modeUsed: 'you_pick',
           chosenRestaurantId: winner.id,
           constraintsUsed: filters || {},
-          createdBy: session.userId,
+          createdBy: userId,
         },
       });
       savedDecisionId = created.id;
     }
 
-    void trackEvent(session.userId, isReroll ? 'reroll' : 'spin', {
+    void trackEvent(userId, isReroll ? 'reroll' : 'spin', {
       groupId,
       decisionId: savedDecisionId,
       candidateCount: candidates.length,
@@ -157,7 +157,7 @@ export async function POST(request: NextRequest) {
       rerollReplaced,
     });
   } catch (error) {
-    console.error('Decision error:', error);
+    reportError(error, { route: 'decide' });
     return NextResponse.json(
       { error: 'Failed to make decision' },
       { status: 500 }

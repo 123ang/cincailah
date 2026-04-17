@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { sendEmail } from '@/lib/email';
 import { trackEvent } from '@/lib/analytics';
 import { requireGroupMembership } from '@/lib/group-access';
 import { getEligibleRestaurants } from '@/lib/decision-service';
 import { StartVoteSchema, zodError } from '@/lib/schemas';
+import { reportError, logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -22,14 +22,14 @@ export async function POST(request: NextRequest) {
 
     const { groupId, filters } = parsed.data;
 
-    const membership = await requireGroupMembership(session.userId, groupId);
+    const membership = await requireGroupMembership(userId, groupId);
     if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const { group, candidates } = await getEligibleRestaurants({
       groupId,
-      userId: session.userId,
+      userId,
       filters,
     });
 
@@ -37,7 +37,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    // 3. Check if we have candidates
     if (candidates.length < 3) {
       return NextResponse.json(
         {
@@ -47,49 +46,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Pick 3-5 random candidates
     const numOptions = Math.min(candidates.length, Math.max(3, Math.min(5, candidates.length)));
     const shuffled = candidates.sort(() => Math.random() - 0.5);
     const selectedCandidates = shuffled.slice(0, numOptions);
 
-    // 5. Create lunch decision record
     const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15); // 15 minute vote window
+    expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
     const decision = await prisma.lunchDecision.create({
       data: {
         groupId,
         decisionDate: new Date(),
         modeUsed: 'we_fight',
-        constraintsUsed: (filters || {}) as any,
-        createdBy: session.userId,
-      },
-    });
-
-    // 6. Create decision options
-    const decisionOptions = await Promise.all(
-      selectedCandidates.map((candidate) =>
-        prisma.decisionOption.create({
-          data: {
-            decisionId: decision.id,
-            restaurantId: candidate.id,
-          },
-        })
-      )
-    );
-
-    // 7. Store expiration time in decision (we'll use a JSON field for this)
-    await prisma.lunchDecision.update({
-      where: { id: decision.id },
-      data: {
         constraintsUsed: {
-          ...((filters || {}) as any),
+          ...(filters ?? {}),
           expiresAt: expiresAt.toISOString(),
         },
+        createdBy: userId,
       },
     });
 
-    // 8. Email fallback notification for group members
+    await prisma.decisionOption.createMany({
+      data: selectedCandidates.map((candidate) => ({
+        decisionId: decision.id,
+        restaurantId: candidate.id,
+      })),
+    });
+
+    // Email fan-out — one failing recipient must not fail the whole request.
     const members = await prisma.groupMember.findMany({
       where: { groupId },
       select: {
@@ -98,10 +82,11 @@ export async function POST(request: NextRequest) {
         },
       },
     });
+
     const voteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/group/${groupId}/vote/${decision.id}`;
-    await Promise.all(
+    const results = await Promise.allSettled(
       members
-        .filter((m) => m.user.id !== session.userId)
+        .filter((m) => m.user.id !== userId)
         .map((m) =>
           sendEmail({
             to: m.user.email,
@@ -110,8 +95,12 @@ export async function POST(request: NextRequest) {
           })
         )
     );
+    const failed = results.filter((r) => r.status === 'rejected').length;
+    if (failed > 0) {
+      logger.warn({ decisionId: decision.id, failed }, 'vote-start email fan-out partial failure');
+    }
 
-    void trackEvent(session.userId, 'vote_start', {
+    void trackEvent(userId, 'vote_start', {
       groupId,
       decisionId: decision.id,
       optionCount: selectedCandidates.length,
@@ -123,7 +112,7 @@ export async function POST(request: NextRequest) {
       expiresAt: expiresAt.toISOString(),
     });
   } catch (error) {
-    console.error('Start vote error:', error);
+    reportError(error, { route: 'vote/start' });
     return NextResponse.json(
       { error: 'Failed to start vote' },
       { status: 500 }

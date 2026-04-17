@@ -111,7 +111,7 @@ model LunchDecision {
   createdAt           DateTime @default(now()) @map("created_at")
 
   group              Group?             @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  chosenRestaurant   Restaurant?        @relation(fields: [chosenRestaurantId], references: [id])
+  chosenRestaurant   Restaurant?        @relation(fields: [chosenRestaurantId], references: [id], onDelete: SetNull)
   creator            User               @relation("DecisionCreator", fields: [createdBy], references: [id])
   decisionOptions    DecisionOption[]
   ratings            Rating[]
@@ -215,10 +215,13 @@ model PushSubscription {
   endpoint   String   @unique
   p256dhKey  String   @map("p256dh_key")
   authKey    String   @map("auth_key")
+  // "web" for browser Web Push API subscriptions, "expo" for Expo push tokens.
+  platform   String   @default("web")
   createdAt  DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([platform])
   @@map("push_subscriptions")
 }

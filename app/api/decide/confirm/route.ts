@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { ConfirmDecisionSchema, zodError } from '@/lib/schemas';
-import { logRequest } from '@/lib/logger';
+import { logRequest, reportError } from '@/lib/logger';
 import { getDecisionWithMembership } from '@/lib/group-access';
 
 // POST /api/decide/confirm — explicitly marks a decision as "confirmed" (i.e., we're going).
@@ -11,8 +11,8 @@ import { getDecisionWithMembership } from '@/lib/group-access';
 export async function POST(request: NextRequest) {
   logRequest(request);
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const { decisionId } = parsed.data;
 
-    const access = await getDecisionWithMembership(decisionId, session.userId);
+    const access = await getDecisionWithMembership(decisionId, userId);
     if (access === null) {
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
     }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
     }
 
-    if (decision.createdBy !== session.userId) {
+    if (decision.createdBy !== userId) {
       return NextResponse.json({ error: 'Not your decision' }, { status: 403 });
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, decision: confirmed });
   } catch (error) {
-    console.error('Confirm decision error:', error);
+    reportError(error, { route: 'decide/confirm' });
     return NextResponse.json({ error: 'Failed to confirm decision' }, { status: 500 });
   }
 }

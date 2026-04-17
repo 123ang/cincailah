@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { trackEvent } from '@/lib/analytics';
 import { getDecisionWithMembership } from '@/lib/group-access';
+import { reportError } from '@/lib/logger';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ decisionId: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { decisionId } = await params;
 
-    const access = await getDecisionWithMembership(decisionId, session.userId);
+    const access = await getDecisionWithMembership(decisionId, userId);
     if (access === null) {
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
     }
@@ -82,7 +83,7 @@ export async function GET(
       winner: winner || (decision.chosenRestaurantId ? decision.decisionOptions.find(o => o.restaurantId === decision.chosenRestaurantId)?.restaurant : null),
     });
   } catch (error) {
-    console.error('Get vote error:', error);
+    reportError(error, { route: 'vote/get' });
     return NextResponse.json(
       { error: 'Failed to get vote' },
       { status: 500 }
@@ -95,15 +96,14 @@ export async function POST(
   { params }: { params: Promise<{ decisionId: string }> }
 ) {
   try {
-    const session = await getSession();
-    
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { decisionId } = await params;
 
-    const access = await getDecisionWithMembership(decisionId, session.userId);
+    const access = await getDecisionWithMembership(decisionId, userId);
     if (access === null) {
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
     }
@@ -137,40 +137,22 @@ export async function POST(
       return NextResponse.json({ error: 'Voting has ended' }, { status: 400 });
     }
 
-    // Upsert vote (update if exists, create if not)
-    const existingVote = await prisma.vote.findUnique({
+    await prisma.vote.upsert({
       where: {
         decisionOptionId_userId: {
           decisionOptionId: optionId,
-          userId: session.userId,
+          userId,
         },
       },
+      update: { vote },
+      create: { decisionOptionId: optionId, userId, vote },
     });
 
-    if (existingVote) {
-      await prisma.vote.update({
-        where: { id: existingVote.id },
-        data: { vote },
-      });
-    } else {
-      await prisma.vote.create({
-        data: {
-          decisionOptionId: optionId,
-          userId: session.userId,
-          vote,
-        },
-      });
-    }
-
-    void trackEvent(session.userId, 'vote_cast', {
-      decisionId,
-      optionId,
-      vote,
-    });
+    void trackEvent(userId, 'vote_cast', { decisionId, optionId, vote });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Vote error:', error);
+    reportError(error, { route: 'vote/cast' });
     return NextResponse.json(
       { error: 'Failed to vote' },
       { status: 500 }

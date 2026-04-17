@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { TransferAdminSchema, zodError } from '@/lib/schemas';
+import { reportError } from '@/lib/logger';
 
 type Params = { params: Promise<{ id: string }> };
 
 // POST /api/groups/[id]/transfer-admin — transfer admin role to another member
 export async function POST(request: NextRequest, { params }: Params) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -20,8 +21,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    if (group.createdBy !== session.userId) {
-      return NextResponse.json({ error: 'Only the current admin can transfer admin role' }, { status: 403 });
+    if (group.createdBy !== userId) {
+      return NextResponse.json(
+        { error: 'Only the current admin can transfer admin role' },
+        { status: 403 }
+      );
     }
 
     const parsed = TransferAdminSchema.safeParse(await request.json());
@@ -31,20 +35,21 @@ export async function POST(request: NextRequest, { params }: Params) {
 
     const { newAdminUserId } = parsed.data;
 
-    if (newAdminUserId === session.userId) {
+    if (newAdminUserId === userId) {
       return NextResponse.json({ error: 'You are already the admin' }, { status: 400 });
     }
 
-    // Verify new admin is a member
     const membership = await prisma.groupMember.findFirst({
       where: { groupId, userId: newAdminUserId },
     });
 
     if (!membership) {
-      return NextResponse.json({ error: 'User is not a member of this group' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'User is not a member of this group' },
+        { status: 400 }
+      );
     }
 
-    // Transfer: update group creator and update member roles
     await prisma.$transaction([
       prisma.group.update({
         where: { id: groupId },
@@ -55,14 +60,14 @@ export async function POST(request: NextRequest, { params }: Params) {
         data: { role: 'admin' },
       }),
       prisma.groupMember.updateMany({
-        where: { groupId, userId: session.userId },
+        where: { groupId, userId },
         data: { role: 'member' },
       }),
     ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Transfer admin error:', error);
+    reportError(error, { route: 'groups/transfer-admin' });
     return NextResponse.json({ error: 'Failed to transfer admin role' }, { status: 500 });
   }
 }

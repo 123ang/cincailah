@@ -4,7 +4,7 @@ import { getSession } from '@/lib/session';
 import { verifyPassword } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { LoginSchema, zodError } from '@/lib/schemas';
-import { logRequest } from '@/lib/logger';
+import { logRequest, reportError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   logRequest(request);
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       activeGroupId: recentMembership?.groupId,
     });
   } catch (error) {
-    console.error('Login error:', error);
+    reportError(error, { route: 'auth/login' });
     return NextResponse.json(
       { error: 'Failed to login' },
       { status: 500 }

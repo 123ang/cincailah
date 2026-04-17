@@ -5,7 +5,7 @@ import { hashPassword, generateResetToken } from '@/lib/auth';
 import { sendEmail, getWelcomeEmail, getVerificationEmail } from '@/lib/email';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { RegisterSchema, zodError } from '@/lib/schemas';
-import { logRequest } from '@/lib/logger';
+import { logRequest, reportError } from '@/lib/logger';
 import { trackEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Register error:', error);
+    reportError(error, { route: 'auth/register' });
     return NextResponse.json(
       { error: 'Failed to register' },
       { status: 500 }

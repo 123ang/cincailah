@@ -7,10 +7,10 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { saveUpload, MAX_FILE_SIZE, type UploadType } from '@/lib/upload';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
-import { logRequest, logger } from '@/lib/logger';
+import { logRequest, logger, reportError } from '@/lib/logger';
 
 // Raise body size limit for this route (Next 15 app router respects this)
 export const runtime = 'nodejs';
@@ -30,8 +30,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const session = await getSession();
-  if (!session.isLoggedIn || !session.userId) {
+  const userId = await resolveUserId(request);
+  if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -59,17 +59,20 @@ export async function POST(request: NextRequest) {
 
     const result = await saveUpload(file, typeRaw as UploadType);
 
-    logger.info({
-      userId: session.userId,
-      type: typeRaw,
-      bytes: result.bytes,
-      filename: result.filename,
-    }, 'image uploaded');
+    logger.info(
+      {
+        userId,
+        type: typeRaw,
+        bytes: result.bytes,
+        filename: result.filename,
+      },
+      'image uploaded'
+    );
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Upload failed';
-    logger.error({ err: error, userId: session.userId }, 'upload error');
+    reportError(error, { route: 'upload', userId });
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 }

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
-import { prisma } from '@/lib/prisma';
+import { resolveUserIdWithSession } from '@/lib/session';
 import { requireGroupMembership } from '@/lib/group-access';
+import { reportError } from '@/lib/logger';
 import { z } from 'zod';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-
-    if (!session?.isLoggedIn || !session?.userId) {
+    const { userId, session } = await resolveUserIdWithSession(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
@@ -19,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const { groupId } = parsed.data;
 
-    const membership = await requireGroupMembership(session.userId, groupId);
+    const membership = await requireGroupMembership(userId, groupId);
 
     if (!membership) {
       return NextResponse.json(
@@ -28,16 +27,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update session
-    session.activeGroupId = groupId;
-    await session.save();
+    // Only web clients have a mutable session — mobile tracks active group client-side.
+    if (session) {
+      session.activeGroupId = groupId;
+      await session.save();
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Switch group error:', error);
-    return NextResponse.json(
-      { error: 'Failed to switch group' },
-      { status: 500 }
-    );
+    reportError(error, { route: 'groups/switch' });
+    return NextResponse.json({ error: 'Failed to switch group' }, { status: 500 });
   }
 }

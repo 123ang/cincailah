@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
@@ -61,6 +61,39 @@ export default function VotePageClient({
   const [error, setError] = useState('');
   const [myVotes, setMyVotes] = useState<Record<string, string>>({});
 
+  const fetchVoteData = useCallback(async (id?: string) => {
+    const targetId = id || decisionId;
+    if (!targetId) return;
+
+    try {
+      const res = await fetch(`/api/vote/${targetId}`);
+      const data = await res.json();
+
+      if (res.ok) {
+        setOptions(data.decision.decisionOptions);
+        setExpiresAt(data.expiresAt);
+        setIsExpired(data.isExpired);
+        setWinner(data.winner);
+
+        if (data.isExpired && data.winner) {
+          setPhase('results');
+          try { fireConfetti(); } catch { /* ignore */ }
+        }
+
+        const votes: Record<string, string> = {};
+        data.decision.decisionOptions.forEach((option: DecisionOption) => {
+          const myVote = option.votes.find((v) => v.user.id === userId);
+          if (myVote) {
+            votes[option.id] = myVote.vote;
+          }
+        });
+        setMyVotes(votes);
+      }
+    } catch (err) {
+      console.error('Fetch vote error:', err);
+    }
+  }, [decisionId, userId]);
+
   // Timer countdown
   useEffect(() => {
     if (!expiresAt) return;
@@ -74,7 +107,6 @@ export default function VotePageClient({
         setTimeLeft('Ended');
         setIsExpired(true);
         clearInterval(interval);
-        // Fetch results
         fetchVoteData();
       } else {
         const minutes = Math.floor(diff / 60000);
@@ -84,7 +116,7 @@ export default function VotePageClient({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [expiresAt]);
+  }, [expiresAt, fetchVoteData]);
 
   // Poll for updates every 3 seconds when voting
   useEffect(() => {
@@ -95,7 +127,7 @@ export default function VotePageClient({
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [phase, decisionId]);
+  }, [phase, decisionId, fetchVoteData]);
 
   const startVote = async () => {
     setLoading(true);
@@ -123,40 +155,6 @@ export default function VotePageClient({
       setError(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchVoteData = async (id?: string) => {
-    const targetId = id || decisionId;
-    if (!targetId) return;
-
-    try {
-      const res = await fetch(`/api/vote/${targetId}`);
-      const data = await res.json();
-
-      if (res.ok) {
-        setOptions(data.decision.decisionOptions);
-        setExpiresAt(data.expiresAt);
-        setIsExpired(data.isExpired);
-        setWinner(data.winner);
-
-        if (data.isExpired && data.winner) {
-          setPhase('results');
-          try { fireConfetti(); } catch { /* ignore */ }
-        }
-
-        // Track user's votes
-        const votes: Record<string, string> = {};
-        data.decision.decisionOptions.forEach((option: DecisionOption) => {
-          const myVote = option.votes.find((v) => v.user.id === userId);
-          if (myVote) {
-            votes[option.id] = myVote.vote;
-          }
-        });
-        setMyVotes(votes);
-      }
-    } catch (err) {
-      console.error('Fetch vote error:', err);
     }
   };
 

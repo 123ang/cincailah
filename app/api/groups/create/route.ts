@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { resolveUserIdWithSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { trackEvent } from '@/lib/analytics';
 import { CreateGroupSchema, zodError } from '@/lib/schemas';
+import { reportError } from '@/lib/logger';
 
 function generateMakanCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -15,9 +16,8 @@ function generateMakanCode(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-
-    if (!session?.isLoggedIn || !session?.userId) {
+    const { userId, session } = await resolveUserIdWithSession(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
@@ -28,8 +28,7 @@ export async function POST(request: NextRequest) {
 
     const { name } = parsed.data;
 
-    // Generate unique Makan Code
-    let makanCode: string;
+    let makanCode: string | undefined;
     let isUnique = false;
     let attempts = 0;
 
@@ -38,41 +37,35 @@ export async function POST(request: NextRequest) {
       const existing = await prisma.group.findUnique({
         where: { makanCode },
       });
-      if (!existing) {
-        isUnique = true;
-      }
+      if (!existing) isUnique = true;
       attempts++;
     }
 
-    if (!isUnique) {
+    if (!isUnique || !makanCode) {
       return NextResponse.json(
         { error: 'Failed to generate unique code. Try again.' },
         { status: 500 }
       );
     }
 
-    // Create group and add user as owner
     const group = await prisma.group.create({
       data: {
         name: name.trim(),
-        makanCode: makanCode!,
-        creator: {
-          connect: { id: session.userId },
-        },
+        makanCode,
+        creator: { connect: { id: userId } },
         members: {
-          create: {
-            userId: session.userId,
-            role: 'owner',
-          },
+          create: { userId, role: 'owner' },
         },
       },
     });
 
-    // Update session
-    session.activeGroupId = group.id;
-    await session.save();
+    // Only web callers have a mutable session to store activeGroupId on.
+    if (session) {
+      session.activeGroupId = group.id;
+      await session.save();
+    }
 
-    void trackEvent(session.userId, 'group_create', {
+    void trackEvent(userId, 'group_create', {
       groupId: group.id,
       makanCode: group.makanCode,
     });
@@ -86,7 +79,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Create group error:', error);
+    reportError(error, { route: 'groups/create' });
     return NextResponse.json(
       { error: 'Failed to create group' },
       { status: 500 }

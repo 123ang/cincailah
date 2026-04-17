@@ -133,7 +133,7 @@ export default function ProfileSettingsClient({
       const sub = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: key,
-      } as PushSubscriptionOptionsInit);
+      });
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

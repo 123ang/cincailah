@@ -39,7 +39,9 @@ export default function VoteScreen({ route, navigation }) {
         setResults(data.options ?? []);
         setPhase("results");
       }
-    } catch {}
+    } catch (error) {
+      console.debug('Failed to fetch vote results', error);
+    }
   }, []);
 
   const startVote = useCallback(async () => {

@@ -1,14 +1,15 @@
 /**
  * POST /api/auth/token
- * Issues a short-lived JWT for mobile clients (React Native / Expo).
+ * Issues a 30-day JWT for mobile clients (React Native / Expo).
  * Mobile cannot easily use iron-session cookies, so this endpoint
  * accepts email+password and returns a signed JWT.
  *
  * Request:  { email, password }
- * Response: { token, expiresIn, user: { id, email, displayName } }
+ * Response: { token, expiresIn, user: { id, email, displayName, emailVerified } }
  *
- * The JWT should be stored in expo-secure-store on the mobile side.
- * Verify tokens in mobile-facing API routes using verifyMobileToken().
+ * Store the token in expo-secure-store on the mobile side and send it as
+ * `Authorization: Bearer <token>` on subsequent requests. Verify tokens
+ * server-side via `resolveUserId(request)` from `lib/session`.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,11 +17,8 @@ import { prisma } from '@/lib/prisma';
 import { verifyPassword } from '@/lib/auth';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { LoginSchema, zodError } from '@/lib/schemas';
-import { logRequest, logger } from '@/lib/logger';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || 'changeme';
-const EXPIRES_IN = '30d';
+import { logRequest, reportError } from '@/lib/logger';
+import { signMobileToken, JWT_EXPIRES_IN } from '@/lib/mobile-auth';
 
 export async function POST(request: NextRequest) {
   logRequest(request, { endpoint: 'auth/token' });
@@ -54,20 +52,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      displayName: user.displayName,
-      iat: Math.floor(Date.now() / 1000),
-    };
-
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: EXPIRES_IN });
-
-    logger.info({ userId: user.id }, 'mobile token issued');
+    const token = signMobileToken(user);
 
     return NextResponse.json({
       token,
-      expiresIn: EXPIRES_IN,
+      expiresIn: JWT_EXPIRES_IN,
       user: {
         id: user.id,
         email: user.email,
@@ -76,16 +65,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error({ err: error }, 'token endpoint error');
+    reportError(error, { route: 'auth/token' });
     return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
-  }
-}
-
-/** Utility: verify a mobile JWT token — import this in mobile-facing routes */
-export function verifyMobileToken(token: string): { sub: string; email: string; displayName: string } | null {
-  try {
-    return jwt.verify(token, JWT_SECRET) as { sub: string; email: string; displayName: string };
-  } catch {
-    return null;
   }
 }

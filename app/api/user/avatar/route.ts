@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
 import { deleteUpload } from '@/lib/upload';
-import { logRequest } from '@/lib/logger';
+import { logRequest, reportError } from '@/lib/logger';
 
 export async function PATCH(request: NextRequest) {
   logRequest(request, { endpoint: 'user/avatar' });
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -23,26 +23,24 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid avatar path' }, { status: 400 });
     }
 
-    // Fetch current avatar to clean up the old file on replace/remove
     const current = await prisma.user.findUnique({
-      where: { id: session.userId },
+      where: { id: userId },
       select: { avatarUrl: true },
     });
 
     const updated = await prisma.user.update({
-      where: { id: session.userId },
+      where: { id: userId },
       data: { avatarUrl: avatarUrl ?? null },
       select: { id: true, avatarUrl: true },
     });
 
-    // Best-effort: delete the old file from disk
     if (current?.avatarUrl && current.avatarUrl !== avatarUrl) {
       await deleteUpload(current.avatarUrl);
     }
 
     return NextResponse.json({ success: true, user: updated });
   } catch (error) {
-    console.error('Avatar update error:', error);
+    reportError(error, { route: 'user/avatar' });
     return NextResponse.json({ error: 'Failed to update avatar' }, { status: 500 });
   }
 }

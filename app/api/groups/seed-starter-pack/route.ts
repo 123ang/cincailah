@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { logRequest } from '@/lib/logger';
+import { logRequest, reportError } from '@/lib/logger';
 import { requireGroupMembership } from '@/lib/group-access';
 
 const STARTER_RESTAURANTS = [
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, added });
   } catch (error) {
-    console.error('Seed starter pack error:', error);
+    reportError(error, { route: 'groups/seed-starter-pack' });
     return NextResponse.json({ error: 'Failed to seed' }, { status: 500 });
   }
 }

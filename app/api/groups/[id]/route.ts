@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserIdWithSession } from '@/lib/session';
 import { deleteUpload } from '@/lib/upload';
 import { UpdateGroupSchema, zodError } from '@/lib/schemas';
+import { reportError } from '@/lib/logger';
 
 type Params = { params: Promise<{ id: string }> };
 
 // DELETE /api/groups/[id] — delete group (admin only)
-export async function DELETE(_request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const { userId, session } = await resolveUserIdWithSession(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -21,21 +22,20 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    if (group.createdBy !== session.userId) {
+    if (group.createdBy !== userId) {
       return NextResponse.json({ error: 'Only the admin can delete this group' }, { status: 403 });
     }
 
     await prisma.group.delete({ where: { id } });
 
-    // Clear active group from session if it was this group
-    if (session.activeGroupId === id) {
+    if (session && session.activeGroupId === id) {
       session.activeGroupId = undefined;
       await session.save();
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Delete group error:', error);
+    reportError(error, { route: 'groups/[id]/delete' });
     return NextResponse.json({ error: 'Failed to delete group' }, { status: 500 });
   }
 }
@@ -43,8 +43,8 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
 // PATCH /api/groups/[id] — rename or update rules (admin only)
 export async function PATCH(request: NextRequest, { params }: Params) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const { userId } = await resolveUserIdWithSession(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -55,7 +55,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
-    if (group.createdBy !== session.userId) {
+    if (group.createdBy !== userId) {
       return NextResponse.json({ error: 'Only the admin can edit this group' }, { status: 403 });
     }
 
@@ -68,7 +68,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const { name, noRepeatDays, maxReroll, decisionModeDefault } = parsed.success ? parsed.data : raw;
     const coverUrl = raw?.coverUrl;
 
-    // coverUrl must point to our own /uploads/ or be null (no external URLs)
     if (coverUrl !== undefined && coverUrl !== null) {
       if (typeof coverUrl !== 'string' || !coverUrl.startsWith('/uploads/group-covers/')) {
         return NextResponse.json({ error: 'Invalid cover path' }, { status: 400 });
@@ -86,14 +85,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       },
     });
 
-    // Clean up old cover file if it was replaced
     if (coverUrl !== undefined && group.coverUrl && group.coverUrl !== coverUrl) {
       await deleteUpload(group.coverUrl);
     }
 
     return NextResponse.json({ success: true, group: updated });
   } catch (error) {
-    console.error('Update group error:', error);
+    reportError(error, { route: 'groups/[id]/patch' });
     return NextResponse.json({ error: 'Failed to update group' }, { status: 500 });
   }
 }

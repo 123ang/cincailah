@@ -1,17 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/session';
+import { resolveUserId } from '@/lib/session';
+import { reportError } from '@/lib/logger';
 
 // GET /api/groups/list — list all groups the logged-in user belongs to
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session.isLoggedIn || !session.userId) {
+    const userId = await resolveUserId(request);
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const memberships = await prisma.groupMember.findMany({
-      where: { userId: session.userId },
+      where: { userId },
       include: {
         group: {
           include: {
@@ -34,7 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ groups });
   } catch (error) {
-    console.error('List groups error:', error);
+    reportError(error, { route: 'groups/list' });
     return NextResponse.json({ error: 'Failed to fetch groups' }, { status: 500 });
   }
 }
