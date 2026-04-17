@@ -2,11 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { verifyPassword } from '@/lib/auth';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
+import { LoginSchema, zodError } from '@/lib/schemas';
+import { logRequest } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
+  const ip = getClientIp(request);
+  const rl = rateLimit(`login:${ip}`, 5);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many login attempts. Please try again in a minute.' },
+      { status: 429 }
+    );
+  }
+
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const raw = await request.json();
+    const parsed = LoginSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+    const { email, password } = parsed.data;
 
     if (!email || !password) {
       return NextResponse.json(

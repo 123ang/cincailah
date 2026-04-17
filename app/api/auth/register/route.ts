@@ -1,37 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { hashPassword, isValidEmail, isValidPassword } from '@/lib/auth';
-import { sendEmail, getWelcomeEmail } from '@/lib/email';
+import { hashPassword, generateResetToken } from '@/lib/auth';
+import { sendEmail, getWelcomeEmail, getVerificationEmail } from '@/lib/email';
+import { rateLimit, getClientIp } from '@/lib/ratelimit';
+import { RegisterSchema, zodError } from '@/lib/schemas';
+import { logRequest } from '@/lib/logger';
+import { trackEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
+  logRequest(request);
+  const ip = getClientIp(request);
+  const rl = rateLimit(`register:${ip}`, 5);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many registration attempts. Please try again in a minute.' },
+      { status: 429 }
+    );
+  }
+
   try {
-    const body = await request.json();
-    const { email, password, displayName } = body;
-
-    // Validation
-    if (!email || !password || !displayName) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
+    const raw = await request.json();
+    const parsed = RegisterSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
-
+    const { email, password, displayName } = parsed.data;
     const emailLower = email.trim().toLowerCase();
-
-    if (!isValidEmail(emailLower)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidPassword(password)) {
-      return NextResponse.json(
-        { error: 'Password must be at least 8 characters' },
-        { status: 400 }
-      );
-    }
 
     // Check if email already exists
     const existing = await prisma.user.findUnique({
@@ -47,11 +42,16 @@ export async function POST(request: NextRequest) {
 
     // Create user
     const passwordHash = await hashPassword(password);
+    const emailVerifyToken = generateResetToken();
+    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
     const user = await prisma.user.create({
       data: {
         email: emailLower,
         passwordHash,
         displayName: displayName.trim(),
+        emailVerifyToken,
+        emailVerifyExpires,
       },
     });
 
@@ -63,12 +63,26 @@ export async function POST(request: NextRequest) {
     session.isLoggedIn = true;
     await session.save();
 
-    // Send welcome email (fire-and-forget, don't block response)
+    // Send welcome + verification emails (fire-and-forget)
     const welcomeContent = getWelcomeEmail(user.displayName);
     void sendEmail({
       to: user.email,
       subject: welcomeContent.subject,
       html: welcomeContent.html,
+    });
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const verifyUrl = `${appUrl}/verify/${emailVerifyToken}`;
+    const verifyContent = getVerificationEmail(verifyUrl, user.displayName);
+    void sendEmail({
+      to: user.email,
+      subject: verifyContent.subject,
+      html: verifyContent.html,
+    });
+
+    void trackEvent(user.id, 'signup', {
+      source: 'web',
+      emailDomain: user.email.split('@')[1] || 'unknown',
     });
 
     return NextResponse.json({

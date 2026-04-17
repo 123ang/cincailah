@@ -66,6 +66,7 @@ export default async function History({
       totalDecisions={totalDecisions}
       restaurantsCount={restaurantsCount}
       topRestaurants={topRestaurantsWithCounts}
+      groupId={groupId}
     />
   );
 }

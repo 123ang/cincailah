@@ -2,7 +2,9 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, haversineKm } from '@/lib/utils';
+import { fireConfetti } from '@/lib/confetti';
+import RatingPrompt, { schedulePendingRating } from '@/components/RatingPrompt';
 
 interface Restaurant {
   id: string;
@@ -15,6 +17,8 @@ interface Restaurant {
   vegOptions: boolean;
   walkMinutes: number;
   mapsUrl: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 interface RouletteSpinnerProps {
@@ -43,10 +47,12 @@ export default function RouletteSpinner({
   const [loadingText, setLoadingText] = useState(LOADING_TEXTS[0]);
   const [candidates, setCandidates] = useState<Restaurant[]>([]);
   const [winner, setWinner] = useState<Restaurant | null>(null);
+  const [decisionId, setDecisionId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
   const [maxReroll, setMaxReroll] = useState<number>(3);
   const [rerollsUsed, setRerollsUsed] = useState<number>(0);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotationRef = useRef(0);
   const animationRef = useRef<number | undefined>(undefined);
@@ -59,6 +65,13 @@ export default function RouletteSpinner({
     a.preload = 'auto';
     a.volume = 0.6;
     audioRef.current = a;
+    // Ask for geolocation silently — used to show distance on winner card
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => { /* permission denied or unavailable — ignore */ }
+      );
+    }
   }, []);
 
   const celebrate = useCallback(() => {
@@ -74,6 +87,11 @@ export default function RouletteSpinner({
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate?.([80, 40, 140]);
       }
+    } catch {
+      // ignore
+    }
+    try {
+      fireConfetti();
     } catch {
       // ignore
     }
@@ -210,6 +228,7 @@ export default function RouletteSpinner({
 
         setCandidates(data.candidates);
         setWinner(data.winner);
+        if (data.decisionId) setDecisionId(data.decisionId);
         if (typeof data.maxReroll === 'number') setMaxReroll(data.maxReroll);
 
         setTimeout(() => {
@@ -247,8 +266,11 @@ export default function RouletteSpinner({
     if (phase === 'result' && winner && !error && !celebratedRef.current) {
       celebratedRef.current = true;
       celebrate();
+      if (decisionId) {
+        schedulePendingRating(decisionId, winner.id, winner.name);
+      }
     }
-  }, [phase, winner, error, celebrate]);
+  }, [phase, winner, error, celebrate, decisionId]);
 
   const handleNotThis = () => {
     if (!winner) return;
@@ -341,7 +363,12 @@ export default function RouletteSpinner({
   return (
     <div className="max-w-md mx-auto px-4">
       <div className="flex flex-col items-center justify-center min-h-[70vh]">
-        <div className="w-full animate-bounce-in">
+        <div
+          className="w-full animate-bounce-in"
+          role="status"
+          aria-live="assertive"
+          aria-label={`Winner: ${winner.name}`}
+        >
           <p className="text-center text-sm text-gray-400 mb-4">
             🎉 The boss has spoken!
           </p>
@@ -367,6 +394,11 @@ export default function RouletteSpinner({
                   ? (winner.cuisineTags as string[]).join(' · ')
                   : 'Restaurant'}
               </p>
+              {userCoords && winner.latitude != null && winner.longitude != null && (
+                <p className="text-xs text-blue-500 mt-1 font-semibold">
+                  📍 {haversineKm(userCoords.lat, userCoords.lng, winner.latitude, winner.longitude).toFixed(1)} km away
+                </p>
+              )}
 
               <div className="flex flex-wrap gap-2 mt-3">
                 {winner.halal && (
@@ -477,6 +509,8 @@ export default function RouletteSpinner({
           ← Back to filters
         </button>
       </div>
+
+      <RatingPrompt />
 
       <style jsx>{`
         @keyframes bounce-in {

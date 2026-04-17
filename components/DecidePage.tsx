@@ -33,6 +33,12 @@ interface Group {
   members: any[];
 }
 
+interface UserPrefs {
+  halal: boolean;
+  vegOptions: boolean;
+  defaultBudget: number;
+}
+
 interface DecidePageProps {
   groupId: string;
   group: Group;
@@ -40,6 +46,7 @@ interface DecidePageProps {
   activeRestaurantsCount: number;
   currentUserId: string;
   displayName: string;
+  userPrefs?: UserPrefs | null;
 }
 
 export default function DecidePage({
@@ -49,6 +56,7 @@ export default function DecidePage({
   activeRestaurantsCount,
   currentUserId,
   displayName,
+  userPrefs,
 }: DecidePageProps) {
   const router = useRouter();
   const [mode, setMode] = useState<'you_pick' | 'we_fight'>(
@@ -57,9 +65,11 @@ export default function DecidePage({
   const [budgetFilter, setBudgetFilter] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [walkTimeMax, setWalkTimeMax] = useState<number>(30);
-  const [halal, setHalal] = useState<boolean>(false);
-  const [vegOptions, setVegOptions] = useState<boolean>(false);
+  const [halal, setHalal] = useState<boolean>(userPrefs?.halal ?? false);
+  const [vegOptions, setVegOptions] = useState<boolean>(userPrefs?.vegOptions ?? false);
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
+  const [nearby500m, setNearby500m] = useState<boolean>(false);
+  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleDecide = () => {
     const filters = {
@@ -69,6 +79,10 @@ export default function DecidePage({
       halal,
       vegOptions,
       favoritesOnly,
+      ...(nearby500m ? { maxDistanceKm: 0.5 } : {}),
+      ...(userCoords
+        ? { userLat: userCoords.lat, userLng: userCoords.lng }
+        : {}),
     };
     
     if (mode === 'you_pick') {
@@ -91,22 +105,23 @@ export default function DecidePage({
     setHalal(false);
     setVegOptions(false);
     setFavoritesOnly(false);
+    setNearby500m(false);
   };
 
   return (
     <div className="max-w-md mx-auto px-4">
       {/* Greeting */}
       <div className="pt-4 pb-2">
-        <p className="text-gray-500 text-sm">
-          Good afternoon, <span className="font-semibold text-slate">{displayName}</span>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">
+          Good afternoon, <span className="font-semibold text-slate dark:text-white">{displayName}</span>
         </p>
-        <h1 className="text-2xl font-extrabold mt-1">Makan mana hari ni? 🤔</h1>
+        <h1 className="text-2xl font-extrabold mt-1 dark:text-white">Makan mana hari ni? 🤔</h1>
       </div>
 
       {/* Group Badge */}
-      <div className="mt-3 inline-flex items-center gap-2 bg-white rounded-full px-3 py-1.5 border border-gray-200 shadow-sm">
+      <div className="mt-3 inline-flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full px-3 py-1.5 border border-gray-200 dark:border-gray-700 shadow-sm">
         <span className="w-2 h-2 rounded-full bg-pandan animate-pulse"></span>
-        <span className="text-sm font-medium text-gray-700">{group.name}</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{group.name}</span>
         <span className="text-xs text-gray-400">·</span>
         <span className="text-xs text-gray-400">{group.members.length} members</span>
         <span className="text-xs bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 font-mono">
@@ -117,7 +132,7 @@ export default function DecidePage({
       {/* Quick Filters */}
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">Quick Filters</h2>
+          <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quick Filters</h2>
           <button
             onClick={resetFilters}
             className="text-xs text-sambal font-semibold hover:underline"
@@ -257,6 +272,47 @@ export default function DecidePage({
               />
             </div>
           </button>
+        </div>
+
+        {/* Nearby 500m */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mt-3">
+          <button
+            onClick={() => {
+              if (!nearby500m && !userCoords && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                    setNearby500m(true);
+                  },
+                  () => setNearby500m(false)
+                );
+              } else {
+                setNearby500m(!nearby500m);
+              }
+            }}
+            className="flex items-center justify-between w-full"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">📍</span>
+              <span className="text-sm font-bold text-gray-700">Within 500m</span>
+            </div>
+            <div
+              className={`w-12 h-6 rounded-full flex items-center px-0.5 transition ${
+                nearby500m ? 'bg-blue-500' : 'bg-gray-300'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 bg-white rounded-full shadow-sm transition transform ${
+                  nearby500m ? 'translate-x-6' : ''
+                }`}
+              />
+            </div>
+          </button>
+          {nearby500m && !userCoords && (
+            <p className="text-xs text-amber-600 mt-2">
+              Location permission is needed for nearby filter.
+            </p>
+          )}
         </div>
       </div>
 

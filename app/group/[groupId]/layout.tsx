@@ -35,7 +35,7 @@ export default async function GroupLayout({
     }
 
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-white dark:bg-gray-950">
         <TopNav groupName={membership.group.name} makanCode={membership.group.makanCode} />
         <div className="pt-14 pb-16">
           {children}

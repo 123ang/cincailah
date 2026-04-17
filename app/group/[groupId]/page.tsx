@@ -2,6 +2,9 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import DecidePage from '@/components/DecidePage';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Decide' };
 
 export default async function GroupHome({
   params,
@@ -31,21 +34,16 @@ export default async function GroupHome({
       redirect('/login?error=group_not_found');
     }
 
-    const recentDecisions = await prisma.lunchDecision.findMany({
-      where: { groupId },
-      include: {
-        chosenRestaurant: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 3,
-    });
-
-    const activeRestaurantsCount = await prisma.restaurant.count({
-      where: {
-        groupId,
-        isActive: true,
-      },
-    });
+    const [recentDecisions, activeRestaurantsCount, userPrefs] = await Promise.all([
+      prisma.lunchDecision.findMany({
+        where: { groupId },
+        include: { chosenRestaurant: true },
+        orderBy: { createdAt: 'desc' },
+        take: 3,
+      }),
+      prisma.restaurant.count({ where: { groupId, isActive: true } }),
+      prisma.userPreferences.findUnique({ where: { userId: session.userId } }),
+    ]);
 
     return (
       <DecidePage
@@ -55,6 +53,7 @@ export default async function GroupHome({
         activeRestaurantsCount={activeRestaurantsCount}
         currentUserId={session.userId}
         displayName={session.displayName || ''}
+        userPrefs={userPrefs ?? null}
       />
     );
   } catch (err) {

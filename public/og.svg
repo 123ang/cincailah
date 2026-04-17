@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1C1917"/>
+      <stop offset="100%" style="stop-color:#292524"/>
+    </linearGradient>
+    <linearGradient id="redg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#DC2626"/>
+      <stop offset="100%" style="stop-color:#B91C1C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="1050" cy="100" r="200" fill="#DC2626" opacity="0.08"/>
+  <circle cx="150" cy="530" r="180" fill="#10B981" opacity="0.06"/>
+
+  <!-- Red accent bar -->
+  <rect x="80" y="195" width="6" height="130" rx="3" fill="url(#redg)"/>
+
+  <!-- Logo circle -->
+  <circle cx="970" cy="310" r="170" fill="#DC2626" opacity="0.12"/>
+  <circle cx="970" cy="310" r="130" fill="#DC2626" opacity="0.15"/>
+
+  <!-- Bowl SVG shape in place of emoji -->
+  <ellipse cx="970" cy="350" rx="100" ry="22" fill="rgba(0,0,0,0.2)"/>
+  <path d="M870 280 Q870 360 970 370 Q1070 360 1070 280 Z" fill="#FEF3C7"/>
+  <path d="M870 280 Q895 262 970 262 Q1045 262 1070 280" fill="none" stroke="#F59E0B" stroke-width="5" stroke-linecap="round"/>
+  <ellipse cx="935" cy="315" rx="38" ry="25" fill="#D97706" opacity="0.85"/>
+  <ellipse cx="1000" cy="310" rx="42" ry="28" fill="#10B981" opacity="0.80"/>
+
+  <!-- Main title -->
+  <text x="112" y="275" font-family="Inter, Arial, sans-serif" font-size="84" font-weight="900" fill="white" letter-spacing="-2">Cincailah</text>
+
+  <!-- Tagline -->
+  <text x="112" y="335" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="400" fill="#A8A29E">Stop debating. Let fate decide your lunch.</text>
+
+  <!-- Feature pills -->
+  <rect x="112" y="378" width="186" height="42" rx="21" fill="#DC2626" opacity="0.15" stroke="#DC2626" stroke-width="1.5"/>
+  <text x="200" y="404" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#FCA5A5" text-anchor="middle">Solo Spin</text>
+
+  <rect x="310" y="378" width="200" height="42" rx="21" fill="#10B981" opacity="0.15" stroke="#10B981" stroke-width="1.5"/>
+  <text x="410" y="404" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#6EE7B7" text-anchor="middle">Group Vote</text>
+
+  <rect x="522" y="378" width="200" height="42" rx="21" fill="#FACC15" opacity="0.15" stroke="#FACC15" stroke-width="1.5"/>
+  <text x="622" y="404" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="600" fill="#FDE68A" text-anchor="middle">Anti-Repeat</text>
+
+  <!-- URL -->
+  <text x="112" y="490" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="500" fill="#57534E">cincailah.com</text>
+</svg>

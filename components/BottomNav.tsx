@@ -55,7 +55,7 @@ export default function BottomNav({ groupId }: { groupId: string }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-gray-200/50">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-gray-200/50 dark:bg-gray-900/90 dark:border-gray-700/50" aria-label="Main navigation">
       <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-around">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -63,8 +63,10 @@ export default function BottomNav({ groupId }: { groupId: string }) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={item.label}
               className={`flex flex-col items-center gap-0.5 transition ${
-                isActive ? 'text-sambal' : 'text-gray-400 hover:text-gray-600'
+                isActive ? 'text-sambal' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
               {item.icon}

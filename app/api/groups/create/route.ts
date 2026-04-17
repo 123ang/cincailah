@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { trackEvent } from '@/lib/analytics';
 
 function generateMakanCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -72,6 +73,11 @@ export async function POST(request: NextRequest) {
     // Update session
     session.activeGroupId = group.id;
     await session.save();
+
+    void trackEvent(session.userId, 'group_create', {
+      groupId: group.id,
+      makanCode: group.makanCode,
+    });
 
     return NextResponse.json({
       success: true,

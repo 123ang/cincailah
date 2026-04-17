@@ -52,6 +52,9 @@ export async function POST(request: NextRequest) {
       vegOptions,
       walkMinutes,
       mapsUrl,
+      photoUrl,
+      latitude,
+      longitude,
     } = body;
 
     if (!groupId || !name) {
@@ -85,6 +88,9 @@ export async function POST(request: NextRequest) {
         vegOptions: Boolean(vegOptions),
         walkMinutes: Number(walkMinutes) || 5,
         mapsUrl: mapsUrl || null,
+        photoUrl: photoUrl || null,
+        latitude: typeof latitude === 'number' ? latitude : null,
+        longitude: typeof longitude === 'number' ? longitude : null,
         createdBy: session.userId,
       },
     });

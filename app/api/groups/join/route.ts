@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { rateLimit } from '@/lib/ratelimit';
+import { trackEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
+
+    if (session?.userId) {
+      const rl = rateLimit(`join:${session.userId}`, 10);
+      if (!rl.success) {
+        return NextResponse.json(
+          { error: 'Too many join attempts. Please try again in a minute.' },
+          { status: 429 }
+        );
+      }
+    }
 
     if (!session?.isLoggedIn || !session?.userId) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -61,6 +73,11 @@ export async function POST(request: NextRequest) {
     // Update session
     session.activeGroupId = group.id;
     await session.save();
+
+    void trackEvent(session.userId, 'group_join', {
+      groupId: group.id,
+      makanCode: group.makanCode,
+    });
 
     return NextResponse.json({
       success: true,

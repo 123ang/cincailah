@@ -1,0 +1,86 @@
+{
+  "expo": {
+    "name": "Cincailah",
+    "slug": "cincailah",
+    "scheme": "jiakhami",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#DC2626"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "plugins": [
+      "expo-audio",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#DC2626",
+          "sounds": [
+            "./assets/sounds/winner.mp3"
+          ]
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Cincailah to use your location to show nearby restaurants.",
+          "locationWhenInUsePermission": "Allow Cincailah to use your location to show nearby restaurants."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow Cincailah to use Face ID for quick sign-in."
+        }
+      ],
+      "expo-updates",
+      "@sentry/react-native"
+    ],
+    "extra": {
+      "apiUrl": "https://cincailah.com",
+      "sentryDsn": "",
+      "eas": {
+        "projectId": "377df96a-a84c-4c03-bd17-ddc4813f2a89"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/377df96a-a84c-4c03-bd17-ddc4813f2a89"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "owner": "jiak-hami",
+    "android": {
+      "package": "com.jiakhami.cincailah",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png",
+        "backgroundColor": "#DC2626"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "USE_BIOMETRIC",
+        "USE_FINGERPRINT"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.jiakhami.cincailah",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Cincailah uses your location to find nearby restaurants.",
+        "NSFaceIDUsageDescription": "Cincailah uses Face ID for quick, secure sign-in."
+      }
+    }
+  }
+}

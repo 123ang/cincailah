@@ -11,13 +11,17 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(uuid()) @db.Uuid
-  email             String    @unique
-  passwordHash      String    @map("password_hash")
-  displayName       String    @map("display_name")
-  resetToken        String?   @map("reset_token")
-  resetTokenExpires DateTime? @map("reset_token_expires")
-  createdAt         DateTime  @default(now()) @map("created_at")
+  id                    String    @id @default(uuid()) @db.Uuid
+  email                 String    @unique
+  passwordHash          String    @map("password_hash")
+  displayName           String    @map("display_name")
+  avatarUrl             String?   @map("avatar_url")
+  resetToken            String?   @map("reset_token")
+  resetTokenExpires     DateTime? @map("reset_token_expires")
+  emailVerified         Boolean   @default(false) @map("email_verified")
+  emailVerifyToken      String?   @map("email_verify_token")
+  emailVerifyExpires    DateTime? @map("email_verify_expires")
+  createdAt             DateTime  @default(now()) @map("created_at")
   
   groupsCreated      Group[]          @relation("GroupCreator")
   groupMemberships   GroupMember[]
@@ -25,6 +29,10 @@ model User {
   decisionsCreated   LunchDecision[]  @relation("DecisionCreator")
   votes              Vote[]
   favorites          UserFavorite[]
+  ratings            Rating[]
+  preferences        UserPreferences?
+  comments           Comment[]
+  pushSubscriptions  PushSubscription[]
 
   @@map("users")
 }
@@ -37,6 +45,7 @@ model Group {
   noRepeatDays        Int      @default(7) @map("no_repeat_days")
   maxReroll           Int      @default(2) @map("max_reroll")
   decisionModeDefault String   @default("you_pick") @map("decision_mode_default")
+  coverUrl            String?  @map("cover_url")
   createdAt           DateTime @default(now()) @map("created_at")
 
   creator         User              @relation("GroupCreator", fields: [createdBy], references: [id])
@@ -73,6 +82,9 @@ model Restaurant {
   vegOptions   Boolean  @default(false) @map("veg_options")
   walkMinutes  Int      @map("walk_minutes")
   mapsUrl      String?  @map("maps_url")
+  photoUrl     String?  @map("photo_url")
+  latitude     Float?
+  longitude    Float?
   isActive     Boolean  @default(true) @map("is_active")
   createdBy    String   @map("created_by") @db.Uuid
   createdAt    DateTime @default(now()) @map("created_at")
@@ -82,6 +94,7 @@ model Restaurant {
   lunchDecisions   LunchDecision[]
   decisionOptions  DecisionOption[]
   favoritedBy      UserFavorite[]
+  ratings          Rating[]
 
   @@index([groupId, isActive])
   @@map("restaurants")
@@ -89,7 +102,7 @@ model Restaurant {
 
 model LunchDecision {
   id                  String   @id @default(uuid()) @db.Uuid
-  groupId             String   @map("group_id") @db.Uuid
+  groupId             String?  @map("group_id") @db.Uuid
   decisionDate        DateTime @map("decision_date") @db.Date
   modeUsed            String   @map("mode_used")
   chosenRestaurantId  String?  @map("chosen_restaurant_id") @db.Uuid
@@ -97,10 +110,12 @@ model LunchDecision {
   createdBy           String   @map("created_by") @db.Uuid
   createdAt           DateTime @default(now()) @map("created_at")
 
-  group              Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group              Group?             @relation(fields: [groupId], references: [id], onDelete: Cascade)
   chosenRestaurant   Restaurant?        @relation(fields: [chosenRestaurantId], references: [id])
   creator            User               @relation("DecisionCreator", fields: [createdBy], references: [id])
   decisionOptions    DecisionOption[]
+  ratings            Rating[]
+  comments           Comment[]
 
   @@index([groupId, decisionDate])
   @@map("lunch_decisions")
@@ -132,6 +147,54 @@ model Vote {
   @@map("votes")
 }
 
+model Rating {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  restaurantId String   @map("restaurant_id") @db.Uuid
+  decisionId   String?  @map("decision_id") @db.Uuid
+  thumbs       String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  decision     LunchDecision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, restaurantId, decisionId])
+  @@index([restaurantId])
+  @@map("ratings")
+}
+
+model UserPreferences {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  halal          Boolean  @default(false)
+  vegOptions     Boolean  @default(false) @map("veg_options")
+  defaultBudget  Int      @default(20) @map("default_budget")
+  reminderEnabled Boolean @default(false) @map("reminder_enabled")
+  reminderTimeLocal String @default("11:45") @map("reminder_time_local")
+  reminderTimezone String @default("Asia/Kuala_Lumpur") @map("reminder_timezone")
+  reminderWeekdaysOnly Boolean @default(true) @map("reminder_weekdays_only")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model Comment {
+  id         String   @id @default(uuid()) @db.Uuid
+  decisionId String   @map("decision_id") @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  body       String
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  decision LunchDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([decisionId])
+  @@map("comments")
+}
+
 model UserFavorite {
   id           String   @id @default(uuid()) @db.Uuid
   userId       String   @map("user_id") @db.Uuid
@@ -144,4 +207,18 @@ model UserFavorite {
   @@unique([userId, restaurantId])
   @@index([userId])
   @@map("user_favorites")
+}
+
+model PushSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  endpoint   String   @unique
+  p256dhKey  String   @map("p256dh_key")
+  authKey    String   @map("auth_key")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }

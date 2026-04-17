@@ -1,0 +1,35 @@
+name: Monitor Health
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    name: Uptime + Response Time
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check /api/health
+        env:
+          HEALTH_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          if [ -z "$HEALTH_URL" ]; then
+            echo "HEALTHCHECK_URL secret is required"
+            exit 1
+          fi
+
+          echo "Checking $HEALTH_URL"
+          HTTP_CODE=$(curl -sS -o /tmp/health.json -w "%{http_code}" "$HEALTH_URL")
+          TOTAL_TIME=$(curl -sS -o /dev/null -w "%{time_total}" "$HEALTH_URL")
+
+          echo "HTTP: $HTTP_CODE"
+          echo "Response time: ${TOTAL_TIME}s"
+          echo "Body:"
+          cat /tmp/health.json
+
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Healthcheck failed"
+            exit 1
+          fi
+

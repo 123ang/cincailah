@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { sendEmail } from '@/lib/email';
+import { trackEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
   try {
@@ -143,6 +145,34 @@ export async function POST(request: NextRequest) {
           expiresAt: expiresAt.toISOString(),
         },
       },
+    });
+
+    // 8. Email fallback notification for group members
+    const members = await prisma.groupMember.findMany({
+      where: { groupId },
+      select: {
+        user: {
+          select: { id: true, email: true, displayName: true },
+        },
+      },
+    });
+    const voteUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/group/${groupId}/vote/${decision.id}`;
+    await Promise.all(
+      members
+        .filter((m) => m.user.id !== session.userId)
+        .map((m) =>
+          sendEmail({
+            to: m.user.email,
+            subject: `Vote now in ${group.name} 🗳️`,
+            html: `<p>Hi ${m.user.displayName},</p><p>A new lunch vote is live in <strong>${group.name}</strong>. Voting closes in 15 minutes.</p><p><a href="${voteUrl}">Vote now</a></p>`,
+          })
+        )
+    );
+
+    void trackEvent(session.userId, 'vote_start', {
+      groupId,
+      decisionId: decision.id,
+      optionCount: selectedCandidates.length,
     });
 
     return NextResponse.json({

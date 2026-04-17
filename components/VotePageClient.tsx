@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
+import { fireConfetti } from '@/lib/confetti';
+import { ToastContainer, useToast } from '@/components/Toast';
 
 interface Restaurant {
   id: string;
@@ -46,6 +48,7 @@ export default function VotePageClient({
   filters,
 }: VotePageClientProps) {
   const router = useRouter();
+  const { toasts, toast, dismiss } = useToast();
   const [phase, setPhase] = useState<'start' | 'voting' | 'results'>('start');
   const [decisionId, setDecisionId] = useState<string | null>(null);
   const [options, setOptions] = useState<DecisionOption[]>([]);
@@ -53,6 +56,7 @@ export default function VotePageClient({
   const [timeLeft, setTimeLeft] = useState<string>('');
   const [isExpired, setIsExpired] = useState(false);
   const [winner, setWinner] = useState<Restaurant | null>(null);
+  const [fateWinner, setFateWinner] = useState<Restaurant | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [myVotes, setMyVotes] = useState<Record<string, string>>({});
@@ -114,6 +118,7 @@ export default function VotePageClient({
       setExpiresAt(data.expiresAt);
       await fetchVoteData(data.decisionId);
       setPhase('voting');
+      toast('🗳️ Vote is live! Share the link so your group can vote.', 'info', 8000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -137,6 +142,7 @@ export default function VotePageClient({
 
         if (data.isExpired && data.winner) {
           setPhase('results');
+          try { fireConfetti(); } catch { /* ignore */ }
         }
 
         // Track user's votes
@@ -203,6 +209,7 @@ export default function VotePageClient({
   if (phase === 'start') {
     return (
       <div className="max-w-md mx-auto px-4 pb-6">
+        <ToastContainer toasts={toasts} onDismiss={dismiss} />
         <div className="pt-4 pb-2">
           <h1 className="text-2xl font-extrabold">⚔️ We Fight Mode</h1>
           <p className="text-sm text-gray-400 mt-1">
@@ -251,12 +258,53 @@ export default function VotePageClient({
     );
   }
 
-  if (phase === 'results' && winner) {
+  const isTie =
+    phase === 'results' &&
+    !winner &&
+    options.length > 1 &&
+    options.every(o => getVoteCount(o) === getVoteCount(options[0]));
+
+  const letFateDecide = () => {
+    const opts = options.filter(o => getVoteCount(o) === getVoteCount(options[0]));
+    setFateWinner(opts[Math.floor(Math.random() * opts.length)].restaurant);
+  };
+
+  if (isTie && !fateWinner) {
+    return (
+      <div className="max-w-md mx-auto px-4 pb-6">
+        <div className="flex flex-col items-center justify-center min-h-[70vh] text-center">
+          <div className="text-7xl mb-4 animate-bounce">🪙</div>
+          <h2 className="text-2xl font-black text-slate mb-2">It&apos;s a tie!</h2>
+          <p className="text-gray-500 mb-8">
+            {options.filter(o => getVoteCount(o) === getVoteCount(options[0])).length} options are tied.
+            Let fate break the deadlock!
+          </p>
+          <button
+            onClick={letFateDecide}
+            className="btn-cincai text-white font-black px-10 py-4 rounded-2xl text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105"
+          >
+            🎲 Let Fate Decide!
+          </button>
+          <button
+            onClick={() => router.push(`/group/${groupId}`)}
+            className="mt-6 text-sm text-gray-400 hover:text-gray-600 font-medium transition"
+          >
+            ← Back to home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (phase === 'results' && (winner || fateWinner)) {
+    const finalWinner = fateWinner ?? winner!;
     return (
       <div className="max-w-md mx-auto px-4 pb-6">
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
           <div className="w-full animate-bounce-in">
-            <p className="text-center text-sm text-gray-400 mb-4">🎉 The people have spoken!</p>
+            <p className="text-center text-sm text-gray-400 mb-4">
+              {fateWinner ? '🎲 Fate has spoken!' : '🎉 The people have spoken!'}
+            </p>
 
             <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
               <div className="h-40 bg-gradient-to-br from-pandan to-green-400 flex items-center justify-center relative">
@@ -267,26 +315,26 @@ export default function VotePageClient({
               </div>
 
               <div className="p-5">
-                <h2 className="text-2xl font-black text-slate">{winner.name}</h2>
+                <h2 className="text-2xl font-black text-slate">{finalWinner.name}</h2>
                 <p className="text-gray-400 text-sm mt-1">
-                  {Array.isArray(winner.cuisineTags) && winner.cuisineTags.length > 0
-                    ? winner.cuisineTags.join(' · ')
+                  {Array.isArray(finalWinner.cuisineTags) && finalWinner.cuisineTags.length > 0
+                    ? finalWinner.cuisineTags.join(' · ')
                     : 'Restaurant'}
                 </p>
 
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {winner.halal && (
+                  {finalWinner.halal && (
                     <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                       ✅ Halal
                     </span>
                   )}
-                  {winner.vegOptions && (
+                  {finalWinner.vegOptions && (
                     <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                       🌱 Veg
                     </span>
                   )}
-                  {Array.isArray(winner.vibeTags) &&
-                    winner.vibeTags.slice(0, 3).map((tag: string) => (
+                  {Array.isArray(finalWinner.vibeTags) &&
+                    finalWinner.vibeTags.slice(0, 3).map((tag: string) => (
                       <span
                         key={tag}
                         className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700"
@@ -300,26 +348,26 @@ export default function VotePageClient({
                   <div className="bg-gray-50 rounded-xl p-3 text-center">
                     <p className="text-xs text-gray-400">Budget</p>
                     <p className="text-sm font-bold text-slate mt-0.5">
-                      {formatPrice(winner.priceMin, winner.priceMax)}
+                      {formatPrice(finalWinner.priceMin, finalWinner.priceMax)}
                     </p>
                   </div>
                   <div className="bg-gray-50 rounded-xl p-3 text-center">
                     <p className="text-xs text-gray-400">Walk</p>
                     <p className="text-sm font-bold text-slate mt-0.5">
-                      {winner.walkMinutes} min 🚶
+                      {finalWinner.walkMinutes} min 🚶
                     </p>
                   </div>
                 </div>
 
                 <div className="flex gap-3 mt-5">
-                  {winner.mapsUrl ? (
+                  {finalWinner.mapsUrl ? (
                     <a
-                      href={winner.mapsUrl}
+                      href={finalWinner.mapsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 bg-pandan hover:bg-pandan-dark text-white font-bold py-3 rounded-xl text-center text-sm transition shadow-lg shadow-pandan/30"
                     >
-                      Let's Go! 📍
+                      Let&apos;s Go! 📍
                     </a>
                   ) : (
                     <button
@@ -476,9 +524,9 @@ export default function VotePageClient({
       {/* Share Link */}
       <div className="mt-5 bg-amber-50 rounded-xl p-4 border border-amber-200">
         <p className="text-xs text-amber-700 font-semibold mb-2">
-          📤 Share this link with your group:
+          📤 Share this vote with your group:
         </p>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mb-2">
           <input
             type="text"
             value={`${window.location.origin}/group/${groupId}/vote`}
@@ -496,6 +544,15 @@ export default function VotePageClient({
             Copy
           </button>
         </div>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(`🗳️ Vote now! Where shall we makan? ${window.location.origin}/group/${groupId}/vote`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#20bd5a] transition"
+        >
+          <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.117.549 4.107 1.51 5.833L.057 23.876a.5.5 0 0 0 .611.61l6.187-1.493A11.942 11.942 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.853 0-3.6-.498-5.107-1.365l-.34-.202-3.77.91.924-3.664-.22-.352A9.95 9.95 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Share on WhatsApp
+        </a>
       </div>
 
       <button

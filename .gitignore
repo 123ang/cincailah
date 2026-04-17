@@ -35,3 +35,16 @@ next-env.d.ts
 
 # Prisma
 prisma/migrations/
+
+# Mobile
+mobile/node_modules/
+mobile/*/node_modules/
+mobile/.expo/
+mobile/*/.expo/
+
+# Backup folder
+backup/
+
+# User uploads (served from /public/uploads/) — keep directory structure, ignore actual files
+public/uploads/**/*
+!public/uploads/**/.gitkeep

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import MakanCodeInput from '@/components/MakanCodeInput';
+import DarkModeToggle from '@/components/DarkModeToggle';
 
 export default function LandingPageClient() {
   return (
@@ -14,6 +15,7 @@ export default function LandingPageClient() {
             <span className="text-2xl font-black text-slate">cincailah</span>
           </div>
           <div className="flex items-center gap-3">
+            <DarkModeToggle />
             <Link
               href="/solo"
               className="hidden sm:inline-flex px-4 py-2 font-bold text-sm text-slate hover:text-sambal transition"
@@ -256,10 +258,10 @@ export default function LandingPageClient() {
             The smartest way to decide where to makan
           </p>
           <div className="flex gap-6 justify-center text-sm text-gray-400">
-            <a href="#" className="hover:text-white transition">About</a>
-            <a href="#" className="hover:text-white transition">Privacy</a>
-            <a href="#" className="hover:text-white transition">Terms</a>
-            <a href="#" className="hover:text-white transition">Contact</a>
+            <a href="/about" className="hover:text-white transition">About</a>
+            <a href="/privacy" className="hover:text-white transition">Privacy</a>
+            <a href="/terms" className="hover:text-white transition">Terms</a>
+            <a href="mailto:support@cincailah.com" className="hover:text-white transition">Contact</a>
           </div>
           <p className="text-xs text-gray-500 mt-8">
             © 2026 cincailah. Made with ❤️ for hungry people.

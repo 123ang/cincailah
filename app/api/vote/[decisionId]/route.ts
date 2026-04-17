@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { trackEvent } from '@/lib/analytics';
 
 export async function GET(
   request: NextRequest,
@@ -138,6 +139,12 @@ export async function POST(
         },
       });
     }
+
+    void trackEvent(session.userId, 'vote_cast', {
+      decisionId,
+      optionId,
+      vote,
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

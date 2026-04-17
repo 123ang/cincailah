@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { fireConfetti } from '@/lib/confetti';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FAVORITES_KEY,
@@ -201,6 +202,7 @@ export default function SoloPage() {
     } catch {
       // Some browsers throw on vibrate; safe to ignore
     }
+    try { fireConfetti(); } catch { /* ignore */ }
     setJustWon(true);
     window.setTimeout(() => setJustWon(false), 1200);
   };

@@ -7,8 +7,8 @@ import { formatPrice } from '@/lib/utils';
 interface Restaurant {
   id: string;
   name: string;
-  cuisineTags: any;
-  vibeTags: any;
+  cuisineTags: unknown;
+  vibeTags: unknown;
   priceMin: number;
   priceMax: number;
   halal: boolean;
@@ -16,6 +16,7 @@ interface Restaurant {
   walkMinutes: number;
   isActive: boolean;
   mapsUrl: string | null;
+  photoUrl?: string | null;
 }
 
 export default function RestaurantsPage({
@@ -162,13 +163,26 @@ export default function RestaurantsPage({
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
-                    <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 ${
-                        restaurant.isActive ? 'bg-red-100' : 'bg-gray-100'
-                      }`}
-                    >
-                      {getEmoji(restaurant.name, restaurant.cuisineTags)}
-                    </div>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden ${
+                      restaurant.isActive ? 'bg-red-100' : 'bg-gray-100'
+                    }`}
+                  >
+                    {restaurant.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={restaurant.photoUrl}
+                        alt={restaurant.name}
+                        className="w-full h-full object-cover"
+                        onError={e => {
+                          const parent = (e.target as HTMLImageElement).parentElement;
+                          if (parent) parent.textContent = getEmoji(restaurant.name, restaurant.cuisineTags);
+                        }}
+                      />
+                    ) : (
+                      getEmoji(restaurant.name, restaurant.cuisineTags)
+                    )}
+                  </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-sm">
                         {restaurant.name}

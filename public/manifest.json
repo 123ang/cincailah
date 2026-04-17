@@ -1,0 +1,40 @@
+{
+  "name": "Cincailah — Makan Mana?",
+  "short_name": "Cincailah",
+  "description": "Stop debating where to eat. Spin the wheel or vote with your group in seconds.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#DC2626",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Solo Spin",
+      "short_name": "Solo",
+      "description": "Spin for yourself — no signup needed",
+      "url": "/solo",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["food", "lifestyle", "utilities"]
+}

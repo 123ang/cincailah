@@ -334,6 +334,19 @@ server {
     listen 80;
     server_name yourdomain.com www.yourdomain.com;
 
+    # Allow up to 6 MB uploads (app limit is 5 MB; leave headroom for multipart overhead)
+    client_max_body_size 6M;
+
+    # Long-cache user uploads (restaurant photos, avatars, group covers)
+    # These are written by the app into /var/www/cincailah/public/uploads/
+    location /uploads/ {
+        alias /var/www/cincailah/public/uploads/;
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+        try_files $uri =404;
+    }
+
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
@@ -344,9 +357,14 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+
+        # Forward large request bodies (uploads) without buffering to disk
+        proxy_request_buffering off;
     }
 }
 ```
+
+> **Note on the `/uploads/` block:** it's optional but **highly recommended**. It lets Nginx serve user-uploaded images directly from disk (bypassing Node.js), which is ~10–50× faster and frees Node to handle API calls. Update `alias` to wherever your app lives on the VPS (e.g. `/home/deploy/cincailah/public/uploads/`).
 
 Enable and test:
 
@@ -382,6 +400,49 @@ sudo ufw status
 
 ---
 
+## 9. User uploads (restaurant photos, avatars, group covers)
+
+The app writes uploaded images to `public/uploads/` on the VPS filesystem:
+
+```
+public/uploads/
+├── restaurants/     # restaurant photos (1200px WebP)
+├── avatars/         # user profile pictures (400×400 WebP)
+└── group-covers/    # group cover images (1600px WebP)
+```
+
+All uploads are auto-resized with `sharp` to WebP for tiny file sizes (~50–200 KB per image).
+Max upload size is **5 MB** (enforced in the app + Nginx `client_max_body_size 6M`).
+
+### Make sure Node can write to the uploads folder
+
+```bash
+cd /var/www/cincailah       # or wherever your app lives
+mkdir -p public/uploads/restaurants public/uploads/avatars public/uploads/group-covers
+sudo chown -R deploy:deploy public/uploads    # change 'deploy' to your app's user
+sudo chmod -R 755 public/uploads
+```
+
+### Backing up uploads
+
+Uploads aren't in Postgres — back them up separately:
+
+```bash
+# Add to your nightly cron:
+tar -czf /backups/uploads_$(date +%Y%m%d).tar.gz /var/www/cincailah/public/uploads/
+find /backups -name 'uploads_*.tar.gz' -mtime +30 -delete
+```
+
+### Surviving deploys (important)
+
+If you `git pull` or re-upload the project, **don't wipe `public/uploads/`**. Options:
+
+- **Simplest:** Just `git pull` — uploads are `.gitignore`'d, so they stay put.
+- **Rsync:** Use `rsync --exclude='public/uploads'` when syncing new code.
+- **Symlink:** Move `public/uploads` to `/var/data/cincailah-uploads` and symlink it back — uploads survive complete redeploys.
+
+---
+
 ## Quick reference after deploy
 
 | Task | Command |
@@ -389,8 +450,9 @@ sudo ufw status
 | View logs | `pm2 logs cincailah` |
 | Restart app | `pm2 restart cincailah` |
 | Stop app | `pm2 stop cincailah` |
-| Update app (after git pull) | `npm install && npx prisma generate && npm run build && pm2 restart cincailah` |
+| Update app (after git pull) | `npm install && npx prisma generate && npx prisma db push && npm run build && pm2 restart cincailah` |
 | DB backup | `pg_dump -U cincailah_user cincailah > backup_$(date +%Y%m%d).sql` |
+| Uploads backup | `tar -czf uploads_$(date +%Y%m%d).tar.gz public/uploads/` |
 
 ---
 
