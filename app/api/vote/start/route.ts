@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { sendEmail } from '@/lib/email';
 import { trackEvent } from '@/lib/analytics';
+import { requireGroupMembership } from '@/lib/group-access';
+import { getEligibleRestaurants } from '@/lib/decision-service';
+import { StartVoteSchema, zodError } from '@/lib/schemas';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,88 +15,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { groupId, filters } = body;
-
-    if (!groupId) {
-      return NextResponse.json({ error: 'Group ID required' }, { status: 400 });
+    const parsed = StartVoteSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
 
-    // Get group settings
-    const group = await prisma.group.findUnique({
-      where: { id: groupId },
+    const { groupId, filters } = parsed.data;
+
+    const membership = await requireGroupMembership(session.userId, groupId);
+    if (!membership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { group, candidates } = await getEligibleRestaurants({
+      groupId,
+      userId: session.userId,
+      filters,
     });
 
     if (!group) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
-
-    // 1. Get active restaurants with filters (same logic as decide)
-    let query: any = {
-      groupId,
-      isActive: true,
-    };
-
-    const { budgetFilter, selectedTags = [], walkTimeMax, halal, vegOptions } = filters || {};
-
-    if (budgetFilter === 'kering') {
-      query.priceMax = { lte: 10 };
-    } else if (budgetFilter === 'ok') {
-      query.priceMin = { gte: 10 };
-      query.priceMax = { lte: 20 };
-    } else if (budgetFilter === 'belanja') {
-      query.priceMin = { gte: 20 };
-    }
-
-    if (walkTimeMax) {
-      query.walkMinutes = { lte: Number(walkTimeMax) };
-    }
-
-    if (halal) {
-      query.halal = true;
-    }
-    if (vegOptions) {
-      query.vegOptions = true;
-    }
-
-    let candidates = await prisma.restaurant.findMany({
-      where: query,
-    });
-
-    // Filter by tags
-    if (selectedTags.length > 0) {
-      candidates = candidates.filter((r) => {
-        const allTags = [
-          ...(Array.isArray(r.cuisineTags) ? r.cuisineTags : []),
-          ...(Array.isArray(r.vibeTags) ? r.vibeTags : []),
-        ];
-        return selectedTags.some((tag: string) => allTags.includes(tag));
-      });
-    }
-
-    // 2. Anti-Repeat Protection
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - group.noRepeatDays);
-
-    const recentDecisions = await prisma.lunchDecision.findMany({
-      where: {
-        groupId,
-        decisionDate: {
-          gte: cutoffDate,
-        },
-      },
-      select: {
-        chosenRestaurantId: true,
-      },
-    });
-
-    const recentRestaurantIds = recentDecisions
-      .map((d) => d.chosenRestaurantId)
-      .filter((id): id is string => id !== null);
-
-    candidates = candidates.filter(
-      (r) => !recentRestaurantIds.includes(r.id)
-    );
 
     // 3. Check if we have candidates
     if (candidates.length < 3) {
@@ -119,7 +61,7 @@ export async function POST(request: NextRequest) {
         groupId,
         decisionDate: new Date(),
         modeUsed: 'we_fight',
-        constraintsUsed: filters || {},
+        constraintsUsed: (filters || {}) as any,
         createdBy: session.userId,
       },
     });
@@ -141,7 +83,7 @@ export async function POST(request: NextRequest) {
       where: { id: decision.id },
       data: {
         constraintsUsed: {
-          ...(filters || {}),
+          ...((filters || {}) as any),
           expiresAt: expiresAt.toISOString(),
         },
       },

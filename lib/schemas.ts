@@ -58,6 +58,8 @@ export const CreateRestaurantSchema = z.object({
   walkMinutes: z.number().int().min(1).max(60),
   mapsUrl: z.string().url().nullable().optional(),
   photoUrl: z.string().url().nullable().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
 });
 
 // Decisions

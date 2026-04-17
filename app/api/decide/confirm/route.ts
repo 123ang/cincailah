@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { ConfirmDecisionSchema, zodError } from '@/lib/schemas';
 import { logRequest } from '@/lib/logger';
+import { getDecisionWithMembership } from '@/lib/group-access';
 
 // POST /api/decide/confirm — explicitly marks a decision as "confirmed" (i.e., we're going).
 // This is cleaner than relying on reroll-overwrite logic.
@@ -22,6 +23,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { decisionId } = parsed.data;
+
+    const access = await getDecisionWithMembership(decisionId, session.userId);
+    if (access === null) {
+      return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
+    }
+    if (access === false) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const decision = await prisma.lunchDecision.findUnique({
       where: { id: decisionId },

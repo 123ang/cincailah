@@ -16,12 +16,13 @@ npm install
 npx prisma generate
 ```
 
-### 2. Configure your database
+### 2. Configure your environment
 
-Edit `.env` and update the `DATABASE_URL`:
+Edit `.env` and update at least:
 
 ```env
 DATABASE_URL="postgresql://YOUR_USER:YOUR_PASSWORD@YOUR_HOST:5432/cincailah?schema=public"
+SESSION_SECRET="your-secure-random-string-at-least-32-characters-long"
 ```
 
 ### 3. Create database tables
@@ -42,10 +43,11 @@ Visit **http://localhost:3000** 🎉
 
 ## 🎯 What to Try First
 
-1. **Create your first group** — Enter your name and click "Start a Makan Group"
-2. **Add restaurants** — Navigate to "Spots" and add 3-5 local restaurants
-3. **Set filters** — Choose budget, cuisine, walk time on the main page
-4. **Click "Cincai lah!"** — Watch the roulette wheel spin! 🎰
+1. **Register or log in** — Create your account first
+2. **Create your first group** — Start a Makan Group or join with a Makan Code
+3. **Add restaurants** — Navigate to "Spots" and add 3-5 local restaurants
+4. **Set filters** — Choose budget, cuisine, walk time on the main page
+5. **Click "Cincai lah!"** — Watch the roulette wheel spin! 🎰
 
 ---
 
@@ -61,6 +63,7 @@ Visit **http://localhost:3000** 🎉
 
 **"Session error"**
 - Make sure SESSION_SECRET is set in `.env`
+- In production, SESSION_SECRET must be at least 32 characters
 
 ---
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { requireGroupMembership } from '@/lib/group-access';
+import { z } from 'zod';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,20 +12,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { groupId } = body;
-
-    if (!groupId) {
-      return NextResponse.json({ error: 'Group ID required' }, { status: 400 });
+    const parsed = z.object({ groupId: z.string().uuid() }).safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Valid groupId required' }, { status: 400 });
     }
 
-    // Verify user is member of this group
-    const membership = await prisma.groupMember.findFirst({
-      where: {
-        userId: session.userId,
-        groupId,
-      },
-    });
+    const { groupId } = parsed.data;
+
+    const membership = await requireGroupMembership(session.userId, groupId);
 
     if (!membership) {
       return NextResponse.json(

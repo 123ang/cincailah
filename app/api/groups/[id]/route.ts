@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { deleteUpload } from '@/lib/upload';
+import { UpdateGroupSchema, zodError } from '@/lib/schemas';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -58,8 +59,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Only the admin can edit this group' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { name, noRepeatDays, maxReroll, decisionModeDefault, coverUrl } = body;
+    const raw = await request.json();
+    const parsed = UpdateGroupSchema.safeParse(raw);
+    if (!parsed.success && raw?.coverUrl === undefined) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+
+    const { name, noRepeatDays, maxReroll, decisionModeDefault } = parsed.success ? parsed.data : raw;
+    const coverUrl = raw?.coverUrl;
 
     // coverUrl must point to our own /uploads/ or be null (no external URLs)
     if (coverUrl !== undefined && coverUrl !== null) {

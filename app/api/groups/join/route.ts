@@ -3,6 +3,7 @@ import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/ratelimit';
 import { trackEvent } from '@/lib/analytics';
+import { JoinGroupSchema, zodError } from '@/lib/schemas';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,17 +23,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { makanCode } = body;
-
-    if (!makanCode?.trim()) {
-      return NextResponse.json(
-        { error: 'Makan Code is required' },
-        { status: 400 }
-      );
+    const parsed = JoinGroupSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
 
-    const codeUpper = makanCode.trim().toUpperCase();
+    const codeUpper = parsed.data.makanCode.trim().toUpperCase();
 
     // Find group
     const group = await prisma.group.findUnique({

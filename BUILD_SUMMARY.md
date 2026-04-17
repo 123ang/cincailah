@@ -9,13 +9,13 @@
 - TypeScript configured
 - TailwindCSS with Cincailah design tokens (Sambal Red, Mamak Yellow, Pandan Green)
 - PostgreSQL + Prisma ORM (7 tables)
-- Cookie-based authentication (iron-session)
+- Cookie-based authentication (iron-session) with email/password auth
 
 **Phase 2 ✅ — Authentication & Groups**
-- Onboarding page with name input
+- Authentication pages for register/login
 - Create group → generates unique Makan Code
 - Join group via Makan Code
-- Session management (cookie-based, no passwords)
+- Session management (cookie-based, authenticated accounts)
 
 **Phase 3 ✅ — Restaurant Management**
 - Restaurant list page with search
@@ -88,7 +88,7 @@ cincailah/
 
 | Table | Purpose |
 |-------|---------|
-| `users` | User accounts (nickname-only) |
+| `users` | User accounts with email/password auth |
 | `groups` | Makan groups with settings (noRepeatDays, maxReroll, etc.) |
 | `group_members` | User-group relationships (role: admin/member) |
 | `restaurants` | Restaurant data (group-scoped) |
@@ -204,7 +204,7 @@ npm run dev
 
 ## ⚡ Key Features to Showcase
 
-1. **Onboarding** — Super fast: name → Makan Code → done!
+1. **Onboarding** — Register/login, create or join a group, then start deciding fast
 2. **Roulette Wheel** — The spinner is satisfying and interactive
 3. **Anti-Repeat** — No boring repeats for 7 days
 4. **Budget Filters** — Dompet Status (Kering/OK lah/Belanja)
@@ -224,8 +224,8 @@ npm run dev
 
 ## 🐛 Known Limitations
 
-- No password auth (nickname-only by design)
-- No email verification
+- Auth exists, but should continue to be hardened and audited
+- Email verification exists and should be tested in production
 - No restaurant editing (only add/deactivate)
 - No group name editing
 - Session expires after 30 days

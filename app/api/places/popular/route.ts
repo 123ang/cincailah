@@ -26,8 +26,8 @@ export async function GET(request: NextRequest) {
     5000
   );
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return NextResponse.json({ error: 'lat and lng are required' }, { status: 400 });
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return NextResponse.json({ error: 'Valid lat and lng are required' }, { status: 400 });
   }
 
   const url = new URL('https://maps.googleapis.com/maps/api/place/nearbysearch/json');

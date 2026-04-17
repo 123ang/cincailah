@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { getDecisionWithMembership } from '@/lib/group-access';
 
 // GET /api/comments?decisionId=...
 export async function GET(request: NextRequest) {
@@ -15,6 +16,14 @@ export async function GET(request: NextRequest) {
 
     if (!decisionId) {
       return NextResponse.json({ error: 'decisionId is required' }, { status: 400 });
+    }
+
+    const decision = await getDecisionWithMembership(decisionId, session.userId);
+    if (decision === null) {
+      return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
+    }
+    if (decision === false) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const comments = await prisma.comment.findMany({
@@ -47,6 +56,14 @@ export async function POST(request: NextRequest) {
 
     if (commentBody.trim().length > 500) {
       return NextResponse.json({ error: 'Comment must be under 500 characters' }, { status: 400 });
+    }
+
+    const decision = await getDecisionWithMembership(decisionId, session.userId);
+    if (decision === null) {
+      return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
+    }
+    if (decision === false) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const comment = await prisma.comment.create({

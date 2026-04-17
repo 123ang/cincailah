@@ -10,9 +10,9 @@ Visiting a group URL (e.g. `/group/d60d9b47-5323-488c-88ec-4671fa523313`) direct
 
 **What we changed:**
 
-- **Group layout** now catches errors and redirects to the **login page** instead of showing 500.
-- **Session** uses a safe fallback password in dev if `SESSION_SECRET` is missing or too short (so the app doesn’t crash).
-- **Home (`/`)** sends you to **Login** if not logged in, or to **your group** if you are.
+- Group pages now enforce both login and actual group membership.
+- Session only uses a fallback secret in development. Production requires a real `SESSION_SECRET`.
+- Home (`/`) sends you to login if not logged in, or to your group(s) if you are.
 
 So if something goes wrong, you’re sent to `/login` instead of an error page.
 
@@ -24,22 +24,19 @@ So if something goes wrong, you’re sent to `/login` instead of an error page.
 
 ### Two modes (tabs)
 
-1. **Log in to my group**
-   - Enter **Your name** and **Makan Code**.
-   - Use the **same name** you used when you first joined/created the group so you’re recognised.
-   - If a member with that name already exists in the group, you’re logged in as that user (no duplicate account).
-   - If not, a new user is created and added to the group.
+1. **Log in**
+   - Enter your **email** and **password**.
+   - If successful, you’re taken back to your active group or groups page.
 
-2. **Create new group**
-   - Enter **Your name** only.
-   - Creates a new group and a Makan Code.
-   - You’re logged in and taken to the new group.
+2. **Register**
+   - Create an account with **email, password, and display name**.
+   - Then create a new group or join one with a Makan Code.
 
 ### Keeping track of your group
 
 - **Same device:** Session cookie keeps you logged in; reopening the app takes you back to your group.
-- **New device / new browser:** Open `/login`, choose **“Log in to my group”**, enter the **same name** and **Makan Code**. You’ll be taken to that group again.
-- **Forgot Makan Code:** Get it from someone in the group (e.g. from **More → group settings**), or create a new group if you’re starting fresh.
+- **New device / new browser:** Open `/login`, sign in with your email and password, then switch to the right group if needed.
+- **Forgot Makan Code:** Get it from someone in the group if you need to join a second account to that group.
 
 ### Redirect after login
 
@@ -51,7 +48,7 @@ So if something goes wrong, you’re sent to `/login` instead of an error page.
 ### Error messages
 
 - **Invalid Makan Code** — No group with that code. Check the code or create a new group.
-- **You are not a member of that group** — You opened a group link for a group you’re not in. Log in with the name + Makan Code for **that** group.
+- **You are not a member of that group** — You opened a group link for a group you’re not in. Log in to your account, then join that group with its Makan Code if appropriate.
 - **Something went wrong. Please log in again.** — Session/backend issue; try logging in again.
 
 ---
@@ -91,4 +88,4 @@ If `SESSION_SECRET` is missing or too short, the app uses a dev fallback so it d
 ## Logout
 
 - In the app: **More (Settings)** → **Logout**.
-- You’re sent to `/login` and can log in again with name + Makan Code to get back to your group.
+- You’re sent to `/login` and can log in again with your email and password.

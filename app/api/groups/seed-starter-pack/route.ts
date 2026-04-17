@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { logRequest } from '@/lib/logger';
+import { requireGroupMembership } from '@/lib/group-access';
 
 const STARTER_RESTAURANTS = [
   { name: 'Nasi Lemak Antarabangsa', cuisineTags: ['Mamak', 'Malaysian'], vibeTags: ['Cheap', 'Parking'], priceMin: 5, priceMax: 12, halal: true, vegOptions: false, walkMinutes: 10 },
@@ -44,11 +45,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'groupId required' }, { status: 400 });
     }
 
-    // Verify user is admin of this group
-    const membership = await prisma.groupMember.findFirst({
-      where: { groupId, userId: session.userId, role: 'admin' },
-    });
-    if (!membership) {
+    const membership = await requireGroupMembership(session.userId, groupId);
+    if (!membership || (membership.role !== 'admin' && membership.role !== 'owner')) {
       return NextResponse.json({ error: 'Admin only' }, { status: 403 });
     }
 

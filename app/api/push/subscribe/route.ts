@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -8,14 +9,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await request.json();
-  const endpoint = typeof body?.endpoint === 'string' ? body.endpoint : '';
-  const p256dhKey = typeof body?.keys?.p256dh === 'string' ? body.keys.p256dh : '';
-  const authKey = typeof body?.keys?.auth === 'string' ? body.keys.auth : '';
+  const parsed = z.object({
+    endpoint: z.string().url(),
+    keys: z.object({
+      p256dh: z.string().min(1),
+      auth: z.string().min(1),
+    }),
+  }).safeParse(await request.json());
 
-  if (!endpoint || !p256dhKey || !authKey) {
+  if (!parsed.success) {
     return NextResponse.json({ error: 'Invalid subscription payload' }, { status: 400 });
   }
+
+  const endpoint = parsed.data.endpoint;
+  const p256dhKey = parsed.data.keys.p256dh;
+  const authKey = parsed.data.keys.auth;
 
   await prisma.pushSubscription.upsert({
     where: { endpoint },

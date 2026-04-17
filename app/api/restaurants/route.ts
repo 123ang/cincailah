@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { requireGroupMembership } from '@/lib/group-access';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,6 +16,11 @@ export async function GET(request: NextRequest) {
 
     if (!groupId) {
       return NextResponse.json({ error: 'Group ID required' }, { status: 400 });
+    }
+
+    const membership = await requireGroupMembership(session.userId, groupId);
+    if (!membership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const restaurants = await prisma.restaurant.findMany({
@@ -65,12 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user is member of the group
-    const membership = await prisma.groupMember.findFirst({
-      where: {
-        groupId,
-        userId: session.userId,
-      },
-    });
+    const membership = await requireGroupMembership(session.userId, groupId);
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a member of this group' }, { status: 403 });

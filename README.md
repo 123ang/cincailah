@@ -1,6 +1,6 @@
 # Cincailah — Makan Mana? 🍛
 
-The "I don't know, you choose" killer. Decide lunch in under 30 seconds.
+The "I don't know, you choose" killer. Decide lunch in under 30 seconds, with solo mode, group picks, and group voting.
 
 ## Tech Stack
 
@@ -12,7 +12,8 @@ The "I don't know, you choose" killer. Decide lunch in under 30 seconds.
 
 ## Features
 
-✅ **Onboarding** — Enter name, create or join group with Makan Code
+✅ **Authentication** — Email/password sign up, login, verification, reset password
+✅ **Onboarding** — Create or join a group with a Makan Code, or use solo mode
 ✅ **Restaurant Management** — Add, view, search restaurants with tags & filters
 ✅ **"You Pick" Decision Engine** — Smart random with anti-repeat protection
 ✅ **Roulette Wheel Spinner** — Interactive 3-second animation with restaurant names
@@ -73,7 +74,7 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 ## Database Schema
 
-- `users` — User accounts (nickname-only)
+- `users` — User accounts with email/password auth
 - `groups` — Makan groups with settings
 - `group_members` — User-group relationships
 - `restaurants` — Restaurant data (group-scoped)
@@ -216,6 +217,16 @@ npm run db:studio    # Open Prisma Studio
 | Success (Pandan) | Green | `#10B981` |
 | Background | Off-White | `#F8FAFC` |
 | Text | Dark Slate | `#0F172A` |
+
+## Documentation
+
+Primary docs:
+- `README.md`
+- `QUICKSTART.md`
+- `DEPLOYMENT_CHECKLIST.md`
+- `LOGIN_AND_ACCESS.md`
+
+Reference/historical docs are listed in `docs/README.md`.
 
 ## License
 

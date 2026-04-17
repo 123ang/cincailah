@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { PreferencesSchema, zodError } from '@/lib/schemas';
 
 // GET /api/user/preferences
 export async function GET() {
@@ -29,8 +30,12 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { halal, vegOptions, defaultBudget } = body;
+    const parsed = PreferencesSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+
+    const { halal, vegOptions, defaultBudget } = parsed.data;
 
     const prefs = await prisma.userPreferences.upsert({
       where: { userId: session.userId },

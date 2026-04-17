@@ -289,7 +289,7 @@ export default function SettingsPage({
                     {member.user.displayName}
                     {(member.role === 'admin' || member.role === 'owner') && (
                       <span className="text-xs bg-sambal/10 text-sambal px-1.5 py-0.5 rounded font-medium ml-1">
-                        Admin
+                        {member.role === 'owner' ? 'Owner' : 'Admin'}
                       </span>
                     )}
                     {isSelf && (

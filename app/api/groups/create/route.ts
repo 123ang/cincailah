@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { trackEvent } from '@/lib/analytics';
+import { CreateGroupSchema, zodError } from '@/lib/schemas';
 
 function generateMakanCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -20,15 +21,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { name } = body;
-
-    if (!name?.trim()) {
-      return NextResponse.json(
-        { error: 'Group name is required' },
-        { status: 400 }
-      );
+    const parsed = CreateGroupSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
+
+    const { name } = parsed.data;
 
     // Generate unique Makan Code
     let makanCode: string;

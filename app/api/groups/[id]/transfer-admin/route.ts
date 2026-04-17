@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { TransferAdminSchema, zodError } from '@/lib/schemas';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -23,12 +24,12 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Only the current admin can transfer admin role' }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { newAdminUserId } = body;
-
-    if (!newAdminUserId) {
-      return NextResponse.json({ error: 'New admin user ID is required' }, { status: 400 });
+    const parsed = TransferAdminSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
+
+    const { newAdminUserId } = parsed.data;
 
     if (newAdminUserId === session.userId) {
       return NextResponse.json({ error: 'You are already the admin' }, { status: 400 });

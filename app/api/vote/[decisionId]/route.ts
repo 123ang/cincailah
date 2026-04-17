@@ -2,13 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { trackEvent } from '@/lib/analytics';
+import { getDecisionWithMembership } from '@/lib/group-access';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ decisionId: string }> }
 ) {
   try {
+    const session = await getSession();
+    if (!session.isLoggedIn || !session.userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { decisionId } = await params;
+
+    const access = await getDecisionWithMembership(decisionId, session.userId);
+    if (access === null) {
+      return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
+    }
+    if (access === false) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const decision = await prisma.lunchDecision.findUnique({
       where: { id: decisionId },
@@ -88,6 +102,14 @@ export async function POST(
     }
 
     const { decisionId } = await params;
+
+    const access = await getDecisionWithMembership(decisionId, session.userId);
+    if (access === null) {
+      return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
+    }
+    if (access === false) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const body = await request.json();
     const { optionId, vote } = body;
 

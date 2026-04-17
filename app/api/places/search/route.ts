@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
 
   const query = request.nextUrl.searchParams.get('q')?.trim();
-  if (!query || query.length < 2) {
+  if (!query || query.length < 2 || query.length > 120) {
     return NextResponse.json({ error: 'Query required' }, { status: 400 });
   }
 

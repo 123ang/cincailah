@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { z } from 'zod';
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -15,17 +16,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: { token?: string };
+  let raw: unknown;
   try {
-    body = await request.json();
+    raw = await request.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { token } = body;
-  if (!token || typeof token !== 'string') {
+  const parsed = z.object({ token: z.string().min(1) }).safeParse(raw);
+  if (!parsed.success) {
     return NextResponse.json({ error: 'token required' }, { status: 400 });
   }
+
+  const { token } = parsed.data;
 
   try {
     await prisma.pushSubscription.upsert({

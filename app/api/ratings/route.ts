@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { ensureRestaurantAccessible } from '@/lib/group-access';
 
 // POST /api/ratings — submit or update a thumbs up/down for a restaurant
 export async function POST(request: NextRequest) {
@@ -19,6 +20,14 @@ export async function POST(request: NextRequest) {
 
     if (thumbs !== 'up' && thumbs !== 'down') {
       return NextResponse.json({ error: 'thumbs must be "up" or "down"' }, { status: 400 });
+    }
+
+    const restaurant = await ensureRestaurantAccessible(restaurantId, session.userId);
+    if (restaurant === null) {
+      return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
+    }
+    if (restaurant === false) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const rating = await prisma.rating.upsert({
@@ -60,9 +69,23 @@ export async function GET(request: NextRequest) {
       ? { userId: session.userId, restaurantId }
       : { userId: session.userId };
 
-    const ratings = await prisma.rating.findMany({ where });
+    const ratings = await prisma.rating.findMany({
+      where,
+      include: {
+        restaurant: {
+          select: { id: true, groupId: true },
+        },
+      },
+    });
 
-    return NextResponse.json({ ratings });
+    const accessible = await Promise.all(
+      ratings.map(async (rating) => {
+        const restaurant = await ensureRestaurantAccessible(rating.restaurantId, session.userId!);
+        return restaurant ? rating : null;
+      })
+    );
+
+    return NextResponse.json({ ratings: accessible.filter(Boolean) });
   } catch (error) {
     console.error('Get ratings error:', error);
     return NextResponse.json({ error: 'Failed to fetch ratings' }, { status: 500 });

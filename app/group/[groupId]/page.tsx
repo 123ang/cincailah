@@ -3,6 +3,7 @@ import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import DecidePage from '@/components/DecidePage';
 import type { Metadata } from 'next';
+import { requireGroupMembership } from '@/lib/group-access';
 
 export const metadata: Metadata = { title: 'Decide' };
 
@@ -17,6 +18,11 @@ export default async function GroupHome({
 
     if (!session?.isLoggedIn || !session?.userId) {
       redirect('/login?redirect=' + encodeURIComponent('/group/' + groupId));
+    }
+
+    const membership = await requireGroupMembership(session.userId, groupId);
+    if (!membership) {
+      redirect('/groups?error=forbidden');
     }
 
     const group = await prisma.group.findUnique({

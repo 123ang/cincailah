@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { ensureRestaurantAccessible } from '@/lib/group-access';
 
 // GET /api/favorites — fetch user's favorite restaurant IDs
 export async function GET() {
@@ -47,15 +48,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if restaurant exists
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id: restaurantId },
-    });
+    const restaurant = await ensureRestaurantAccessible(restaurantId, session.userId);
 
-    if (!restaurant) {
+    if (restaurant === null) {
       return NextResponse.json(
         { error: 'Restaurant not found' },
         { status: 404 }
+      );
+    }
+
+    if (restaurant === false) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       );
     }
 

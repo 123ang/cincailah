@@ -115,6 +115,7 @@ Use this checklist to deploy Cincailah to your VPS.
   DATABASE_URL="postgresql://cincailah_user:YOUR_PASSWORD@localhost:5432/cincailah?schema=public"
   SESSION_SECRET="$(openssl rand -hex 32)"
   NODE_ENV="production"
+  NEXT_PUBLIC_APP_URL="https://your-domain.com"
   ```
 - [ ] Save and exit (Ctrl+O, Ctrl+X)
 - [ ] Verify file exists:

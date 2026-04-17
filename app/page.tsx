@@ -6,7 +6,7 @@ import LandingPageClient from '@/components/LandingPageClient';
 export const metadata: Metadata = {
   title: 'Cincailah — Decide Where to Makan in 10 Seconds',
   description:
-    'No more "makan apa?" debates. Spin the wheel or run a group vote. Free, fast, and works on any device. Try it — no signup needed!',
+    'No more "makan apa?" debates. Spin the wheel or run a group vote. Fast, mobile-friendly, and built for real groups.',
   alternates: {
     canonical: '/',
   },

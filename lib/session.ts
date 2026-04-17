@@ -9,8 +9,13 @@ export interface SessionData {
   isLoggedIn: boolean;
 }
 
-// Iron-session requires at least 32 chars. Use fallback in dev if missing.
+// Iron-session requires at least 32 chars. Never allow a weak fallback in production.
 const secret = process.env.SESSION_SECRET;
+
+if (process.env.NODE_ENV === 'production' && (!secret || secret.length < 32)) {
+  throw new Error('SESSION_SECRET must be set and at least 32 characters in production');
+}
+
 const password =
   secret && secret.length >= 32
     ? secret

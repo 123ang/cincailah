@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { requireGroupMembership } from '@/lib/group-access';
 
 type Params = { params: Promise<{ id: string; userId: string }> };
 
@@ -18,6 +19,16 @@ export async function DELETE(_request: NextRequest, { params }: Params) {
     const group = await prisma.group.findUnique({ where: { id: groupId } });
     if (!group) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+    }
+
+    const requesterMembership = await requireGroupMembership(session.userId, groupId);
+    if (!requesterMembership) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const targetMembership = await requireGroupMembership(targetUserId, groupId);
+    if (!targetMembership) {
+      return NextResponse.json({ error: 'Member not found' }, { status: 404 });
     }
 
     const isAdmin = group.createdBy === session.userId;
