@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cincailah — Makan Mana?</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            sambal: '#DC2626',
+            'sambal-dark': '#B91C1C',
+            mamak: '#FACC15',
+            'mamak-dark': '#EAB308',
+            pandan: '#10B981',
+            'pandan-dark': '#059669',
+            slate: '#0F172A',
+            cream: '#F8FAFC',
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes bounce-in {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    @keyframes typing {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .animate-bounce-in { animation: bounce-in 0.6s ease-out; }
+    .animate-spin-slow { animation: spin-slow 3s linear infinite; }
+    .animate-pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    .animate-typing { animation: typing 1s ease-in-out infinite; }
+    .shimmer-bg {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+    .btn-cincai {
+      background: linear-gradient(135deg, #DC2626, #B91C1C);
+      box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-cincai:hover {
+      box-shadow: 0 12px 40px rgba(220, 38, 38, 0.5);
+      transform: translateY(-2px);
+    }
+    .btn-cincai:active { transform: translateY(0); }
+    .glass {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
+    .tag { transition: all 0.15s ease; }
+    .tag:hover { transform: scale(1.05); }
+    .nav-item { position: relative; }
+    .nav-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 3px;
+      background: #DC2626;
+      border-radius: 2px;
+    }
+
+    .vote-bar {
+      transition: width 1s ease-out;
+    }
+  </style>
+</head>
+<body class="bg-cream text-slate min-h-screen">
+
+  <!-- ==================== NAVIGATION ==================== -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-gray-200/50">
+    <div class="max-w-md mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-2xl">🍛</span>
+        <span class="font-extrabold text-lg tracking-tight text-sambal">cincailah</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="showPage('page-group')" class="p-2 rounded-xl hover:bg-gray-100 transition" title="Group Settings">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+        <button onclick="showPage('page-restaurants')" class="p-2 rounded-xl hover:bg-gray-100 transition" title="Restaurants">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        </button>
+        <button onclick="showPage('page-history')" class="p-2 rounded-xl hover:bg-gray-100 transition" title="History">
+          <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-md mx-auto px-4 pt-16 pb-24">
+
+    <!-- ==================== PAGE: HOME / DECIDE ==================== -->
+    <div id="page-home" class="page active">
+
+      <!-- Greeting -->
+      <div class="pt-4 pb-2">
+        <p class="text-gray-500 text-sm">Good afternoon, <span class="font-semibold text-slate">Ahmad</span></p>
+        <h1 class="text-2xl font-extrabold mt-1">Makan mana hari ni? 🤔</h1>
+      </div>
+
+      <!-- Group Badge -->
+      <div class="mt-3 inline-flex items-center gap-2 bg-white rounded-full px-3 py-1.5 border border-gray-200 shadow-sm">
+        <span class="w-2 h-2 rounded-full bg-pandan animate-pulse"></span>
+        <span class="text-sm font-medium text-gray-700">Team Backend</span>
+        <span class="text-xs text-gray-400">·</span>
+        <span class="text-xs text-gray-400">5 members</span>
+        <span class="text-xs bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 font-mono">MAKAN-7X2K</span>
+      </div>
+
+      <!-- Quick Filters -->
+      <div class="mt-6">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider">Quick Filters</h2>
+          <button class="text-xs text-sambal font-semibold hover:underline">Reset All</button>
+        </div>
+
+        <!-- Dompet Status (Budget) -->
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-base">💰</span>
+            <span class="text-sm font-bold text-gray-700">Dompet Status</span>
+          </div>
+          <div class="flex gap-2">
+            <button class="tag flex-1 py-2 px-3 rounded-xl text-sm font-semibold bg-sambal text-white shadow-sm">
+              Kering<br><span class="text-xs font-normal opacity-80">< RM10</span>
+            </button>
+            <button class="tag flex-1 py-2 px-3 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+              OK lah<br><span class="text-xs font-normal text-gray-400">RM10-20</span>
+            </button>
+            <button class="tag flex-1 py-2 px-3 rounded-xl text-sm font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200">
+              Belanja<br><span class="text-xs font-normal text-gray-400">RM20+</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Type & Preference Filters -->
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-base">🏷️</span>
+            <span class="text-sm font-bold text-gray-700">What mood?</span>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-700 ring-2 ring-pandan">🥗 Halal</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">🌱 Veg Options</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">❄️ Aircond</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-yellow-100 text-yellow-700 ring-2 ring-mamak">🍜 Mamak</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">🍱 Japanese</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">🥘 Western</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">✨ Atas</button>
+            <button class="tag px-3 py-1.5 rounded-full text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200">💨 Cheap</button>
+          </div>
+        </div>
+
+        <!-- Walk Time -->
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-base">🚶</span>
+              <span class="text-sm font-bold text-gray-700">Walk Time</span>
+            </div>
+            <span class="text-sm font-bold text-sambal">≤ 10 min</span>
+          </div>
+          <input type="range" min="5" max="30" value="10" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sambal">
+          <div class="flex justify-between text-xs text-gray-400 mt-1">
+            <span>5 min</span>
+            <span>30 min</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Anti-Repeat Notice -->
+      <div class="mt-4 flex items-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200">
+        <span class="text-base">🔁</span>
+        <p class="text-xs text-amber-700"><strong>Anti-Repeat ON:</strong> Ate Already protection — skipping last 7 days of picks.</p>
+      </div>
+
+      <!-- Decision Mode Toggle -->
+      <div class="mt-6">
+        <div class="bg-white rounded-2xl p-1.5 flex gap-1 border border-gray-200 shadow-sm">
+          <button id="btn-youpick" onclick="setMode('youpick')" class="flex-1 py-2.5 rounded-xl text-sm font-bold bg-sambal text-white transition">
+            🎲 You Pick
+          </button>
+          <button id="btn-wefight" onclick="setMode('wefight')" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition">
+            ⚔️ We Fight
+          </button>
+        </div>
+        <p id="mode-desc" class="text-xs text-gray-400 text-center mt-2">Smart random pick — let fate decide!</p>
+      </div>
+
+      <!-- MAIN ACTION BUTTON -->
+      <div class="mt-8 mb-6 flex flex-col items-center">
+        <div class="relative">
+          <div class="absolute inset-0 rounded-full bg-sambal/20 animate-pulse-ring"></div>
+          <button onclick="showPage('page-loading')" class="btn-cincai relative z-10 w-44 h-44 rounded-full text-white flex flex-col items-center justify-center">
+            <span class="text-3xl mb-1">🍛</span>
+            <span class="text-xl font-black tracking-tight">Cincai lah!</span>
+            <span class="text-xs font-medium opacity-80 mt-0.5">Tap to decide</span>
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-4">12 restaurants available · 3 filtered out</p>
+      </div>
+
+      <!-- Recently Makan -->
+      <div class="mt-2">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Recently Makan 🕐</h2>
+        <div class="space-y-2">
+          <div class="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-gray-100 shadow-sm">
+            <div>
+              <p class="font-semibold text-sm">Nasi Kandar Pelita</p>
+              <p class="text-xs text-gray-400">Today · You Pick</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium">Halal</span>
+              <span class="text-xs text-gray-400">RM8-15</span>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-gray-100 shadow-sm">
+            <div>
+              <p class="font-semibold text-sm">Sushi Mentai</p>
+              <p class="text-xs text-gray-400">Yesterday · We Fight</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs bg-blue-100 text-blue-700 rounded-full px-2 py-0.5 font-medium">Japanese</span>
+              <span class="text-xs text-gray-400">RM15-25</span>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-gray-100 shadow-sm">
+            <div>
+              <p class="font-semibold text-sm">Mamak Corner</p>
+              <p class="text-xs text-gray-400">2 days ago · You Pick</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-xs bg-yellow-100 text-yellow-700 rounded-full px-2 py-0.5 font-medium">Mamak</span>
+              <span class="text-xs text-gray-400">RM5-12</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== PAGE: LOADING ==================== -->
+    <div id="page-loading" class="page">
+      <div class="flex flex-col items-center justify-center min-h-[70vh]">
+        <div class="relative">
+          <div class="w-32 h-32 rounded-full border-4 border-gray-200 border-t-sambal animate-spin-slow"></div>
+          <span class="absolute inset-0 flex items-center justify-center text-5xl animate-float">🍛</span>
+        </div>
+        <p id="loading-text" class="mt-8 text-lg font-bold text-gray-700 animate-typing">Asking the boss...</p>
+        <p class="text-sm text-gray-400 mt-2">Applying filters & anti-repeat...</p>
+        <div class="mt-6 flex gap-1">
+          <div class="w-2 h-2 rounded-full bg-sambal animate-bounce" style="animation-delay:0s"></div>
+          <div class="w-2 h-2 rounded-full bg-sambal animate-bounce" style="animation-delay:0.15s"></div>
+          <div class="w-2 h-2 rounded-full bg-sambal animate-bounce" style="animation-delay:0.3s"></div>
+        </div>
+        <button onclick="showPage('page-result')" class="mt-10 text-xs text-gray-400 underline">(click to see result →)</button>
+      </div>
+    </div>
+
+    <!-- ==================== PAGE: RESULT CARD ==================== -->
+    <div id="page-result" class="page">
+      <div class="flex flex-col items-center justify-center min-h-[70vh]">
+        <div class="animate-bounce-in w-full">
+          <!-- Confetti hint -->
+          <p class="text-center text-sm text-gray-400 mb-4">🎉 The boss has spoken!</p>
+
+          <!-- Result Card -->
+          <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+            <!-- Restaurant Image Banner -->
+            <div class="h-40 bg-gradient-to-br from-sambal to-red-400 flex items-center justify-center relative">
+              <span class="text-7xl">🍜</span>
+              <div class="absolute top-3 right-3 bg-white/90 rounded-full px-3 py-1 text-xs font-bold text-sambal">
+                You Pick
+              </div>
+            </div>
+
+            <div class="p-5">
+              <h2 class="text-2xl font-black text-slate">Restoran Mahbub</h2>
+              <p class="text-gray-400 text-sm mt-1">Mamak · Nasi Kandar · 24 Hours</p>
+
+              <!-- Tags -->
+              <div class="flex flex-wrap gap-2 mt-3">
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">✅ Halal</span>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">❄️ Aircond</span>
+                <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">💨 Cheap</span>
+              </div>
+
+              <!-- Details Grid -->
+              <div class="grid grid-cols-3 gap-3 mt-4">
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                  <p class="text-xs text-gray-400">Budget</p>
+                  <p class="text-sm font-bold text-slate mt-0.5">RM6-12</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                  <p class="text-xs text-gray-400">Walk</p>
+                  <p class="text-sm font-bold text-slate mt-0.5">5 min 🚶</p>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3 text-center">
+                  <p class="text-xs text-gray-400">Last Ate</p>
+                  <p class="text-sm font-bold text-pandan mt-0.5">12 days</p>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3 mt-5">
+                <a href="#" class="flex-1 bg-pandan hover:bg-pandan-dark text-white font-bold py-3 rounded-xl text-center text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-pandan/30">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                  Let's Go!
+                </a>
+                <button onclick="showPage('page-home')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl text-center text-sm transition">
+                  Don't want, again. 😤
+                </button>
+              </div>
+              <p class="text-xs text-gray-400 text-center mt-3">Rerolls left: <strong class="text-sambal">1 of 2</strong></p>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="showPage('page-home')" class="mt-6 text-sm text-gray-400 hover:text-gray-600 font-medium transition">← Back to filters</button>
+      </div>
+    </div>
+
+    <!-- ==================== PAGE: WE FIGHT (VOTE MODE) ==================== -->
+    <div id="page-wefight" class="page">
+      <div class="pt-4 pb-2">
+        <h1 class="text-2xl font-extrabold">⚔️ We Fight Mode</h1>
+        <p class="text-sm text-gray-400 mt-1">Vote for your pick. Majority wins. No drama.</p>
+      </div>
+
+      <!-- Vote Timer -->
+      <div class="mt-4 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400">Voting ends in</p>
+          <p class="text-2xl font-black text-sambal tabular-nums">04:32</p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-gray-400">Votes cast</p>
+          <p class="text-2xl font-black text-slate">3<span class="text-gray-300">/5</span></p>
+        </div>
+      </div>
+
+      <!-- Vote Options -->
+      <div class="mt-4 space-y-3">
+        <!-- Option 1 - Leading -->
+        <div class="bg-white rounded-2xl border-2 border-pandan shadow-sm overflow-hidden">
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">🍛</span>
+              <div>
+                <p class="font-bold text-sm">Nasi Kandar Pelita</p>
+                <p class="text-xs text-gray-400">Mamak · RM8-15 · 5 min walk</p>
+              </div>
+            </div>
+            <button class="bg-pandan text-white w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shadow-md">✓</button>
+          </div>
+          <div class="px-4 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="vote-bar bg-pandan h-full rounded-full" style="width:60%"></div>
+              </div>
+              <span class="text-xs font-bold text-pandan">3 votes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 2 -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">🍱</span>
+              <div>
+                <p class="font-bold text-sm">Sushi Mentai</p>
+                <p class="text-xs text-gray-400">Japanese · RM15-25 · 8 min walk</p>
+              </div>
+            </div>
+            <button class="bg-gray-100 hover:bg-gray-200 text-gray-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition">+</button>
+          </div>
+          <div class="px-4 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="vote-bar bg-mamak h-full rounded-full" style="width:40%"></div>
+              </div>
+              <span class="text-xs font-bold text-gray-500">2 votes</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 3 -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">🥘</span>
+              <div>
+                <p class="font-bold text-sm">The Chicken Rice Shop</p>
+                <p class="text-xs text-gray-400">Local · RM12-18 · 3 min walk</p>
+              </div>
+            </div>
+            <button class="bg-gray-100 hover:bg-gray-200 text-gray-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition">+</button>
+          </div>
+          <div class="px-4 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="vote-bar bg-gray-300 h-full rounded-full" style="width:20%"></div>
+              </div>
+              <span class="text-xs font-bold text-gray-500">1 vote</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Option 4 -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-3xl">🍕</span>
+              <div>
+                <p class="font-bold text-sm">Domino's Pizza</p>
+                <p class="text-xs text-gray-400">Western · RM15-30 · 10 min walk</p>
+              </div>
+            </div>
+            <button class="bg-gray-100 hover:bg-gray-200 text-gray-500 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition">+</button>
+          </div>
+          <div class="px-4 pb-3">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                <div class="vote-bar bg-gray-300 h-full rounded-full" style="width:0%"></div>
+              </div>
+              <span class="text-xs font-bold text-gray-400">0 votes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share link -->
+      <div class="mt-5 bg-amber-50 rounded-xl p-4 border border-amber-200">
+        <p class="text-xs text-amber-700 font-semibold mb-2">📤 Share voting link with your team:</p>
+        <div class="flex items-center gap-2">
+          <input type="text" value="cincailah.app/vote/MAKAN-7X2K" class="flex-1 bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600" readonly>
+          <button class="bg-mamak hover:bg-mamak-dark text-slate font-bold px-4 py-2 rounded-lg text-xs transition">Copy</button>
+        </div>
+      </div>
+
+      <button onclick="showPage('page-home')" class="mt-6 w-full text-sm text-gray-400 hover:text-gray-600 font-medium transition text-center">← Back to decide</button>
+    </div>
+
+    <!-- ==================== PAGE: RESTAURANTS ==================== -->
+    <div id="page-restaurants" class="page">
+      <div class="pt-4 pb-2 flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-extrabold">Our Spots 📍</h1>
+          <p class="text-sm text-gray-400 mt-1">15 restaurants · Team Backend</p>
+        </div>
+        <button class="bg-sambal hover:bg-sambal-dark text-white font-bold px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-sambal/20">
+          + Add
+        </button>
+      </div>
+
+      <!-- Search -->
+      <div class="mt-4 relative">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" placeholder="Search restaurants..." class="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+      </div>
+
+      <!-- Restaurant List -->
+      <div class="mt-4 space-y-3">
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm card-hover">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">🍛</div>
+              <div>
+                <h3 class="font-bold text-sm">Nasi Kandar Pelita</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Mamak · Nasi Kandar</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Halal</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">Aircond</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-700">24hrs</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-bold text-sambal">RM8-15</p>
+              <p class="text-xs text-gray-400 mt-1">5 min 🚶</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm card-hover">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">🍱</div>
+              <div>
+                <h3 class="font-bold text-sm">Sushi Mentai</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Japanese · Sushi · Ramen</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">Aircond</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-pink-100 text-pink-700">Atas</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-bold text-sambal">RM15-25</p>
+              <p class="text-xs text-gray-400 mt-1">8 min 🚶</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm card-hover">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">🍜</div>
+              <div>
+                <h3 class="font-bold text-sm">Mamak Corner</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Mamak · Roti Canai · Teh Tarik</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Halal</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-amber-100 text-amber-700">Cheap</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-bold text-sambal">RM5-12</p>
+              <p class="text-xs text-gray-400 mt-1">3 min 🚶</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm card-hover">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">🥗</div>
+              <div>
+                <h3 class="font-bold text-sm">Salad Atelier</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Western · Salad · Healthy</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Veg Options</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">Aircond</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-pink-100 text-pink-700">Atas</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-bold text-sambal">RM18-30</p>
+              <p class="text-xs text-gray-400 mt-1">12 min 🚶</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm card-hover">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">🍕</div>
+              <div>
+                <h3 class="font-bold text-sm">Domino's Pizza</h3>
+                <p class="text-xs text-gray-400 mt-0.5">Western · Pizza · Fast Food</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Halal</span>
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-blue-100 text-blue-700">Aircond</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-bold text-sambal">RM15-30</p>
+              <p class="text-xs text-gray-400 mt-1">10 min 🚶</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm card-hover opacity-50">
+          <div class="flex items-start justify-between">
+            <div class="flex items-start gap-3">
+              <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">🍔</div>
+              <div>
+                <h3 class="font-bold text-sm">Burger Lab <span class="text-xs font-normal text-red-500">(Inactive)</span></h3>
+                <p class="text-xs text-gray-400 mt-0.5">Western · Burger · Grill</p>
+                <div class="flex flex-wrap gap-1 mt-2">
+                  <span class="px-2 py-0.5 rounded-full text-xs bg-gray-100 text-gray-500">Closed for renovation</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="text-xs font-bold text-gray-400">RM20-35</p>
+              <p class="text-xs text-gray-400 mt-1">15 min 🚶</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="showPage('page-home')" class="mt-6 w-full text-sm text-gray-400 hover:text-gray-600 font-medium transition text-center">← Back to decide</button>
+    </div>
+
+    <!-- ==================== PAGE: HISTORY ==================== -->
+    <div id="page-history" class="page">
+      <div class="pt-4 pb-2">
+        <h1 class="text-2xl font-extrabold">Makan History 📊</h1>
+        <p class="text-sm text-gray-400 mt-1">Past decisions for Team Backend</p>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="mt-4 grid grid-cols-3 gap-3">
+        <div class="bg-white rounded-xl p-3 text-center border border-gray-100 shadow-sm">
+          <p class="text-2xl font-black text-sambal">42</p>
+          <p class="text-xs text-gray-400 mt-1">Total Picks</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 text-center border border-gray-100 shadow-sm">
+          <p class="text-2xl font-black text-mamak-dark">15</p>
+          <p class="text-xs text-gray-400 mt-1">Restaurants</p>
+        </div>
+        <div class="bg-white rounded-xl p-3 text-center border border-gray-100 shadow-sm">
+          <p class="text-2xl font-black text-pandan">8s</p>
+          <p class="text-xs text-gray-400 mt-1">Avg Decision</p>
+        </div>
+      </div>
+
+      <!-- Top Picked -->
+      <div class="mt-6">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">🏆 Most Picked</h2>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="flex items-center gap-3 p-3 border-b border-gray-50">
+            <span class="text-sm font-black text-mamak-dark w-6 text-center">1</span>
+            <span class="text-xl">🍛</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Nasi Kandar Pelita</p>
+            </div>
+            <span class="text-xs font-bold bg-sambal/10 text-sambal px-2 py-1 rounded-lg">8x</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 border-b border-gray-50">
+            <span class="text-sm font-black text-gray-400 w-6 text-center">2</span>
+            <span class="text-xl">🍜</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Mamak Corner</p>
+            </div>
+            <span class="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">6x</span>
+          </div>
+          <div class="flex items-center gap-3 p-3">
+            <span class="text-sm font-black text-gray-400 w-6 text-center">3</span>
+            <span class="text-xl">🍱</span>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Sushi Mentai</p>
+            </div>
+            <span class="text-xs font-bold bg-gray-100 text-gray-600 px-2 py-1 rounded-lg">5x</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="mt-6">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">📅 This Week</h2>
+        <div class="space-y-2">
+          <div class="bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-sambal/10 rounded-lg flex items-center justify-center">
+                  <span class="text-xs font-black text-sambal">FRI</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Nasi Kandar Pelita</p>
+                  <p class="text-xs text-gray-400">You Pick · by Ahmad</p>
+                </div>
+              </div>
+              <span class="text-xs text-gray-400">Today</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <span class="text-xs font-black text-purple-600">THU</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Sushi Mentai</p>
+                  <p class="text-xs text-gray-400">We Fight · 4 voted</p>
+                </div>
+              </div>
+              <span class="text-xs text-gray-400">Yesterday</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <span class="text-xs font-black text-blue-600">WED</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Mamak Corner</p>
+                  <p class="text-xs text-gray-400">You Pick · by Siti</p>
+                </div>
+              </div>
+              <span class="text-xs text-gray-400">2 days ago</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <span class="text-xs font-black text-green-600">TUE</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">Salad Atelier</p>
+                  <p class="text-xs text-gray-400">You Pick · by Wei Jie</p>
+                </div>
+              </div>
+              <span class="text-xs text-gray-400">3 days ago</span>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-xl px-4 py-3 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                  <span class="text-xs font-black text-amber-600">MON</span>
+                </div>
+                <div>
+                  <p class="font-semibold text-sm">The Chicken Rice Shop</p>
+                  <p class="text-xs text-gray-400">We Fight · 5 voted</p>
+                </div>
+              </div>
+              <span class="text-xs text-gray-400">4 days ago</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="showPage('page-home')" class="mt-6 w-full text-sm text-gray-400 hover:text-gray-600 font-medium transition text-center">← Back to decide</button>
+    </div>
+
+    <!-- ==================== PAGE: GROUP ==================== -->
+    <div id="page-group" class="page">
+      <div class="pt-4 pb-2">
+        <h1 class="text-2xl font-extrabold">Team Backend 👥</h1>
+        <p class="text-sm text-gray-400 mt-1">Group settings & members</p>
+      </div>
+
+      <!-- Makan Code -->
+      <div class="mt-4 bg-gradient-to-br from-sambal to-red-500 rounded-2xl p-5 text-white shadow-lg">
+        <p class="text-sm font-medium opacity-80">Your Makan Code</p>
+        <div class="flex items-center gap-3 mt-2">
+          <p class="text-3xl font-black tracking-widest">MAKAN-7X2K</p>
+          <button class="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </button>
+        </div>
+        <p class="text-xs opacity-60 mt-2">Share this code to invite friends</p>
+      </div>
+
+      <!-- Members -->
+      <div class="mt-6">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Members</h2>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="flex items-center gap-3 p-3 border-b border-gray-50">
+            <div class="w-10 h-10 bg-sambal rounded-full flex items-center justify-center text-white font-bold text-sm">A</div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Ahmad <span class="text-xs bg-sambal/10 text-sambal px-1.5 py-0.5 rounded font-medium ml-1">Admin</span></p>
+              <p class="text-xs text-gray-400">That's you!</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-pandan"></span>
+          </div>
+          <div class="flex items-center gap-3 p-3 border-b border-gray-50">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm">S</div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Siti</p>
+              <p class="text-xs text-gray-400">Joined 2 weeks ago</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-pandan"></span>
+          </div>
+          <div class="flex items-center gap-3 p-3 border-b border-gray-50">
+            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">W</div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Wei Jie</p>
+              <p class="text-xs text-gray-400">Joined 1 week ago</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-pandan"></span>
+          </div>
+          <div class="flex items-center gap-3 p-3 border-b border-gray-50">
+            <div class="w-10 h-10 bg-amber-500 rounded-full flex items-center justify-center text-white font-bold text-sm">R</div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Raj</p>
+              <p class="text-xs text-gray-400">Joined 3 days ago</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+          </div>
+          <div class="flex items-center gap-3 p-3">
+            <div class="w-10 h-10 bg-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm">N</div>
+            <div class="flex-1">
+              <p class="text-sm font-semibold">Nurul</p>
+              <p class="text-xs text-gray-400">Joined yesterday</p>
+            </div>
+            <span class="w-2 h-2 rounded-full bg-pandan"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Group Rules -->
+      <div class="mt-6">
+        <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Group Rules</h2>
+        <div class="space-y-3">
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold text-gray-700">Anti-Repeat Days</p>
+                <p class="text-xs text-gray-400">How many days before a restaurant can be picked again</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="w-8 h-8 bg-gray-100 rounded-lg text-gray-500 font-bold hover:bg-gray-200 transition">−</button>
+                <span class="text-lg font-black text-sambal w-8 text-center">7</span>
+                <button class="w-8 h-8 bg-gray-100 rounded-lg text-gray-500 font-bold hover:bg-gray-200 transition">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold text-gray-700">Max Rerolls</p>
+                <p class="text-xs text-gray-400">Prevent infinite "don't want" syndrome</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="w-8 h-8 bg-gray-100 rounded-lg text-gray-500 font-bold hover:bg-gray-200 transition">−</button>
+                <span class="text-lg font-black text-sambal w-8 text-center">2</span>
+                <button class="w-8 h-8 bg-gray-100 rounded-lg text-gray-500 font-bold hover:bg-gray-200 transition">+</button>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold text-gray-700">Default Mode</p>
+                <p class="text-xs text-gray-400">What happens when you press "Cincai lah!"</p>
+              </div>
+              <select class="bg-gray-100 text-sm font-semibold text-gray-700 px-3 py-2 rounded-lg border-0 outline-none focus:ring-2 focus:ring-sambal/30">
+                <option>You Pick</option>
+                <option>We Fight</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="showPage('page-home')" class="mt-6 w-full text-sm text-gray-400 hover:text-gray-600 font-medium transition text-center">← Back to decide</button>
+    </div>
+
+    <!-- ==================== PAGE: FIRST TIME / ONBOARDING ==================== -->
+    <div id="page-onboarding" class="page">
+      <div class="flex flex-col items-center justify-center min-h-[80vh] text-center">
+        <span class="text-6xl mb-4">🍛</span>
+        <h1 class="text-3xl font-black text-slate">Cincai lah!</h1>
+        <p class="text-gray-400 mt-2 text-sm max-w-xs">The "I don't know, you choose" killer. Decide lunch in under 30 seconds.</p>
+
+        <div class="mt-8 w-full max-w-xs">
+          <label class="text-left block text-sm font-bold text-gray-600 mb-2">What's your name?</label>
+          <input type="text" placeholder="e.g. Ahmad" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+        </div>
+
+        <div class="mt-4 w-full max-w-xs">
+          <button class="w-full btn-cincai text-white font-bold py-3.5 rounded-xl text-sm">
+            Start a Makan Group 🚀
+          </button>
+          <div class="flex items-center gap-3 mt-4">
+            <hr class="flex-1 border-gray-200">
+            <span class="text-xs text-gray-400">or</span>
+            <hr class="flex-1 border-gray-200">
+          </div>
+          <div class="mt-4 flex gap-2">
+            <input type="text" placeholder="Enter Makan Code" class="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition uppercase tracking-wider">
+            <button class="bg-gray-900 hover:bg-gray-800 text-white font-bold px-5 py-3 rounded-xl text-sm transition">
+              Join
+            </button>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-300 mt-8">No signup required. Just vibes. 🤙</p>
+      </div>
+    </div>
+
+    <!-- ==================== PAGE: ADD RESTAURANT ==================== -->
+    <div id="page-add-restaurant" class="page">
+      <div class="pt-4 pb-2">
+        <h1 class="text-2xl font-extrabold">Add Restaurant ➕</h1>
+        <p class="text-sm text-gray-400 mt-1">Add your favourite makan spot</p>
+      </div>
+
+      <div class="mt-4 space-y-4">
+        <div>
+          <label class="text-sm font-bold text-gray-600 mb-1.5 block">Restaurant Name</label>
+          <input type="text" placeholder="e.g. Restoran Mahbub" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+        </div>
+
+        <div>
+          <label class="text-sm font-bold text-gray-600 mb-1.5 block">Cuisine Tags</label>
+          <div class="flex flex-wrap gap-2">
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-sambal text-white">🍜 Mamak</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🍱 Japanese</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🥘 Western</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🍚 Chinese</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🌮 Thai</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🍕 Fast Food</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">☕ Cafe</button>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-sm font-bold text-gray-600 mb-1.5 block">Vibe Tags</label>
+          <div class="flex flex-wrap gap-2">
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-sambal text-white">❄️ Aircond</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-sambal text-white">💨 Cheap</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">✨ Atas</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🎉 Group Friendly</button>
+            <button class="tag px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">🅿️ Parking</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-sm font-bold text-gray-600 mb-1.5 block">Price Min (RM)</label>
+            <input type="number" value="5" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+          </div>
+          <div>
+            <label class="text-sm font-bold text-gray-600 mb-1.5 block">Price Max (RM)</label>
+            <input type="number" value="15" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <label class="bg-white rounded-xl p-4 border border-gray-200 flex items-center gap-3 cursor-pointer hover:border-sambal/30 transition">
+            <input type="checkbox" checked class="w-5 h-5 rounded accent-sambal">
+            <span class="text-sm font-semibold text-gray-700">Halal</span>
+          </label>
+          <label class="bg-white rounded-xl p-4 border border-gray-200 flex items-center gap-3 cursor-pointer hover:border-sambal/30 transition">
+            <input type="checkbox" class="w-5 h-5 rounded accent-pandan">
+            <span class="text-sm font-semibold text-gray-700">Veg Options</span>
+          </label>
+        </div>
+
+        <div>
+          <label class="text-sm font-bold text-gray-600 mb-1.5 block">Walk Time (minutes)</label>
+          <input type="number" value="5" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+        </div>
+
+        <div>
+          <label class="text-sm font-bold text-gray-600 mb-1.5 block">Google Maps URL <span class="font-normal text-gray-400">(optional)</span></label>
+          <input type="url" placeholder="https://maps.google.com/..." class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition">
+        </div>
+
+        <button class="w-full btn-cincai text-white font-bold py-3.5 rounded-xl text-sm mt-2">
+          Save Restaurant 🍽️
+        </button>
+      </div>
+
+      <button onclick="showPage('page-restaurants')" class="mt-4 w-full text-sm text-gray-400 hover:text-gray-600 font-medium transition text-center">← Cancel</button>
+    </div>
+
+  </div>
+
+  <!-- ==================== BOTTOM NAV ==================== -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 glass border-t border-gray-200/50">
+    <div class="max-w-md mx-auto px-4 h-16 flex items-center justify-around">
+      <button onclick="showPage('page-home')" class="nav-item active flex flex-col items-center gap-0.5 text-sambal">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span class="text-xs font-semibold">Decide</span>
+      </button>
+      <button onclick="showPage('page-wefight')" class="nav-item flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span class="text-xs font-medium">Vote</span>
+      </button>
+      <button onclick="showPage('page-restaurants')" class="nav-item flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+        <span class="text-xs font-medium">Spots</span>
+      </button>
+      <button onclick="showPage('page-history')" class="nav-item flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs font-medium">History</span>
+      </button>
+      <button onclick="showPage('page-onboarding')" class="nav-item flex flex-col items-center gap-0.5 text-gray-400 hover:text-gray-600 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs font-medium">More</span>
+      </button>
+    </div>
+  </nav>
+
+  <script>
+    const loadingTexts = [
+      "Asking the boss...",
+      "Checking wallet...",
+      "Consulting grandma...",
+      "Flipping coin...",
+      "Reading your fortune...",
+      "Sniffing the air...",
+    ];
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+      window.scrollTo(0, 0);
+
+      document.querySelectorAll('nav:last-of-type .nav-item').forEach(n => {
+        n.classList.remove('active');
+        n.classList.remove('text-sambal');
+        n.classList.add('text-gray-400');
+      });
+
+      const navMap = {
+        'page-home': 0, 'page-loading': 0, 'page-result': 0,
+        'page-wefight': 1,
+        'page-restaurants': 2, 'page-add-restaurant': 2,
+        'page-history': 3,
+        'page-onboarding': 4, 'page-group': 4,
+      };
+      const idx = navMap[pageId];
+      if (idx !== undefined) {
+        const btn = document.querySelectorAll('nav:last-of-type .nav-item')[idx];
+        if (btn) {
+          btn.classList.add('active', 'text-sambal');
+          btn.classList.remove('text-gray-400');
+        }
+      }
+
+      if (pageId === 'page-loading') {
+        let i = 0;
+        const el = document.getElementById('loading-text');
+        const interval = setInterval(() => {
+          i = (i + 1) % loadingTexts.length;
+          el.textContent = loadingTexts[i];
+        }, 1200);
+        setTimeout(() => clearInterval(interval), 10000);
+      }
+    }
+
+    function setMode(mode) {
+      const yp = document.getElementById('btn-youpick');
+      const wf = document.getElementById('btn-wefight');
+      const desc = document.getElementById('mode-desc');
+      if (mode === 'youpick') {
+        yp.className = 'flex-1 py-2.5 rounded-xl text-sm font-bold bg-sambal text-white transition';
+        wf.className = 'flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition';
+        desc.textContent = 'Smart random pick — let fate decide!';
+      } else {
+        wf.className = 'flex-1 py-2.5 rounded-xl text-sm font-bold bg-sambal text-white transition';
+        yp.className = 'flex-1 py-2.5 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition';
+        desc.textContent = 'Vote with your group — majority wins!';
+      }
+    }
+  </script>
+
+</body>
+</html>

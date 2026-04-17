@@ -1,0 +1,131 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(uuid()) @db.Uuid
+  email             String    @unique
+  passwordHash      String    @map("password_hash")
+  displayName       String    @map("display_name")
+  resetToken        String?   @map("reset_token")
+  resetTokenExpires DateTime? @map("reset_token_expires")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  
+  groupsCreated      Group[]          @relation("GroupCreator")
+  groupMemberships   GroupMember[]
+  restaurantsCreated Restaurant[]     @relation("RestaurantCreator")
+  decisionsCreated   LunchDecision[]  @relation("DecisionCreator")
+  votes              Vote[]
+
+  @@map("users")
+}
+
+model Group {
+  id                  String   @id @default(uuid()) @db.Uuid
+  name                String
+  makanCode           String   @unique @map("makan_code")
+  createdBy           String   @map("created_by") @db.Uuid
+  noRepeatDays        Int      @default(7) @map("no_repeat_days")
+  maxReroll           Int      @default(2) @map("max_reroll")
+  decisionModeDefault String   @default("you_pick") @map("decision_mode_default")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  creator         User              @relation("GroupCreator", fields: [createdBy], references: [id])
+  members         GroupMember[]
+  restaurants     Restaurant[]
+  lunchDecisions  LunchDecision[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(uuid()) @db.Uuid
+  groupId  String   @map("group_id") @db.Uuid
+  userId   String   @map("user_id") @db.Uuid
+  role     String   @default("member")
+  joinedAt DateTime @default(now()) @map("joined_at")
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model Restaurant {
+  id           String   @id @default(uuid()) @db.Uuid
+  groupId      String   @map("group_id") @db.Uuid
+  name         String
+  cuisineTags  Json     @default("[]") @map("cuisine_tags")
+  vibeTags     Json     @default("[]") @map("vibe_tags")
+  priceMin     Int      @map("price_min")
+  priceMax     Int      @map("price_max")
+  halal        Boolean  @default(false)
+  vegOptions   Boolean  @default(false) @map("veg_options")
+  walkMinutes  Int      @map("walk_minutes")
+  mapsUrl      String?  @map("maps_url")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdBy    String   @map("created_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  group            Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  creator          User               @relation("RestaurantCreator", fields: [createdBy], references: [id])
+  lunchDecisions   LunchDecision[]
+  decisionOptions  DecisionOption[]
+
+  @@index([groupId, isActive])
+  @@map("restaurants")
+}
+
+model LunchDecision {
+  id                  String   @id @default(uuid()) @db.Uuid
+  groupId             String   @map("group_id") @db.Uuid
+  decisionDate        DateTime @map("decision_date") @db.Date
+  modeUsed            String   @map("mode_used")
+  chosenRestaurantId  String?  @map("chosen_restaurant_id") @db.Uuid
+  constraintsUsed     Json     @default("{}") @map("constraints_used")
+  createdBy           String   @map("created_by") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  group              Group              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  chosenRestaurant   Restaurant?        @relation(fields: [chosenRestaurantId], references: [id])
+  creator            User               @relation("DecisionCreator", fields: [createdBy], references: [id])
+  decisionOptions    DecisionOption[]
+
+  @@index([groupId, decisionDate])
+  @@map("lunch_decisions")
+}
+
+model DecisionOption {
+  id           String   @id @default(uuid()) @db.Uuid
+  decisionId   String   @map("decision_id") @db.Uuid
+  restaurantId String   @map("restaurant_id") @db.Uuid
+
+  decision    LunchDecision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  restaurant  Restaurant    @relation(fields: [restaurantId], references: [id])
+  votes       Vote[]
+
+  @@map("decision_options")
+}
+
+model Vote {
+  id               String   @id @default(uuid()) @db.Uuid
+  decisionOptionId String   @map("decision_option_id") @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  vote             String
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  decisionOption DecisionOption @relation(fields: [decisionOptionId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id])
+
+  @@unique([decisionOptionId, userId])
+  @@map("votes")
+}
