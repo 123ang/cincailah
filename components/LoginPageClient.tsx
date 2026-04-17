@@ -7,11 +7,13 @@ import Link from 'next/link';
 interface LoginPageClientProps {
   redirectTo: string;
   error: string;
+  pendingCode?: string;
 }
 
 export default function LoginPageClient({
   redirectTo,
   error: initialError,
+  pendingCode,
 }: LoginPageClientProps) {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -46,7 +48,27 @@ export default function LoginPageClient({
         throw new Error(data.error || 'Failed to login');
       }
 
-      // Redirect based on response
+      if (pendingCode) {
+        try {
+          const joinRes = await fetch('/api/groups/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ makanCode: pendingCode }),
+          });
+          const joinData = await joinRes.json();
+          if (joinRes.ok && joinData.group?.id) {
+            router.push(`/group/${joinData.group.id}`);
+            return;
+          }
+          // Already-a-member case: route to the code's group via /join
+          router.push(`/join/${encodeURIComponent(pendingCode)}`);
+          return;
+        } catch {
+          router.push(`/join/${encodeURIComponent(pendingCode)}`);
+          return;
+        }
+      }
+
       if (redirectTo) {
         router.push(redirectTo);
       } else if (data.activeGroupId) {
@@ -54,8 +76,8 @@ export default function LoginPageClient({
       } else {
         router.push('/groups');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
     }
   };
@@ -63,7 +85,6 @@ export default function LoginPageClient({
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-cream">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <span className="text-5xl block mb-3">🍛</span>
@@ -72,7 +93,14 @@ export default function LoginPageClient({
           <p className="text-gray-500 text-sm mt-2">Welcome back!</p>
         </div>
 
-        {/* Form */}
+        {pendingCode && (
+          <div className="mb-4 bg-pandan/10 border border-pandan/30 rounded-xl px-4 py-3 text-sm text-slate">
+            <span className="font-bold">🤝 Joining group</span>{' '}
+            <span className="font-mono font-bold">{pendingCode}</span> after
+            you log in.
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
@@ -129,8 +157,15 @@ export default function LoginPageClient({
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
-              Don't have an account?{' '}
-              <Link href="/register" className="text-sambal font-semibold hover:underline">
+              Don&apos;t have an account?{' '}
+              <Link
+                href={
+                  pendingCode
+                    ? `/register?code=${encodeURIComponent(pendingCode)}`
+                    : '/register'
+                }
+                className="text-sambal font-semibold hover:underline"
+              >
                 Create one
               </Link>
             </p>

@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function RegisterPageClient() {
+interface RegisterPageClientProps {
+  pendingCode?: string;
+}
+
+export default function RegisterPageClient({
+  pendingCode,
+}: RegisterPageClientProps) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -51,9 +57,26 @@ export default function RegisterPageClient() {
         throw new Error(data.error || 'Failed to register');
       }
 
+      if (pendingCode) {
+        try {
+          const joinRes = await fetch('/api/groups/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ makanCode: pendingCode }),
+          });
+          const joinData = await joinRes.json();
+          if (joinRes.ok && joinData.group?.id) {
+            router.push(`/group/${joinData.group.id}`);
+            return;
+          }
+        } catch {
+          // fall through to default redirect
+        }
+      }
+
       router.push('/groups');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
     }
   };
@@ -61,7 +84,6 @@ export default function RegisterPageClient() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-cream">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
             <span className="text-5xl block mb-3">🍛</span>
@@ -70,7 +92,14 @@ export default function RegisterPageClient() {
           <p className="text-gray-500 text-sm mt-2">Create your free account</p>
         </div>
 
-        {/* Form */}
+        {pendingCode && (
+          <div className="mb-4 bg-pandan/10 border border-pandan/30 rounded-xl px-4 py-3 text-sm text-slate">
+            <span className="font-bold">🤝 Joining group</span>{' '}
+            <span className="font-mono font-bold">{pendingCode}</span> after
+            you sign up.
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
@@ -147,7 +176,14 @@ export default function RegisterPageClient() {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-500">
               Already have an account?{' '}
-              <Link href="/login" className="text-sambal font-semibold hover:underline">
+              <Link
+                href={
+                  pendingCode
+                    ? `/login?code=${encodeURIComponent(pendingCode)}`
+                    : '/login'
+                }
+                className="text-sambal font-semibold hover:underline"
+              >
                 Log in
               </Link>
             </p>

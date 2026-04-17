@@ -5,12 +5,16 @@ import LoginPageClient from '@/components/LoginPageClient';
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ redirect?: string; error?: string }>;
+  searchParams: Promise<{ redirect?: string; error?: string; code?: string }>;
 }) {
   const session = await getSession();
+  const params = await searchParams;
+  const pendingCode = (params.code || '').trim().toUpperCase() || undefined;
 
-  // If already logged in, redirect
   if (session?.isLoggedIn) {
+    if (pendingCode) {
+      redirect(`/join/${pendingCode}`);
+    }
     if (session.activeGroupId) {
       redirect('/group/' + session.activeGroupId);
     } else {
@@ -18,12 +22,11 @@ export default async function LoginPage({
     }
   }
 
-  const params = await searchParams;
-
   return (
     <LoginPageClient
       redirectTo={params.redirect || ''}
       error={params.error || ''}
+      pendingCode={pendingCode}
     />
   );
 }

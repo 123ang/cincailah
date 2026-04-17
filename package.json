@@ -19,6 +19,7 @@
     "iron-session": "^8.0.3",
     "next": "^15.1.6",
     "prisma": "^5.22.0",
+    "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.24.1"

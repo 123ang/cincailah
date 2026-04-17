@@ -11,11 +11,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { groupId, filters } = body;
+    const { groupId, filters, excludeIds } = body;
 
     if (!groupId) {
       return NextResponse.json({ error: 'Group ID required' }, { status: 400 });
     }
+
+    const excludeList: string[] = Array.isArray(excludeIds)
+      ? excludeIds.filter((id: unknown): id is string => typeof id === 'string')
+      : [];
+    const isReroll = excludeList.length > 0;
 
     // Get group settings
     const group = await prisma.group.findUnique({
@@ -97,6 +102,11 @@ export async function POST(request: NextRequest) {
       (r) => !recentRestaurantIds.includes(r.id)
     );
 
+    // Exclude already-shown winners from this reroll session
+    if (excludeList.length > 0) {
+      candidates = candidates.filter((r) => !excludeList.includes(r.id));
+    }
+
     // 4. Check if we have candidates
     if (candidates.length === 0) {
       return NextResponse.json(
@@ -111,22 +121,52 @@ export async function POST(request: NextRequest) {
     const randomIndex = Math.floor(Math.random() * candidates.length);
     const winner = candidates[randomIndex];
 
-    // 6. Save decision to database
-    await prisma.lunchDecision.create({
-      data: {
-        groupId,
-        decisionDate: new Date(),
-        modeUsed: 'you_pick',
-        chosenRestaurantId: winner.id,
-        constraintsUsed: filters || {},
-        createdBy: session.userId,
-      },
-    });
+    // 6. Save decision — on reroll, overwrite the most-recent decision by
+    //    this user in this group within the last 10 minutes so rerolls don't
+    //    pollute anti-repeat history.
+    let rerollReplaced = false;
+    if (isReroll) {
+      const recent = await prisma.lunchDecision.findFirst({
+        where: {
+          groupId,
+          createdBy: session.userId,
+          modeUsed: 'you_pick',
+          createdAt: { gte: new Date(Date.now() - 10 * 60_000) },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (recent) {
+        await prisma.lunchDecision.update({
+          where: { id: recent.id },
+          data: {
+            chosenRestaurantId: winner.id,
+            constraintsUsed: filters || {},
+            decisionDate: new Date(),
+          },
+        });
+        rerollReplaced = true;
+      }
+    }
+
+    if (!rerollReplaced) {
+      await prisma.lunchDecision.create({
+        data: {
+          groupId,
+          decisionDate: new Date(),
+          modeUsed: 'you_pick',
+          chosenRestaurantId: winner.id,
+          constraintsUsed: filters || {},
+          createdBy: session.userId,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
       winner,
       candidates: candidates.slice(0, 8), // Return up to 8 for the wheel
+      maxReroll: group.maxReroll,
+      rerollReplaced,
     });
   } catch (error) {
     console.error('Decision error:', error);

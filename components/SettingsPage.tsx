@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import InviteShare from '@/components/InviteShare';
 
 interface Member {
   id: string;
@@ -33,13 +34,6 @@ export default function SettingsPage({
   currentUserId: string;
 }) {
   const router = useRouter();
-  const [copied, setCopied] = useState(false);
-
-  const copyMakanCode = () => {
-    navigator.clipboard.writeText(group.makanCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -66,32 +60,9 @@ export default function SettingsPage({
         <p className="text-sm text-gray-400 mt-1">Group settings & members</p>
       </div>
 
-      {/* Makan Code */}
-      <div className="mt-4 bg-gradient-to-br from-sambal to-red-500 rounded-2xl p-5 text-white shadow-lg">
-        <p className="text-sm font-medium opacity-80">Your Makan Code</p>
-        <div className="flex items-center gap-3 mt-2">
-          <p className="text-3xl font-black tracking-widest">{group.makanCode}</p>
-          <button
-            onClick={copyMakanCode}
-            className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition"
-          >
-            {copied ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                />
-              </svg>
-            )}
-          </button>
-        </div>
-        <p className="text-xs opacity-60 mt-2">Share this code to invite friends</p>
+      {/* Invite */}
+      <div className="mt-4">
+        <InviteShare makanCode={group.makanCode} groupName={group.name} />
       </div>
 
       {/* Members */}

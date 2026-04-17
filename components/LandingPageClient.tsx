@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import MakanCodeInput from '@/components/MakanCodeInput';
 
 export default function LandingPageClient() {
   return (
@@ -12,7 +13,13 @@ export default function LandingPageClient() {
             <span className="text-3xl">🍛</span>
             <span className="text-2xl font-black text-slate">cincailah</span>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/solo"
+              className="hidden sm:inline-flex px-4 py-2 font-bold text-sm text-slate hover:text-sambal transition"
+            >
+              Try Solo
+            </Link>
             <Link
               href="/login"
               className="px-5 py-2 font-bold text-sm text-slate hover:text-sambal transition"
@@ -49,22 +56,29 @@ export default function LandingPageClient() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link
-            href="/register"
+            href="/solo"
             className="btn-cincai text-white font-black px-10 py-4 rounded-2xl text-lg shadow-lg hover:shadow-xl transition transform hover:scale-105"
           >
-            🚀 Start Free
+            🎲 Try Solo — No Signup
           </Link>
           <Link
-            href="/login"
+            href="/register"
             className="bg-white border-2 border-sambal text-sambal font-black px-10 py-4 rounded-2xl text-lg hover:bg-sambal hover:text-white transition"
           >
-            🔑 Log In
+            👥 Create Group
           </Link>
         </div>
 
         <p className="text-sm text-gray-400 mt-4">
-          No credit card. No stress. Just makan.
+          Spin instantly, or sign up free to decide with friends.
         </p>
+
+        <div className="mt-10">
+          <MakanCodeInput />
+          <p className="text-xs text-gray-400 mt-3">
+            Someone shared a code? Paste it above to jump straight in.
+          </p>
+        </div>
       </section>
 
       {/* Features Section */}
