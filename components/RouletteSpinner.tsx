@@ -157,13 +157,22 @@ export default function RouletteSpinner({
       ctx.lineWidth = 4;
       ctx.stroke();
 
+      // Pointer at top (12 o'clock): canvas angles are clockwise from +x; top = 3π/2.
+      // Triangle tip on the vertical centerline, base straddling the rim for a clear read.
+      const rimY = centerY - radius;
+      const tipY = rimY - 16;
+      const baseHalf = 18;
+      const baseDrop = 5;
       ctx.beginPath();
-      ctx.moveTo(centerX, centerY - radius - 20);
-      ctx.lineTo(centerX - 15, centerY - radius);
-      ctx.lineTo(centerX + 15, centerY - radius);
+      ctx.moveTo(centerX, tipY);
+      ctx.lineTo(centerX - baseHalf, rimY + baseDrop);
+      ctx.lineTo(centerX + baseHalf, rimY + baseDrop);
       ctx.closePath();
       ctx.fillStyle = '#DC2626';
       ctx.fill();
+      ctx.strokeStyle = '#991B1B';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     },
     []
   );
@@ -185,9 +194,12 @@ export default function RouletteSpinner({
         0,
         allCandidates.findIndex((c) => c.id === finalWinner.id)
       );
-      const targetAngle =
-        360 * (allCandidates.length === 1 ? 2 : 5) +
-        (360 - (winnerIndex / Math.max(1, allCandidates.length)) * 360);
+      const n = Math.max(1, allCandidates.length);
+      const sliceDeg = 360 / n;
+      // Pointer is fixed at top = 270° (clockwise from +x). Align winner slice midpoint to 270°.
+      const alignDeg = ((270 - (winnerIndex + 0.5) * sliceDeg) % 360 + 360) % 360;
+      const fullSpins = allCandidates.length === 1 ? 2 : 5;
+      const targetAngle = fullSpins * 360 + alignDeg;
 
       const animate = () => {
         const elapsed = Date.now() - startTime;
