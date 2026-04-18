@@ -4,7 +4,7 @@ This guide shows how to deploy `cincailah` on a VPS from scratch.
 It assumes:
 
 - Ubuntu 22.04 VPS
-- A domain name (example: `cincailah.com`)
+- A domain name you control (example: `cincailah.suntzutechnologies.com`)
 - You can SSH into the server as a sudo user
 
 If you follow this step-by-step, you will have:
@@ -19,10 +19,30 @@ If you follow this step-by-step, you will have:
 
 ## 1) Prepare your domain
 
-In your domain provider DNS panel, add:
+### Important: what a “domain name” actually is
+
+A hostname **cannot** contain `http://` or `https://` inside it.
+
+- **Wrong (not a real hostname):** `cincailah.http://suntzutechnologies.com/`
+- **Right (hostname):** `cincailah.suntzutechnologies.com`
+- **Right (full site URL):** `https://cincailah.suntzutechnologies.com`
+
+This project is easiest to deploy as a **subdomain** like `cincailah.suntzutechnologies.com`.
+
+If you instead want the app at a **path** like `https://suntzutechnologies.com/cincailah`, that is possible in Next.js but requires extra configuration (`basePath`, asset URLs, cookies, etc.). For beginners, use a subdomain.
+
+### DNS records (recommended: subdomain)
+
+In your domain provider DNS panel for `suntzutechnologies.com`, add:
+
+- `A` record: `cincailah` -> your VPS public IP
+
+That creates the hostname `cincailah.suntzutechnologies.com`.
+
+Optional (only if you want the apex domain on the same server too):
 
 - `A` record: `@` -> your VPS public IP
-- `A` record: `www` -> your VPS public IP (optional)
+- `A` record: `www` -> your VPS public IP
 
 Wait for DNS propagation (usually a few minutes, sometimes longer).
 
@@ -88,7 +108,7 @@ sudo -u postgres psql
 Inside `psql`:
 
 ```sql
-CREATE USER cincailah_user WITH PASSWORD 'CHANGE_THIS_STRONG_PASSWORD';
+CREATE USER cincailah_user WITH PASSWORD '5792_Ang';
 CREATE DATABASE cincailah_db OWNER cincailah_user;
 \q
 ```
@@ -103,16 +123,24 @@ DATABASE_URL="postgresql://cincailah_user:CHANGE_THIS_STRONG_PASSWORD@localhost:
 
 ## 5) Clone project and install dependencies
 
-Pick an app directory (example `/var/www/cincailah`):
+Pick an app directory. You said you want:
+
+- `/root/projects/cincailah`
+
+That is totally fine. Just make sure **every later command** that references the folder path matches what you chose.
 
 ```bash
-sudo mkdir -p /var/www
-sudo chown -R $USER:$USER /var/www
-cd /var/www
+sudo mkdir -p /root/projects
+sudo chown -R "$USER":"$USER" /root/projects
+cd /root/projects
 git clone <YOUR_GIT_REPO_URL> cincailah
 cd cincailah
 npm install
 ```
+
+**Beginner note (important):** deploying under `/root/...` is convenient, but `/root` is normally very locked down.
+If you use the Nginx `alias` trick for `/uploads/` (recommended for performance), Nginx must be able to **traverse directories** down to `public/uploads/`.
+If uploads fail with `403`, jump to section 9 and apply the permission fix there.
 
 ---
 
@@ -135,7 +163,7 @@ DATABASE_URL="postgresql://cincailah_user:CHANGE_THIS_STRONG_PASSWORD@localhost:
 SESSION_SECRET="REPLACE_WITH_LONG_RANDOM_SECRET"
 JWT_SECRET="REPLACE_WITH_ANOTHER_LONG_RANDOM_SECRET"
 
-NEXT_PUBLIC_APP_URL="https://your-domain.com"
+NEXT_PUBLIC_APP_URL="https://cincailah.suntzutechnologies.com"
 
 # Optional but recommended
 RESEND_API_KEY=""
@@ -212,17 +240,19 @@ sudo nano /etc/nginx/sites-available/cincailah
 
 Paste this config (replace domain):
 
+**If your project lives at `/root/projects/cincailah`, the `alias` path must match exactly.**
+
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com www.your-domain.com;
+    server_name cincailah.suntzutechnologies.com;
 
     # Allow larger image uploads
     client_max_body_size 10M;
 
     # Serve uploaded files directly from disk for speed
     location /uploads/ {
-        alias /var/www/cincailah/public/uploads/;
+        alias /root/projects/cincailah/public/uploads/;
         access_log off;
         add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;
@@ -241,6 +271,20 @@ server {
 }
 ```
 
+### If `/uploads/` returns 403 (common when code is under `/root`)
+
+Nginx runs as `www-data` on Ubuntu. For `alias` to work under `/root/projects/...`, `www-data` needs **execute** permission on each directory in the path (`/root`, `/root/projects`, etc.).
+
+A common beginner-friendly fix (tradeoff: slightly looser `/root` permissions):
+
+```bash
+sudo chmod 711 /root
+sudo chmod -R 755 /root/projects/cincailah/public/uploads
+sudo systemctl restart nginx
+```
+
+If you do not want to loosen `/root` permissions, move the repo to something like `/srv/cincailah` or `/home/deploy/projects/cincailah` instead, or remove the `/uploads/` `location` block and let Next.js serve uploads (slower, but simplest).
+
 Enable it:
 
 ```bash
@@ -256,7 +300,7 @@ sudo systemctl restart nginx
 Run Certbot:
 
 ```bash
-sudo certbot --nginx -d your-domain.com -d www.your-domain.com
+sudo certbot --nginx -d cincailah.suntzutechnologies.com
 ```
 
 Choose auto-redirect to HTTPS when prompted.
@@ -288,13 +332,13 @@ Run these checks:
 
 ```bash
 curl -I http://127.0.0.1:3000
-curl -I https://your-domain.com
-curl -I https://your-domain.com/api/health
+curl -I https://cincailah.suntzutechnologies.com
+curl -I https://cincailah.suntzutechnologies.com/api/health
 ```
 
 Open browser:
 
-- `https://your-domain.com`
+- `https://cincailah.suntzutechnologies.com`
 - Register/login
 - Create group
 - Add restaurant
@@ -309,7 +353,7 @@ If image works, `/uploads/...` serving is correct.
 Every time you push new code:
 
 ```bash
-cd /var/www/cincailah
+cd /root/projects/cincailah
 git pull
 npm install
 npx prisma generate
@@ -349,7 +393,7 @@ sudo systemctl status nginx
 App health:
 
 ```bash
-curl https://your-domain.com/api/health
+curl https://cincailah.suntzutechnologies.com/api/health
 ```
 
 ---
@@ -383,7 +427,7 @@ curl https://your-domain.com/api/health
 Minimum backup:
 
 - PostgreSQL dump daily
-- `/var/www/cincailah/public/uploads/` daily
+- `/root/projects/cincailah/public/uploads/` daily
 - Keep at least 7 days of backups
 
 If you want, I can also add a simple automated backup script (`backup.sh`) for your VPS next.

@@ -9,29 +9,43 @@
  */
 
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET_RAW = process.env.JWT_SECRET || process.env.SESSION_SECRET;
-
-if (process.env.NODE_ENV === 'production') {
-  if (!JWT_SECRET_RAW || JWT_SECRET_RAW.length < 32) {
-    throw new Error(
-      'JWT_SECRET (or SESSION_SECRET fallback) must be set to at least 32 chars in production'
-    );
-  }
-}
-
-// Dev-only fallback — never reached in production because of the throw above.
-export const JWT_SECRET =
-  JWT_SECRET_RAW && JWT_SECRET_RAW.length >= 32
-    ? JWT_SECRET_RAW
-    : 'dev-jwt-secret-min-32-chars-do-not-use-in-production';
+import { isNextProductionBuild } from '@/lib/next-phase';
 
 export const JWT_EXPIRES_IN = '30d';
+
+const DEV_FALLBACK =
+  'dev-jwt-secret-min-32-chars-do-not-use-in-production________________';
 
 export interface MobileTokenPayload {
   sub: string;
   email: string;
   displayName: string;
+}
+
+function isProdRuntime(): boolean {
+  return process.env.NODE_ENV === 'production' && !isNextProductionBuild();
+}
+
+function resolveRawSecret(): string | undefined {
+  return process.env.JWT_SECRET || process.env.SESSION_SECRET;
+}
+
+function getJwtSecret(): string {
+  const raw = resolveRawSecret();
+
+  if (raw && raw.length >= 32) return raw;
+
+  // `next build` imports route modules with NODE_ENV=production — allow missing
+  // secrets during that phase only.
+  if (isNextProductionBuild()) return DEV_FALLBACK;
+
+  if (isProdRuntime()) {
+    throw new Error(
+      'JWT_SECRET (or SESSION_SECRET fallback) must be set to at least 32 chars in production'
+    );
+  }
+
+  return DEV_FALLBACK;
 }
 
 export function signMobileToken(user: {
@@ -44,12 +58,12 @@ export function signMobileToken(user: {
     email: user.email,
     displayName: user.displayName,
   };
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
 
 export function verifyMobileToken(token: string): MobileTokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as MobileTokenPayload;
+    const decoded = jwt.verify(token, getJwtSecret()) as MobileTokenPayload;
     if (!decoded?.sub) return null;
     return decoded;
   } catch {

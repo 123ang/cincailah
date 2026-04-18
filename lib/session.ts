@@ -1,6 +1,7 @@
 import { getIronSession, IronSession, SessionOptions } from 'iron-session';
 import { cookies } from 'next/headers';
 import { verifyMobileToken } from '@/lib/mobile-auth';
+import { isNextProductionBuild } from '@/lib/next-phase';
 
 export interface SessionData {
   userId?: string;
@@ -10,32 +11,45 @@ export interface SessionData {
   isLoggedIn: boolean;
 }
 
-// Iron-session requires at least 32 chars. Never allow a weak fallback in production.
-const secret = process.env.SESSION_SECRET;
+const DEV_PASSWORD = 'dev-secret-min-32-chars-required-for-iron-session';
 
-if (process.env.NODE_ENV === 'production' && (!secret || secret.length < 32)) {
-  throw new Error('SESSION_SECRET must be set and at least 32 characters in production');
+function isProdRuntime(): boolean {
+  return process.env.NODE_ENV === 'production' && !isNextProductionBuild();
 }
 
-const password =
-  secret && secret.length >= 32
-    ? secret
-    : 'dev-secret-min-32-chars-required-for-iron-session';
+function getIronSessionPassword(): string {
+  const secret = process.env.SESSION_SECRET;
 
-export const sessionOptions: SessionOptions = {
-  password,
-  cookieName: 'cincailah_session',
-  cookieOptions: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-};
+  if (secret && secret.length >= 32) return secret;
+
+  // `next build` imports route modules with NODE_ENV=production — allow missing
+  // secrets during that phase only.
+  if (isNextProductionBuild()) return DEV_PASSWORD;
+
+  if (isProdRuntime()) {
+    throw new Error('SESSION_SECRET must be set and at least 32 characters in production');
+  }
+
+  return DEV_PASSWORD;
+}
+
+export function getSessionOptions(): SessionOptions {
+  return {
+    password: getIronSessionPassword(),
+    cookieName: 'cincailah_session',
+    cookieOptions: {
+      // Only enforce secure cookies on a real production runtime (HTTPS).
+      secure: isProdRuntime(),
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    },
+  };
+}
 
 export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
-  return getIronSession<SessionData>(cookieStore, sessionOptions);
+  return getIronSession<SessionData>(cookieStore, getSessionOptions());
 }
 
 /**

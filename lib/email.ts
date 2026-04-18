@@ -1,10 +1,18 @@
 import { Resend } from 'resend';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { logger } from '@/lib/logger';
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Cincailah <onboarding@resend.dev>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const APP_NAME = 'Cincailah';
+
+let resendClient: Resend | null = null;
+
+function getResend(): Resend | null {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  if (!resendClient) resendClient = new Resend(key);
+  return resendClient;
+}
 
 export interface SendEmailOptions {
   to: string;
@@ -14,13 +22,12 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
-  if (!process.env.RESEND_API_KEY) {
-    console.warn(
-      '⚠️  RESEND_API_KEY not set. Email would have been sent to:',
-      to
+  const resend = getResend();
+  if (!resend) {
+    logger.warn(
+      { to, subjectPreview: subject.slice(0, 120) },
+      'RESEND_API_KEY not set — email skipped (dev mode)'
     );
-    console.log('Subject:', subject);
-    console.log('HTML Preview:', html.substring(0, 200) + '...');
     return { success: false, devMode: true };
   }
 
@@ -35,7 +42,7 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
 
     return { success: true, id: result.data?.id };
   } catch (error) {
-    console.error('Failed to send email:', error);
+    logger.error({ err: error, to, subjectPreview: subject.slice(0, 120) }, 'Failed to send email');
     return { success: false, error };
   }
 }
