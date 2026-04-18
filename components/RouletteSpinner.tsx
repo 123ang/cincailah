@@ -213,12 +213,26 @@ export default function RouletteSpinner({
         setError('');
         setPhase('loading');
         celebratedRef.current = false;
+
+        // Drop fields the server's Zod schema rejects:
+        //   - empty string (e.g. budgetFilter: '')
+        //   - null / undefined
+        //   - empty arrays are fine; boolean false is fine
+        const sanitizedFilters =
+          filters && typeof filters === 'object'
+            ? Object.fromEntries(
+                Object.entries(filters as Record<string, unknown>).filter(
+                  ([, v]) => v !== '' && v !== null && v !== undefined
+                )
+              )
+            : undefined;
+
         const res = await fetch('/api/decide', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             groupId,
-            filters,
+            filters: sanitizedFilters,
             excludeIds: extraExclude,
           }),
         });

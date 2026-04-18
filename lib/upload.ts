@@ -6,24 +6,15 @@
  *
  * All images are auto-resized and converted to JPEG via `jimp`
  * (pure JavaScript, no native/CPU-specific binaries) so the app runs on
- * any VPS including older CPUs that can't use sharp's prebuilt linux-x64
+ * any VPS, including older CPUs that can't use sharp's prebuilt linux-x64
  * binaries.
  */
 
 import { randomUUID } from 'crypto';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { Jimp } from 'jimp';
 import { MAX_FILE_SIZE } from '@/lib/upload-constants';
-
-type JimpModule = typeof import('jimp');
-let jimpSingleton: JimpModule | null = null;
-
-async function loadJimp(): Promise<JimpModule> {
-  if (jimpSingleton) return jimpSingleton;
-  const mod = (await import('jimp')) as unknown as JimpModule;
-  jimpSingleton = mod;
-  return jimpSingleton;
-}
 
 export type UploadType = 'restaurant' | 'avatar' | 'group_cover';
 
@@ -41,9 +32,8 @@ const TYPE_CONFIG: Record<UploadType, { maxWidth: number; square: boolean; quali
 
 export { MAX_FILE_SIZE };
 
-// HEIC/HEIF requires libheif; jimp can't decode it in pure JS. If users need
-// HEIC uploads later, convert client-side before upload or add a native
-// decoder. For now we accept the common web formats.
+// HEIC/HEIF requires libheif; jimp can't decode it in pure JS. If users
+// need HEIC uploads later, convert client-side before upload.
 export const ALLOWED_MIMES = new Set([
   'image/jpeg',
   'image/jpg',
@@ -58,17 +48,6 @@ export interface UploadResult {
   url: string;
   filename: string;
   bytes: number;
-}
-
-function getJimpRead(mod: JimpModule): (buf: Buffer) => Promise<unknown> {
-  const candidate =
-    (mod as unknown as { Jimp?: { read?: unknown }; read?: unknown }).Jimp?.read ??
-    (mod as unknown as { read?: unknown }).read ??
-    (mod as unknown as { default?: { read?: unknown } }).default?.read;
-  if (typeof candidate !== 'function') {
-    throw new Error('jimp module did not expose read()');
-  }
-  return candidate as (buf: Buffer) => Promise<unknown>;
 }
 
 /**
@@ -90,28 +69,14 @@ export async function saveUpload(file: File, type: UploadType): Promise<UploadRe
   const subdir = TYPE_DIRS[type];
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  const jimpMod = await loadJimp();
-  const read = getJimpRead(jimpMod);
-  const image = (await read(bytes)) as {
-    width: number;
-    height: number;
-    resize: (opts: { w: number; h?: number } | { w: number; h: number }) => unknown;
-    cover: (opts: { w: number; h: number }) => unknown;
-    quality?: (q: number) => unknown;
-    getBuffer: (mime: string, opts?: { quality?: number }) => Promise<Buffer>;
-  };
+  // jimp v1 API: use Jimp.fromBuffer for in-memory images.
+  // (Jimp.read is for file paths / URLs in v1.)
+  const image = await Jimp.fromBuffer(bytes);
 
   if (config.square) {
-    // Crop to square, centered.
-    (image as { cover: (o: { w: number; h: number }) => unknown }).cover({
-      w: config.maxWidth,
-      h: config.maxWidth,
-    });
-  } else {
-    const w = image.width;
-    if (w > config.maxWidth) {
-      (image as { resize: (o: { w: number }) => unknown }).resize({ w: config.maxWidth });
-    }
+    image.cover({ w: config.maxWidth, h: config.maxWidth });
+  } else if (image.width > config.maxWidth) {
+    image.resize({ w: config.maxWidth });
   }
 
   const processed = await image.getBuffer('image/jpeg', { quality: config.quality });

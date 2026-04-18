@@ -134,10 +134,19 @@ export default function VotePageClient({
     setError('');
 
     try {
+      const sanitizedFilters =
+        filters && typeof filters === 'object'
+          ? Object.fromEntries(
+              Object.entries(filters as Record<string, unknown>).filter(
+                ([, v]) => v !== '' && v !== null && v !== undefined
+              )
+            )
+          : undefined;
+
       const res = await fetch('/api/vote/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId, filters }),
+        body: JSON.stringify({ groupId, filters: sanitizedFilters }),
       });
 
       const data = await res.json();

@@ -72,19 +72,25 @@ export default function DecidePage({
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const handleDecide = () => {
-    const filters = {
-      budgetFilter,
+    // Only include fields when actually set — the server schema expects
+    // enums (e.g. budgetFilter) to be one of the allowed values or omitted.
+    // Sending '' triggers a 400 on some server builds.
+    const filters: Record<string, unknown> = {
       selectedTags,
       walkTimeMax,
       halal,
       vegOptions,
       favoritesOnly,
-      ...(nearby500m ? { maxDistanceKm: 0.5 } : {}),
-      ...(userCoords
-        ? { userLat: userCoords.lat, userLng: userCoords.lng }
-        : {}),
     };
-    
+    if (budgetFilter === 'kering' || budgetFilter === 'ok' || budgetFilter === 'belanja') {
+      filters.budgetFilter = budgetFilter;
+    }
+    if (nearby500m) filters.maxDistanceKm = 0.5;
+    if (userCoords) {
+      filters.userLat = userCoords.lat;
+      filters.userLng = userCoords.lng;
+    }
+
     if (mode === 'you_pick') {
       router.push(`/group/${groupId}/decide?filters=${encodeURIComponent(JSON.stringify(filters))}`);
     } else {
