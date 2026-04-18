@@ -9,7 +9,7 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { isNextProductionBuild } from '@/lib/next-phase';
+import { isBuildLike } from '@/lib/next-phase';
 
 export const JWT_EXPIRES_IN = '30d';
 
@@ -23,7 +23,7 @@ export interface MobileTokenPayload {
 }
 
 function isProdRuntime(): boolean {
-  return process.env.NODE_ENV === 'production' && !isNextProductionBuild();
+  return process.env.NODE_ENV === 'production' && !isBuildLike();
 }
 
 function resolveRawSecret(): string | undefined {
@@ -37,7 +37,7 @@ function getJwtSecret(): string {
 
   // `next build` imports route modules with NODE_ENV=production — allow missing
   // secrets during that phase only.
-  if (isNextProductionBuild()) return DEV_FALLBACK;
+  if (isBuildLike()) return DEV_FALLBACK;
 
   if (isProdRuntime()) {
     throw new Error(

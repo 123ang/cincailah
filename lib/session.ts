@@ -1,7 +1,7 @@
 import { getIronSession, IronSession, SessionOptions } from 'iron-session';
 import { cookies } from 'next/headers';
 import { verifyMobileToken } from '@/lib/mobile-auth';
-import { isNextProductionBuild } from '@/lib/next-phase';
+import { isBuildLike } from '@/lib/next-phase';
 
 export interface SessionData {
   userId?: string;
@@ -14,7 +14,7 @@ export interface SessionData {
 const DEV_PASSWORD = 'dev-secret-min-32-chars-required-for-iron-session';
 
 function isProdRuntime(): boolean {
-  return process.env.NODE_ENV === 'production' && !isNextProductionBuild();
+  return process.env.NODE_ENV === 'production' && !isBuildLike();
 }
 
 function getIronSessionPassword(): string {
@@ -24,7 +24,7 @@ function getIronSessionPassword(): string {
 
   // `next build` imports route modules with NODE_ENV=production — allow missing
   // secrets during that phase only.
-  if (isNextProductionBuild()) return DEV_PASSWORD;
+  if (isBuildLike()) return DEV_PASSWORD;
 
   if (isProdRuntime()) {
     throw new Error('SESSION_SECRET must be set and at least 32 characters in production');

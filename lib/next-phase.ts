@@ -11,3 +11,16 @@
 export function isNextProductionBuild(): boolean {
   return process.env.NEXT_PHASE === 'phase-production-build';
 }
+
+/**
+ * Broader heuristic for "we are building, not serving".
+ *
+ * Next normally sets `NEXT_PHASE=phase-production-build`, but we also treat
+ * `npm run build` as build-like because `npm_lifecycle_event=build` is stable
+ * across environments.
+ */
+export function isBuildLike(): boolean {
+  if (isNextProductionBuild()) return true;
+  if (process.env.npm_lifecycle_event === 'build') return true;
+  return false;
+}

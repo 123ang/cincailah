@@ -3,6 +3,8 @@
  * Call this from lib/prisma.ts or a Next.js instrumentation file so it runs once at startup.
  */
 
+import { isBuildLike } from '@/lib/next-phase';
+
 interface EnvSpec {
   key: string;
   required: boolean;
@@ -99,6 +101,10 @@ let validated = false;
 export function validateEnv() {
   if (validated) return;
   validated = true;
+
+  // `next build` imports server modules with NODE_ENV=production, but that is not a
+  // running server — do not hard-fail env validation during the build graph step.
+  if (isBuildLike()) return;
 
   const errors: string[] = [];
 
