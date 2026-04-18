@@ -234,9 +234,9 @@ Next.js. See `nginx.conf.example` at the repo root.
   route.
 - **Request logs.** `logRequest(request, { endpoint })` at the top of a handler
   emits one line per request with method, path, and IP.
-- **Health check.** `GET /api/health` — used by the `monitor-health` GitHub
-  Actions workflow. Anything that blocks this endpoint (DB outage, missing env
-  vars) will 503. Keep it fast; don't add feature checks.
+- **Health check.** `GET /api/health` — for load balancers or manual checks.
+  Anything that blocks this endpoint (DB outage, missing env vars) will 503.
+  Keep it fast; don't add feature checks.
 
 ---
 
@@ -247,10 +247,8 @@ Next.js. See `nginx.conf.example` at the repo root.
 - `npx next lint` (still functional in Next 15; `next lint` is deprecated but
   we have not migrated yet).
 - Mobile: `cd mobile && npm run lint` runs `expo lint`.
-- GitHub Actions workflows in `.github/workflows/`:
-  - `ci.yml` — typecheck + lint on every push
-  - `preview-deploy.yml` — Vercel preview per PR
-  - `monitor-health.yml` — cron hit on `/api/health` every 10 minutes
+- There are no GitHub Actions workflows in this repo (CI / preview / uptime
+  monitoring were removed).
 
 ### There are no unit tests yet.
 
