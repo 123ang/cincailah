@@ -157,16 +157,15 @@ export default function RouletteSpinner({
       ctx.lineWidth = 4;
       ctx.stroke();
 
-      // Pointer at top (12 o'clock): canvas angles are clockwise from +x; top = 3π/2.
-      // Triangle tip on the vertical centerline, base straddling the rim for a clear read.
+      // Pointer at top (12 o'clock): wide base above the rim, tip points down into the winning slice.
       const rimY = centerY - radius;
-      const tipY = rimY - 16;
-      const baseHalf = 18;
-      const baseDrop = 5;
+      const baseY = rimY - 20;
+      const baseHalf = 20;
+      const tipY = rimY + 10;
       ctx.beginPath();
-      ctx.moveTo(centerX, tipY);
-      ctx.lineTo(centerX - baseHalf, rimY + baseDrop);
-      ctx.lineTo(centerX + baseHalf, rimY + baseDrop);
+      ctx.moveTo(centerX - baseHalf, baseY);
+      ctx.lineTo(centerX + baseHalf, baseY);
+      ctx.lineTo(centerX, tipY);
       ctx.closePath();
       ctx.fillStyle = '#DC2626';
       ctx.fill();
