@@ -48,6 +48,7 @@ export default function SoloPage() {
   );
   const [newFavName, setNewFavName] = useState('');
   const [newFavNote, setNewFavNote] = useState('');
+  const [editingFavId, setEditingFavId] = useState<string | null>(null);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [picked, setPicked] = useState<Picked>({
@@ -250,21 +251,50 @@ export default function SoloPage() {
     }
   };
 
-  const addFavorite = () => {
+  const cancelFavoriteEdit = () => {
+    setEditingFavId(null);
+    setNewFavName('');
+    setNewFavNote('');
+  };
+
+  const beginEditFavorite = (f: FavoriteSpot) => {
+    setEditingFavId(f.id);
+    setNewFavName(f.name);
+    setNewFavNote(f.note ?? '');
+    setShowFavorites(true);
+  };
+
+  const saveFavorite = () => {
     const name = newFavName.trim();
     if (!name) return;
-    const fav: FavoriteSpot = {
-      id: makeId(),
-      name,
-      note: newFavNote.trim() || undefined,
-      createdAt: Date.now(),
-    };
-    setFavorites((prev) => [fav, ...prev]);
+    if (editingFavId) {
+      setFavorites((prev) =>
+        prev.map((f) =>
+          f.id === editingFavId
+            ? {
+                ...f,
+                name,
+                note: newFavNote.trim() || undefined,
+              }
+            : f
+        )
+      );
+      setEditingFavId(null);
+    } else {
+      const fav: FavoriteSpot = {
+        id: makeId(),
+        name,
+        note: newFavNote.trim() || undefined,
+        createdAt: Date.now(),
+      };
+      setFavorites((prev) => [fav, ...prev]);
+    }
     setNewFavName('');
     setNewFavNote('');
   };
 
   const deleteFavorite = (id: string) => {
+    if (editingFavId === id) cancelFavoriteEdit();
     setFavorites((prev) => prev.filter((f) => f.id !== id));
   };
 
@@ -480,24 +510,33 @@ export default function SoloPage() {
                 <input
                   value={newFavName}
                   onChange={(e) => setNewFavName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addFavorite()}
+                  onKeyDown={(e) => e.key === 'Enter' && saveFavorite()}
                   placeholder="Restaurant / spot name"
                   className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-sambal"
                 />
                 <input
                   value={newFavNote}
                   onChange={(e) => setNewFavNote(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addFavorite()}
+                  onKeyDown={(e) => e.key === 'Enter' && saveFavorite()}
                   placeholder="Note (optional)"
                   className="sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-sambal"
                 />
                 <button
-                  onClick={addFavorite}
+                  onClick={saveFavorite}
                   disabled={!newFavName.trim()}
                   className="btn-cincai text-white font-bold px-4 py-2.5 rounded-xl disabled:opacity-50"
                 >
-                  Add
+                  {editingFavId ? 'Save' : 'Add'}
                 </button>
+                {editingFavId && (
+                  <button
+                    type="button"
+                    onClick={cancelFavoriteEdit}
+                    className="text-xs font-semibold text-gray-500 hover:text-gray-700 px-2 py-2"
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
 
               {favorites.length === 0 ? (
@@ -521,12 +560,22 @@ export default function SoloPage() {
                           </div>
                         )}
                       </div>
-                      <button
-                        onClick={() => deleteFavorite(f.id)}
-                        className="text-xs font-semibold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg"
-                      >
-                        Remove
-                      </button>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => beginEditFavorite(f)}
+                          className="text-xs font-semibold text-sambal hover:bg-red-50 px-3 py-1.5 rounded-lg"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteFavorite(f.id)}
+                          className="text-xs font-semibold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

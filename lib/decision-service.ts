@@ -12,6 +12,8 @@ export type DecisionFilters = {
   maxDistanceKm?: number;
   userLat?: number;
   userLng?: number;
+  /** Skip anti-repeat filter; reroll may land on the same restaurant. */
+  allowRepeatPicks?: boolean;
 };
 
 export async function getEligibleRestaurants({
@@ -41,6 +43,7 @@ export async function getEligibleRestaurants({
     maxDistanceKm,
     userLat,
     userLng,
+    allowRepeatPicks,
   } = filters || {};
 
   if (budgetFilter === 'kering') {
@@ -102,7 +105,9 @@ export async function getEligibleRestaurants({
     .map((d) => d.chosenRestaurantId)
     .filter((id): id is string => id !== null);
 
-  candidates = candidates.filter((r) => !recentRestaurantIds.includes(r.id));
+  if (!allowRepeatPicks) {
+    candidates = candidates.filter((r) => !recentRestaurantIds.includes(r.id));
+  }
 
   return { group, candidates };
 }

@@ -63,7 +63,7 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
 
 Recommended additions: `JWT_SECRET` (separate from SESSION_SECRET),
-`RESEND_API_KEY`, `GOOGLE_PLACES_API_KEY`, `SENTRY_DSN`,
+`RESEND_API_KEY`, `SENTRY_DSN`,
 `NEXT_PUBLIC_SENTRY_DSN`, `POSTHOG_API_KEY`.
 
 Validation lives in `lib/env.ts` — add new variables there so misconfigurations

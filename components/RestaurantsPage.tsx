@@ -221,6 +221,12 @@ export default function RestaurantsPage({
                     </div>
                   </div>
                   <div className="flex items-start gap-2 flex-shrink-0">
+                    <Link
+                      href={`/group/${groupId}/restaurants/${restaurant.id}/edit`}
+                      className="text-xs font-bold text-sambal hover:bg-red-50 px-2 py-2 rounded-lg self-start"
+                    >
+                      Edit
+                    </Link>
                     <button
                       onClick={() => toggleFavorite(restaurant.id)}
                       disabled={isTogglingThis}

@@ -44,6 +44,7 @@ export default function DecideScreen({ route, navigation }) {
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [switcherLoading, setSwitcherLoading] = useState(false);
   const [myGroups, setMyGroups] = useState([]);
+  const [allowRepeatPicks, setAllowRepeatPicks] = useState(false);
 
   const { showToast, ToastHost } = useToast();
 
@@ -90,6 +91,9 @@ export default function DecideScreen({ route, navigation }) {
       f.userLat = userCoords.lat;
       f.userLng = userCoords.lng;
     }
+    if (allowRepeatPicks) {
+      f.allowRepeatPicks = true;
+    }
     return f;
   };
 
@@ -117,7 +121,7 @@ export default function DecideScreen({ route, navigation }) {
         decisionId: data.decisionId,
         groupId,
         maxReroll,
-        excludeIds: [data.winner.id],
+        excludeIds: [],
         filters: buildFilters(),
       });
     } finally {
@@ -131,6 +135,7 @@ export default function DecideScreen({ route, navigation }) {
     setVeg(false);
     setTags([]);
     setNearby(false);
+    setAllowRepeatPicks(false);
   };
 
   const openGroupSwitcher = async () => {
@@ -246,6 +251,24 @@ export default function DecideScreen({ route, navigation }) {
       >
         <Text style={styles.restoLinkText}>🍽️ Manage restaurants →</Text>
       </Pressable>
+
+      {/* Same spot can win again */}
+      <View style={styles.section}>
+        <View style={styles.nearbyRow}>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={styles.nearbyLabel}>Same spot can win again</Text>
+            <Text style={styles.nearbySub}>
+              Skip anti-repeat and allow rerolls to pick the same restaurant
+            </Text>
+          </View>
+          <Switch
+            value={allowRepeatPicks}
+            onValueChange={setAllowRepeatPicks}
+            trackColor={{ true: SAMBAL, false: "#E5E7EB" }}
+            thumbColor="#fff"
+          />
+        </View>
+      </View>
 
       {/* Mode toggle */}
       <View style={styles.modeRow}>

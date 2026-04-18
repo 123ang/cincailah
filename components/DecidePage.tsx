@@ -70,6 +70,8 @@ export default function DecidePage({
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
   const [nearby500m, setNearby500m] = useState<boolean>(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  /** When true, anti-repeat is skipped and "Not this" rerolls can land on the same spot again. */
+  const [allowRepeatPicks, setAllowRepeatPicks] = useState(false);
 
   const handleDecide = () => {
     // Only include fields when actually set — the server schema expects
@@ -89,6 +91,9 @@ export default function DecidePage({
     if (userCoords) {
       filters.userLat = userCoords.lat;
       filters.userLng = userCoords.lng;
+    }
+    if (allowRepeatPicks) {
+      filters.allowRepeatPicks = true;
     }
 
     if (mode === 'you_pick') {
@@ -112,6 +117,7 @@ export default function DecidePage({
     setVegOptions(false);
     setFavoritesOnly(false);
     setNearby500m(false);
+    setAllowRepeatPicks(false);
   };
 
   return (
@@ -328,6 +334,26 @@ export default function DecidePage({
         <p className="text-xs text-amber-700">
           <strong>Anti-Repeat ON:</strong> Ate Already protection — skipping last {group.noRepeatDays} days of picks.
         </p>
+      </div>
+
+      {/* Same spot can win again */}
+      <div className="mt-3 bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={allowRepeatPicks}
+            onChange={(e) => setAllowRepeatPicks(e.target.checked)}
+            className="mt-0.5 w-5 h-5 rounded accent-sambal shrink-0"
+          />
+          <span className="min-w-0">
+            <span className="text-sm font-bold text-gray-800 dark:text-gray-100 block">
+              Same spot can win again
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5 leading-snug">
+              Tick this to include recently picked places and to allow &quot;Not this&quot; rerolls to pick the same restaurant again.
+            </span>
+          </span>
+        </label>
       </div>
 
       {/* Decision Mode Toggle */}

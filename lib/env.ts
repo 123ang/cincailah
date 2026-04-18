@@ -45,11 +45,6 @@ const envSpecs: EnvSpec[] = [
     description: 'JWT secret for mobile token auth — falls back to SESSION_SECRET',
   },
   {
-    key: 'GOOGLE_PLACES_API_KEY',
-    required: false,
-    description: 'Google Places API key for restaurant import',
-  },
-  {
     key: 'CRON_SECRET',
     required: false,
     description: 'Shared secret for /api/cron/reminders',

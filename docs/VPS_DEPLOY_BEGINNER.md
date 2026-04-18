@@ -194,7 +194,6 @@ EMAIL_FROM="Cincailah <admin@suntzutechnologies.com>"
 RESEND_API_KEY=""
 
 # Optional but recommended
-GOOGLE_PLACES_API_KEY=""
 POSTHOG_API_KEY=""
 POSTHOG_HOST="https://app.posthog.com"
 SENTRY_DSN=""

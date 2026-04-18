@@ -77,6 +77,8 @@ export const DecisionFiltersSchema = z.object({
   maxDistanceKm: z.number().min(0.1).max(50).optional(),
   userLat: z.number().min(-90).max(90).optional(),
   userLng: z.number().min(-180).max(180).optional(),
+  /** When true, skip anti-repeat (recent picks) and allow rerolls to pick the same spot again. */
+  allowRepeatPicks: z.boolean().optional(),
 });
 
 export const DecideSchema = z.object({

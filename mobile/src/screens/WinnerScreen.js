@@ -63,7 +63,8 @@ export default function WinnerScreen({ route, navigation }) {
     if (rerollsUsed >= maxReroll) return;
     setLoading(true);
     try {
-      const nextExclude = [...excludeIds, winner.id];
+      const allowRepeat = Boolean(filters?.allowRepeatPicks);
+      const nextExclude = allowRepeat ? excludeIds : [...excludeIds, winner.id];
       const { data, ok } = await apiFetch("/api/decide", {
         method: "POST",
         body: { groupId, filters, excludeIds: nextExclude },
@@ -74,7 +75,9 @@ export default function WinnerScreen({ route, navigation }) {
       }
       scale.setValue(0.6);
       setWinner(data.winner);
-      setExcludeIds(nextExclude);
+      if (!allowRepeat) {
+        setExcludeIds(nextExclude);
+      }
       setRerollsUsed((n) => n + 1);
     } finally {
       setLoading(false);

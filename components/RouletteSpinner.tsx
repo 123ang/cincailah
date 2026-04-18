@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatPrice, haversineKm } from '@/lib/utils';
 import { fireConfetti } from '@/lib/confetti';
@@ -17,6 +17,7 @@ interface Restaurant {
   vegOptions: boolean;
   walkMinutes: number;
   mapsUrl: string | null;
+  photoUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
 }
@@ -43,6 +44,11 @@ export default function RouletteSpinner({
   filters,
 }: RouletteSpinnerProps) {
   const router = useRouter();
+  const allowRepeatPicks = useMemo(() => {
+    if (!filters || typeof filters !== 'object') return false;
+    return (filters as Record<string, unknown>).allowRepeatPicks === true;
+  }, [filters]);
+
   const [phase, setPhase] = useState<Phase>('loading');
   const [loadingText, setLoadingText] = useState(LOADING_TEXTS[0]);
   const [candidates, setCandidates] = useState<Restaurant[]>([]);
@@ -322,8 +328,10 @@ export default function RouletteSpinner({
 
   const handleNotThis = () => {
     if (!winner) return;
-    const nextExclude = [...excludeIds, winner.id];
-    setExcludeIds(nextExclude);
+    const nextExclude = allowRepeatPicks ? excludeIds : [...excludeIds, winner.id];
+    if (!allowRepeatPicks) {
+      setExcludeIds((prev) => [...prev, winner.id]);
+    }
     setRerollsUsed((n) => n + 1);
     void fetchDecision(nextExclude);
   };
@@ -374,8 +382,17 @@ export default function RouletteSpinner({
             {onlyOne ? 'Only one match — easy!' : 'Spinning the wheel…'}
           </h2>
           {onlyOne ? (
-            <div className="w-40 h-40 rounded-full bg-gradient-to-br from-sambal to-red-400 flex items-center justify-center shadow-lg animate-pulse">
-              <span className="text-6xl">🍜</span>
+            <div className="w-40 h-40 rounded-full overflow-hidden shadow-lg ring-4 ring-sambal/30 animate-pulse bg-gradient-to-br from-sambal to-red-400 flex items-center justify-center">
+              {candidates[0]?.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={candidates[0].photoUrl}
+                  alt={candidates[0].name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-6xl">🍜</span>
+              )}
             </div>
           ) : (
             <canvas
@@ -429,13 +446,25 @@ export default function RouletteSpinner({
           </p>
 
           <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="h-40 bg-gradient-to-br from-sambal to-red-400 flex items-center justify-center relative">
-              <span className="text-7xl">🍜</span>
-              <div className="absolute top-3 right-3 bg-white/90 rounded-full px-3 py-1 text-xs font-bold text-sambal">
+            <div className="h-40 bg-gradient-to-br from-sambal to-red-400 relative overflow-hidden">
+              {winner.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={winner.photoUrl}
+                  alt={winner.name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-7xl">🍜</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-[1]" />
+              <div className="absolute top-3 right-3 z-[2] bg-white/90 rounded-full px-3 py-1 text-xs font-bold text-sambal">
                 You Pick
               </div>
               {rerollsUsed > 0 && (
-                <div className="absolute top-3 left-3 bg-black/40 backdrop-blur rounded-full px-3 py-1 text-xs font-bold text-white">
+                <div className="absolute top-3 left-3 z-[2] bg-black/40 backdrop-blur rounded-full px-3 py-1 text-xs font-bold text-white">
                   Reroll {rerollsUsed}/{maxReroll}
                 </div>
               )}
