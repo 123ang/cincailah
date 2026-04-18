@@ -64,7 +64,11 @@ export const CreateRestaurantSchema = z.object({
 
 // Decisions
 export const DecisionFiltersSchema = z.object({
-  budgetFilter: z.enum(['kering', 'ok', 'belanja']).optional(),
+  // Web/mobile send '' when no tier is selected; treat as unset.
+  budgetFilter: z.preprocess(
+    (val) => (val === '' || val === null ? undefined : val),
+    z.enum(['kering', 'ok', 'belanja']).optional()
+  ),
   selectedTags: z.array(z.string()).optional(),
   walkTimeMax: z.number().optional(),
   halal: z.boolean().optional(),

@@ -190,7 +190,7 @@ All uploads go through `POST /api/upload` (multipart form, fields `file` and
 
 1. Authenticates via `resolveUserId` (web cookie or mobile JWT).
 2. Rate limits at 20 uploads/min/IP.
-3. Validates size (`MAX_FILE_SIZE` in `lib/upload.ts`) and MIME.
+3. Validates size (`MAX_FILE_SIZE` in `lib/upload-constants.ts`, used by `lib/upload.ts`; currently **50 MB**) and MIME.
 4. Resizes + converts to WebP via `sharp`.
 5. Writes under `/public/uploads/<type>/<uuid>.webp`.
 6. Returns `{ url: '/uploads/...', bytes, filename }`.

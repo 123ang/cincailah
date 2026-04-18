@@ -343,7 +343,7 @@ server {
     server_name cincailah.suntzutechnologies.com;
 
     # Allow larger image uploads
-    client_max_body_size 10M;
+    client_max_body_size 50M;
 
     # Serve uploaded files directly from disk for speed
     location /uploads/ {
@@ -508,7 +508,7 @@ curl https://cincailah.suntzutechnologies.com/api/health
    - Run `npx prisma db push` (or migration deploy).
 
 4. **Image upload fails**
-   - `client_max_body_size` too small or `/uploads/` alias wrong.
+   - `client_max_body_size` too small (use **50M** to match app uploads) or `/uploads/` alias wrong.
    - Confirm Nginx config and restart Nginx.
 
 5. **SSL not issuing**

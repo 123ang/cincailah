@@ -11,6 +11,7 @@
 import { randomUUID } from 'crypto';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
+import { MAX_FILE_SIZE } from '@/lib/upload-constants';
 
 type SharpModule = typeof import('sharp');
 let sharpSingleton: SharpModule | null = null;
@@ -44,7 +45,7 @@ const TYPE_CONFIG: Record<UploadType, { maxWidth: number; square: boolean; quali
   group_cover: { maxWidth: 1600, square: false, quality: 82 },
 };
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+export { MAX_FILE_SIZE };
 
 export const ALLOWED_MIMES = new Set([
   'image/jpeg',

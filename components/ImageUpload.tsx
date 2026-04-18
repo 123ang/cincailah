@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { MAX_FILE_SIZE } from '@/lib/upload-constants';
 
 type UploadType = 'restaurant' | 'avatar' | 'group_cover';
 
@@ -31,8 +32,8 @@ export default function ImageUpload({
 
   const handleFile = async (file: File) => {
     setError(null);
-    if (file.size > 5 * 1024 * 1024) {
-      setError('File too large (max 5 MB)');
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`File too large (max ${MAX_FILE_SIZE / 1024 / 1024} MB)`);
       return;
     }
     setUploading(true);
