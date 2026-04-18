@@ -1,3 +1,4 @@
+import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { logger } from '@/lib/logger';
 
@@ -6,12 +7,48 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const APP_NAME = 'Cincailah';
 
 let resendClient: Resend | null = null;
+let smtpTransporter: nodemailer.Transporter | null = null;
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
   if (!key) return null;
   if (!resendClient) resendClient = new Resend(key);
   return resendClient;
+}
+
+function smtpEnv() {
+  return {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    secure: process.env.SMTP_SECURE === '1' || process.env.SMTP_SECURE === 'true',
+  };
+}
+
+function smtpFullyConfigured(): boolean {
+  const { host, port, user, pass } = smtpEnv();
+  return Boolean(host && port && user && pass && Number.isFinite(port));
+}
+
+function smtpPartiallyConfigured(): boolean {
+  const { host, port, user, pass } = smtpEnv();
+  const any = Boolean(host || port || user || pass);
+  return any && !smtpFullyConfigured();
+}
+
+function getSmtpTransporter(): nodemailer.Transporter | null {
+  if (!smtpFullyConfigured()) return null;
+  if (smtpTransporter) return smtpTransporter;
+
+  const { host, port, user, pass, secure } = smtpEnv();
+  smtpTransporter = nodemailer.createTransport({
+    host: host!,
+    port: port!,
+    secure,
+    auth: { user: user!, pass: pass! },
+  });
+  return smtpTransporter;
 }
 
 export interface SendEmailOptions {
@@ -22,11 +59,36 @@ export interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
+  if (smtpPartiallyConfigured()) {
+    logger.warn(
+      { to, subjectPreview: subject.slice(0, 120) },
+      'SMTP partially configured (set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS together) — email skipped'
+    );
+    return { success: false, devMode: true };
+  }
+
+  const smtp = getSmtpTransporter();
+  if (smtp) {
+    try {
+      const info = await smtp.sendMail({
+        from: FROM_EMAIL,
+        to,
+        subject,
+        html,
+        text: text || stripHtml(html),
+      });
+      return { success: true, id: info.messageId };
+    } catch (error) {
+      logger.error({ err: error, to, subjectPreview: subject.slice(0, 120) }, 'SMTP send failed');
+      return { success: false, error };
+    }
+  }
+
   const resend = getResend();
   if (!resend) {
     logger.warn(
       { to, subjectPreview: subject.slice(0, 120) },
-      'RESEND_API_KEY not set — email skipped (dev mode)'
+      'No email transport configured (set Zoho SMTP_* vars or RESEND_API_KEY) — email skipped'
     );
     return { success: false, devMode: true };
   }

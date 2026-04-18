@@ -3,6 +3,10 @@ import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import MyGroupsClient from '@/components/MyGroupsClient';
 
+// This page reads cookies (iron-session) and user-specific DB rows — it must never
+// be statically prerendered at build time.
+export const dynamic = 'force-dynamic';
+
 export default async function MyGroupsPage() {
   try {
     const session = await getSession();
