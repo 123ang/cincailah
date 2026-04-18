@@ -66,20 +66,16 @@ sudo apt update && sudo apt upgrade -y
 
 ## 3) Install required software
 
-Install Node.js 20, git, nginx, certbot, and build tools:
+Install Node.js 20, git, nginx, and certbot:
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs git nginx certbot python3-certbot-nginx build-essential \
-  python3 pkg-config libvips-dev
+sudo apt install -y nodejs git nginx certbot python3-certbot-nginx
 ```
 
-**Why `libvips-dev` matters (Sharp / image uploads):** Cincailah uses `sharp` to resize uploaded images.
-On some older VPS CPUs, the prebuilt `sharp` Linux binary can fail with:
-
-`Unsupported CPU: Prebuilt binaries for linux-x64 require v2 microarchitecture`
-
-Installing `libvips-dev` + build tools allows `sharp` to **compile against the system libvips** during `npm install` (the repo runs a small `postinstall` helper for this).
+Cincailah resizes uploaded images with **`jimp`** (pure JavaScript), so no native
+image library or build toolchain is required. Works on older VPS CPUs that
+can't run `sharp`'s prebuilt linux-x64 binaries.
 
 Verify:
 
@@ -515,17 +511,12 @@ curl https://cincailah.suntzutechnologies.com/api/health
    - Domain not pointed to VPS yet.
    - Check DNS records and wait a bit, then retry certbot.
 
-6. **`sharp` fails during `npm run build` on Linux (Unsupported CPU / x86-64-v2)**
-   - Some VPS CPUs cannot use the prebuilt `sharp` linux-x64 binary.
-   - Fix: install system libvips + compiler toolchain (section 3), then reinstall deps so `sharp` can compile:
-
-```bash
-sudo apt install -y build-essential python3 pkg-config libvips-dev
-cd ~/projects/cincailah
-rm -rf node_modules
-npm install
-npm run build
-```
+6. **Image library errors on older CPUs**
+   - Cincailah uses `jimp` (pure JavaScript) for resizing, so there are **no
+     native CPU requirements** and no `sharp` / `libvips` setup needed.
+   - If you see an error about `sharp` after a `git pull`, run `npm install`
+     again — `sharp` is no longer a dependency and leftover binaries can be
+     removed with `rm -rf node_modules && npm install`.
 
 ---
 

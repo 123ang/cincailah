@@ -14,7 +14,7 @@
 | Database           | PostgreSQL via Prisma ORM 5.22                                       |
 | Web auth           | `iron-session` (encrypted cookie)                                    |
 | Mobile auth        | 30-day JWT issued at `POST /api/auth/token` (Bearer header)          |
-| Image uploads      | Direct VPS filesystem (`/public/uploads/...`), `sharp` for resizing  |
+| Image uploads      | Direct VPS filesystem (`/public/uploads/...`), `jimp` (pure JS) for resizing |
 | Email              | Resend (falls back to `devMode` log if `RESEND_API_KEY` missing)     |
 | Logging            | `pino` with a Sentry bridge via `lib/logger.ts`                      |
 | Analytics          | `posthog-node` via `lib/analytics.ts`                                |
@@ -191,7 +191,7 @@ All uploads go through `POST /api/upload` (multipart form, fields `file` and
 1. Authenticates via `resolveUserId` (web cookie or mobile JWT).
 2. Rate limits at 20 uploads/min/IP.
 3. Validates size (`MAX_FILE_SIZE` in `lib/upload-constants.ts`, used by `lib/upload.ts`; currently **50 MB**) and MIME.
-4. Resizes + converts to WebP via `sharp`.
+4. Resizes + converts to JPEG via `jimp` (pure JavaScript, no native binaries).
 5. Writes under `/public/uploads/<type>/<uuid>.webp`.
 6. Returns `{ url: '/uploads/...', bytes, filename }`.
 

@@ -1,7 +1,7 @@
 /**
  * Shared upload limits (safe to import from Client Components).
  *
- * Keep this file free of Node-only imports (fs, sharp, etc.).
+ * Keep this file free of Node-only imports (fs, jimp, etc.).
  */
 
 /** Hard cap for multipart image uploads (restaurant / avatar / group cover). */

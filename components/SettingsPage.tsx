@@ -241,7 +241,7 @@ export default function SettingsPage({
             onChange={handleCoverChange}
             label="Group cover"
             previewClassName="h-32 w-full"
-            helpText="Auto-resized to 1600px WebP · max 50 MB"
+            helpText="Auto-resized to 1600px JPEG · max 50 MB"
           />
         </div>
       ) : group.coverUrl ? (

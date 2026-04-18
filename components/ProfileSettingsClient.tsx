@@ -184,8 +184,8 @@ export default function ProfileSettingsClient({
               />
               <div>
                 <p className="text-xs text-gray-400">Profile picture</p>
-                <p className="text-xs text-gray-500 mt-0.5">JPEG / PNG / HEIC · max 50 MB</p>
-                <p className="text-xs text-gray-400">Auto-resized to 400×400 WebP</p>
+                <p className="text-xs text-gray-500 mt-0.5">JPEG / PNG / WebP · max 50 MB</p>
+                <p className="text-xs text-gray-400">Auto-resized to 400×400 JPEG</p>
               </div>
             </div>
             <div>

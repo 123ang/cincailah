@@ -1,11 +1,13 @@
 /**
  * Local-filesystem image upload helper for VPS deployment.
  *
- * Uploads are stored at /public/uploads/<type>/<uuid>.webp and served by
- * Next.js at https://<host>/uploads/<type>/<uuid>.webp.
+ * Uploads are stored at /public/uploads/<type>/<uuid>.jpg and served by
+ * Next.js at https://<host>/uploads/<type>/<uuid>.jpg.
  *
- * All images are auto-resized to max 1200px wide and converted to WebP
- * via `sharp` for consistent quality + small file size.
+ * All images are auto-resized and converted to JPEG via `jimp`
+ * (pure JavaScript, no native/CPU-specific binaries) so the app runs on
+ * any VPS including older CPUs that can't use sharp's prebuilt linux-x64
+ * binaries.
  */
 
 import { randomUUID } from 'crypto';
@@ -13,21 +15,14 @@ import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 import { MAX_FILE_SIZE } from '@/lib/upload-constants';
 
-type SharpModule = typeof import('sharp');
-let sharpSingleton: SharpModule | null = null;
+type JimpModule = typeof import('jimp');
+let jimpSingleton: JimpModule | null = null;
 
-async function loadSharp(): Promise<SharpModule> {
-  if (sharpSingleton) return sharpSingleton;
-  const mod: unknown = await import('sharp');
-  const sharp =
-    typeof mod === 'function'
-      ? (mod as SharpModule)
-      : (mod as { default?: SharpModule }).default ??
-        (() => {
-          throw new Error('Failed to load sharp module (unexpected export shape)');
-        })();
-  sharpSingleton = sharp;
-  return sharpSingleton;
+async function loadJimp(): Promise<JimpModule> {
+  if (jimpSingleton) return jimpSingleton;
+  const mod = (await import('jimp')) as unknown as JimpModule;
+  jimpSingleton = mod;
+  return jimpSingleton;
 }
 
 export type UploadType = 'restaurant' | 'avatar' | 'group_cover';
@@ -38,7 +33,6 @@ const TYPE_DIRS: Record<UploadType, string> = {
   group_cover: 'group-covers',
 };
 
-// Max dimensions by type (avatars square-cropped, others preserve aspect)
 const TYPE_CONFIG: Record<UploadType, { maxWidth: number; square: boolean; quality: number }> = {
   restaurant: { maxWidth: 1200, square: false, quality: 82 },
   avatar: { maxWidth: 400, square: true, quality: 85 },
@@ -47,20 +41,34 @@ const TYPE_CONFIG: Record<UploadType, { maxWidth: number; square: boolean; quali
 
 export { MAX_FILE_SIZE };
 
+// HEIC/HEIF requires libheif; jimp can't decode it in pure JS. If users need
+// HEIC uploads later, convert client-side before upload or add a native
+// decoder. For now we accept the common web formats.
 export const ALLOWED_MIMES = new Set([
   'image/jpeg',
   'image/jpg',
   'image/png',
   'image/webp',
   'image/gif',
-  'image/heic',
-  'image/heif',
+  'image/bmp',
+  'image/tiff',
 ]);
 
 export interface UploadResult {
-  url: string;   // public URL path, e.g. /uploads/restaurants/abc.webp
+  url: string;
   filename: string;
   bytes: number;
+}
+
+function getJimpRead(mod: JimpModule): (buf: Buffer) => Promise<unknown> {
+  const candidate =
+    (mod as unknown as { Jimp?: { read?: unknown }; read?: unknown }).Jimp?.read ??
+    (mod as unknown as { read?: unknown }).read ??
+    (mod as unknown as { default?: { read?: unknown } }).default?.read;
+  if (typeof candidate !== 'function') {
+    throw new Error('jimp module did not expose read()');
+  }
+  return candidate as (buf: Buffer) => Promise<unknown>;
 }
 
 /**
@@ -82,26 +90,33 @@ export async function saveUpload(file: File, type: UploadType): Promise<UploadRe
   const subdir = TYPE_DIRS[type];
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  // Process image with sharp
-  const sharp = await loadSharp();
-  let pipeline = sharp(bytes, { failOn: 'error' }).rotate(); // respect EXIF orientation
+  const jimpMod = await loadJimp();
+  const read = getJimpRead(jimpMod);
+  const image = (await read(bytes)) as {
+    width: number;
+    height: number;
+    resize: (opts: { w: number; h?: number } | { w: number; h: number }) => unknown;
+    cover: (opts: { w: number; h: number }) => unknown;
+    quality?: (q: number) => unknown;
+    getBuffer: (mime: string, opts?: { quality?: number }) => Promise<Buffer>;
+  };
 
   if (config.square) {
-    pipeline = pipeline.resize(config.maxWidth, config.maxWidth, {
-      fit: 'cover',
-      position: 'attention',
+    // Crop to square, centered.
+    (image as { cover: (o: { w: number; h: number }) => unknown }).cover({
+      w: config.maxWidth,
+      h: config.maxWidth,
     });
   } else {
-    pipeline = pipeline.resize(config.maxWidth, null, {
-      fit: 'inside',
-      withoutEnlargement: true,
-    });
+    const w = image.width;
+    if (w > config.maxWidth) {
+      (image as { resize: (o: { w: number }) => unknown }).resize({ w: config.maxWidth });
+    }
   }
 
-  const processed = await pipeline.webp({ quality: config.quality }).toBuffer();
+  const processed = await image.getBuffer('image/jpeg', { quality: config.quality });
 
-  // Save to /public/uploads/<type>/<uuid>.webp
-  const filename = `${randomUUID()}.webp`;
+  const filename = `${randomUUID()}.jpg`;
   const dir = path.join(process.cwd(), 'public', 'uploads', subdir);
   await mkdir(dir, { recursive: true });
   const fullPath = path.join(dir, filename);
@@ -124,7 +139,6 @@ export async function deleteUpload(publicUrl: string | null | undefined): Promis
     const { unlink } = await import('fs/promises');
     const rel = publicUrl.replace(/^\/+/, '');
     const fullPath = path.join(process.cwd(), 'public', rel);
-    // Safety: path must resolve inside /public/uploads
     const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
     if (!path.resolve(fullPath).startsWith(path.resolve(uploadsRoot))) return;
     await unlink(fullPath);

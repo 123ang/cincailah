@@ -2,7 +2,7 @@
  * POST /api/upload
  * Accepts multipart/form-data with `file` and `type` ("restaurant" | "avatar" | "group_cover").
  *
- * Validates auth, file size/MIME, resizes via sharp, writes to /public/uploads/<type>/.
+ * Validates auth, file size/MIME, resizes via jimp, writes to /public/uploads/<type>/.
  * Returns { url, bytes, filename }.
  */
 

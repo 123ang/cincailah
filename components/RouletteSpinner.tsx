@@ -165,21 +165,23 @@ export default function RouletteSpinner({
   const startSpinAnimation = useCallback(
     (allCandidates: Restaurant[], finalWinner: Restaurant) => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) return false;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) return false;
 
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       const radius = Math.min(centerX, centerY) - 40;
 
-      const totalSpinTime = 3000;
+      const totalSpinTime = allCandidates.length === 1 ? 1200 : 3000;
       const startTime = Date.now();
-      const winnerIndex = allCandidates.findIndex(
-        (c) => c.id === finalWinner.id
+      const winnerIndex = Math.max(
+        0,
+        allCandidates.findIndex((c) => c.id === finalWinner.id)
       );
       const targetAngle =
-        360 * 5 + (360 - (winnerIndex / allCandidates.length) * 360);
+        360 * (allCandidates.length === 1 ? 2 : 5) +
+        (360 - (winnerIndex / Math.max(1, allCandidates.length)) * 360);
 
       const animate = () => {
         const elapsed = Date.now() - startTime;
@@ -195,11 +197,12 @@ export default function RouletteSpinner({
         } else {
           setTimeout(() => {
             setPhase('result');
-          }, 500);
+          }, 400);
         }
       };
 
       animate();
+      return true;
     },
     [drawWheel]
   );
@@ -233,15 +236,46 @@ export default function RouletteSpinner({
 
         setTimeout(() => {
           setPhase('spinning');
-          startSpinAnimation(data.candidates, data.winner);
         }, 800);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Something went wrong');
         setPhase('result');
       }
     },
-    [groupId, filters, startSpinAnimation]
+    [groupId, filters]
   );
+
+  // Kick off (or re-attempt) the canvas spin only once the `spinning` phase
+  // has actually rendered — otherwise `canvasRef.current` is null and the
+  // animation silently aborts, leaving the UI stuck on the spinning screen.
+  useEffect(() => {
+    if (phase !== 'spinning' || !winner || candidates.length === 0) return;
+
+    // With only one candidate there's no meaningful wheel — show a short
+    // reveal and jump to the result.
+    if (candidates.length === 1) {
+      const t = setTimeout(() => setPhase('result'), 900);
+      return () => clearTimeout(t);
+    }
+
+    let cancelled = false;
+    let rafId: number | null = null;
+
+    const tryStart = () => {
+      if (cancelled) return;
+      const ok = startSpinAnimation(candidates, winner);
+      if (!ok) {
+        rafId = requestAnimationFrame(tryStart);
+      }
+    };
+    tryStart();
+
+    return () => {
+      cancelled = true;
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [phase, winner, candidates, startSpinAnimation]);
 
   useEffect(() => {
     let idx = 0;
@@ -318,20 +352,27 @@ export default function RouletteSpinner({
   }
 
   if (phase === 'spinning') {
+    const onlyOne = candidates.length === 1;
     return (
       <div className="max-w-md mx-auto px-4">
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
           <h2 className="text-2xl font-black text-slate mb-6">
-            Spinning the wheel…
+            {onlyOne ? 'Only one match — easy!' : 'Spinning the wheel…'}
           </h2>
-          <canvas
-            ref={canvasRef}
-            width={400}
-            height={400}
-            className="max-w-full"
-          />
+          {onlyOne ? (
+            <div className="w-40 h-40 rounded-full bg-gradient-to-br from-sambal to-red-400 flex items-center justify-center shadow-lg animate-pulse">
+              <span className="text-6xl">🍜</span>
+            </div>
+          ) : (
+            <canvas
+              ref={canvasRef}
+              width={400}
+              height={400}
+              className="max-w-full"
+            />
+          )}
           <p className="text-sm text-gray-400 mt-4">
-            {candidates.length} options in the mix!
+            {candidates.length} option{candidates.length === 1 ? '' : 's'} in the mix!
           </p>
         </div>
       </div>

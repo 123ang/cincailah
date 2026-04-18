@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cincailah-v1';
+const CACHE_NAME = 'cincailah-v2';
 const OFFLINE_ASSETS = [
   '/',
   '/solo',
@@ -23,11 +23,39 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Only cache http(s) GETs that return a full 200 OK. This avoids:
+//  - "Request scheme 'chrome-extension' is unsupported"
+//  - "Partial response (status code 206) is unsupported"
+//  - accidentally caching opaque/error responses
+function isCacheableRequest(request) {
+  if (request.method !== 'GET') return false;
+  const url = new URL(request.url);
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  return true;
+}
+
+function isCacheableResponse(response) {
+  if (!response) return false;
+  if (response.status !== 200) return false; // skip 206, 3xx, errors
+  if (response.type === 'opaque' || response.type === 'opaqueredirect') return false;
+  return true;
+}
+
+function safeCachePut(request, response) {
+  if (!isCacheableRequest(request) || !isCacheableResponse(response)) return;
+  const clone = response.clone();
+  caches
+    .open(CACHE_NAME)
+    .then((cache) => cache.put(request, clone))
+    .catch(() => {
+      // ignore cache write failures (quota, scheme, etc.)
+    });
+}
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  if (request.method !== 'GET') return;
+  if (!isCacheableRequest(request)) return;
 
-  // Network-first for app routes, cache-first for static assets
   const url = new URL(request.url);
   const isStatic =
     url.pathname.startsWith('/icons/') ||
@@ -43,8 +71,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(request).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((res) => {
-          const clone = res.clone();
-          void caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          safeCachePut(request, res);
           return res;
         });
       })
@@ -55,8 +82,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(request)
       .then((res) => {
-        const clone = res.clone();
-        void caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        safeCachePut(request, res);
         return res;
       })
       .catch(async () => {

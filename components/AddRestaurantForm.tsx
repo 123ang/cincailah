@@ -399,7 +399,7 @@ export default function AddRestaurantForm({ groupId }: { groupId: string }) {
           onChange={(url) => setPhotoUrl(url ?? '')}
           label="Photo (optional)"
           previewClassName="h-40 w-full"
-          helpText="JPEG, PNG, WebP, or HEIC — max 50 MB. Auto-resized to 1200px WebP."
+          helpText="JPEG, PNG, or WebP — max 50 MB. Auto-resized to 1200px JPEG."
         />
 
         <details className="text-xs">
