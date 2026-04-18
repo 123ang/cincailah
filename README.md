@@ -121,6 +121,7 @@ npm run build
 
 ```bash
 npm install -g pm2
+# Production: set PORT in `.env` (recommended), e.g. PORT=3015
 pm2 start npm --name "cincailah" -- start
 pm2 save
 pm2 startup
@@ -128,13 +129,15 @@ pm2 startup
 
 ### 3. Configure Nginx Reverse Proxy
 
+Point Nginx at whatever port Next is listening on (`PORT` in `.env`, commonly **3015** on VPS setups):
+
 ```nginx
 server {
     listen 80;
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://127.0.0.1:3015;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -162,6 +165,9 @@ SESSION_SECRET="..."
 
 # Node Environment
 NODE_ENV="production"
+
+# Next server port (optional; defaults to 3000 if unset)
+PORT="3015"
 ```
 
 ## Project Structure

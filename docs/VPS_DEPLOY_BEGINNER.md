@@ -165,6 +165,10 @@ Paste and fill:
 ```env
 NODE_ENV="production"
 
+# Next.js listens on this port for `npm start` / PM2.
+# Nginx will proxy public traffic (80/443) -> this internal port.
+PORT="3015"
+
 DATABASE_URL="postgresql://cincailah_user:CHANGE_THIS_STRONG_PASSWORD@localhost:5432/cincailah_db?schema=public"
 
 # At least 32 chars
@@ -317,7 +321,7 @@ pm2 status
 pm2 logs cincailah --lines 100
 ```
 
-At this point app usually runs on `http://localhost:3000`.
+At this point the app should answer on `http://127.0.0.1:3015` (because `PORT=3015` in `.env`).
 
 ---
 
@@ -350,7 +354,7 @@ server {
     }
 
     location / {
-        proxy_pass http://127.0.0.1:3000;
+        proxy_pass http://127.0.0.1:3015;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -422,7 +426,7 @@ sudo ufw status
 Run these checks:
 
 ```bash
-curl -I http://127.0.0.1:3000
+curl -I http://127.0.0.1:3015
 curl -I https://cincailah.suntzutechnologies.com
 curl -I https://cincailah.suntzutechnologies.com/api/health
 ```
@@ -492,8 +496,8 @@ curl https://cincailah.suntzutechnologies.com/api/health
 ## 15) Common beginner issues
 
 1. **502 Bad Gateway**
-   - App is not running on port 3000.
-   - Fix: `pm2 status`, then `pm2 restart cincailah`.
+   - App is not running on port **3015** (or Nginx `proxy_pass` points to the wrong port).
+   - Fix: `pm2 status`, confirm `.env` has `PORT=3015`, then `pm2 restart cincailah`.
 
 2. **500 Internal Server Error on all pages**
    - Missing or wrong `.env` values (`DATABASE_URL`, `SESSION_SECRET`).
