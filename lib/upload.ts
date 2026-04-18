@@ -11,7 +11,23 @@
 import { randomUUID } from 'crypto';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
-import sharp from 'sharp';
+
+type SharpModule = typeof import('sharp');
+let sharpSingleton: SharpModule | null = null;
+
+async function loadSharp(): Promise<SharpModule> {
+  if (sharpSingleton) return sharpSingleton;
+  const mod: unknown = await import('sharp');
+  const sharp =
+    typeof mod === 'function'
+      ? (mod as SharpModule)
+      : (mod as { default?: SharpModule }).default ??
+        (() => {
+          throw new Error('Failed to load sharp module (unexpected export shape)');
+        })();
+  sharpSingleton = sharp;
+  return sharpSingleton;
+}
 
 export type UploadType = 'restaurant' | 'avatar' | 'group_cover';
 
@@ -66,6 +82,7 @@ export async function saveUpload(file: File, type: UploadType): Promise<UploadRe
   const bytes = Buffer.from(await file.arrayBuffer());
 
   // Process image with sharp
+  const sharp = await loadSharp();
   let pipeline = sharp(bytes, { failOn: 'error' }).rotate(); // respect EXIF orientation
 
   if (config.square) {

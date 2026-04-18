@@ -70,8 +70,16 @@ Install Node.js 20, git, nginx, certbot, and build tools:
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs git nginx certbot python3-certbot-nginx build-essential
+sudo apt install -y nodejs git nginx certbot python3-certbot-nginx build-essential \
+  python3 pkg-config libvips-dev
 ```
+
+**Why `libvips-dev` matters (Sharp / image uploads):** Cincailah uses `sharp` to resize uploaded images.
+On some older VPS CPUs, the prebuilt `sharp` Linux binary can fail with:
+
+`Unsupported CPU: Prebuilt binaries for linux-x64 require v2 microarchitecture`
+
+Installing `libvips-dev` + build tools allows `sharp` to **compile against the system libvips** during `npm install` (the repo runs a small `postinstall` helper for this).
 
 Verify:
 
@@ -165,8 +173,27 @@ JWT_SECRET="REPLACE_WITH_ANOTHER_LONG_RANDOM_SECRET"
 
 NEXT_PUBLIC_APP_URL="https://cincailah.suntzutechnologies.com"
 
-# Optional but recommended
+# --- Email (Zoho Mail SMTP) ---
+# This app sends mail via SMTP when these 4 vars are all set:
+#   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS
+#
+# For your setup, you want outgoing mail from:
+#   admin@suntzutechnologies.com
+#
+# Typical Zoho SMTP (SSL):
+SMTP_HOST="smtp.zoho.com"
+SMTP_PORT="465"
+SMTP_SECURE="true"
+SMTP_USER="admin@suntzutechnologies.com"
+SMTP_PASS="PASTE_ZOHO_APP_SPECIFIC_PASSWORD_HERE"
+
+# The visible From header — should match a mailbox Zoho lets you send as
+EMAIL_FROM="Cincailah <admin@suntzutechnologies.com>"
+
+# Optional (only used if SMTP is NOT fully configured)
 RESEND_API_KEY=""
+
+# Optional but recommended
 GOOGLE_PLACES_API_KEY=""
 POSTHOG_API_KEY=""
 POSTHOG_HOST="https://app.posthog.com"
@@ -183,6 +210,70 @@ openssl rand -hex 32
 ```
 
 Use one output for `SESSION_SECRET`, then run again for `JWT_SECRET`.
+
+---
+
+## 6A) Zoho Mail setup (recommended for `admin@suntzutechnologies.com`)
+
+Cincailah sends transactional email for things like **password reset** and **email verification**.
+You already use **Zoho Mail** for `admin@suntzutechnologies.com`, so use **SMTP** on the VPS.
+
+### A) Create the SMTP password in Zoho (most common issue)
+
+1. Log in to Zoho Mail as `admin@suntzutechnologies.com`.
+2. Go to **Security / App passwords** (wording varies slightly).
+3. Generate an **App-specific password** (recommended), especially if you use **2FA**.
+
+Put that value into `.env` as `SMTP_PASS=...` (not your normal web login password).
+
+### B) Pick the correct SMTP host/port
+
+Most Zoho accounts work with:
+
+- **SSL:** `smtp.zoho.com:465` and `SMTP_SECURE="true"` (what the template above uses)
+
+If 465 is blocked by your provider/firewall, use STARTTLS instead:
+
+```env
+SMTP_HOST="smtp.zoho.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+```
+
+If your mailbox is on a **region-specific** Zoho cluster, Zoho may give you a different SMTP hostname in their docs/settings screen — use **exactly** what Zoho shows for your account.
+
+### C) Make `EMAIL_FROM` match what Zoho allows
+
+Rule of thumb:
+
+- `SMTP_USER` should be the mailbox you authenticate as (`admin@suntzutechnologies.com`).
+- `EMAIL_FROM` should be the same mailbox **unless** you have a verified alias/group sender in Zoho.
+
+If `EMAIL_FROM` uses a different address than Zoho permits, Zoho may reject the message or recipients may never see it.
+
+### D) DNS deliverability (strongly recommended)
+
+For `suntzutechnologies.com`, make sure Zoho’s DNS records are correct:
+
+- **SPF** includes Zoho (Zoho provides the exact TXT record)
+- **DKIM** enabled in Zoho + the DNS CNAME/TXT records added
+- **DMARC** (optional but good) once SPF/DKIM are stable
+
+This reduces “email went to spam” problems.
+
+### E) Quick sanity check after deploy
+
+After you finish PM2 + Nginx + `.env`:
+
+1. Register a **throwaway Gmail** account for testing.
+2. Trigger **Forgot password** from the site.
+3. Watch logs:
+
+```bash
+pm2 logs cincailah --lines 200
+```
+
+If SMTP auth fails, the log line will usually mention **authentication failed** / **invalid login** — that almost always means **`SMTP_PASS` is wrong** (use app password) or **`SMTP_USER` doesn’t match** the mailbox.
 
 ---
 
@@ -419,6 +510,18 @@ curl https://cincailah.suntzutechnologies.com/api/health
 5. **SSL not issuing**
    - Domain not pointed to VPS yet.
    - Check DNS records and wait a bit, then retry certbot.
+
+6. **`sharp` fails during `npm run build` on Linux (Unsupported CPU / x86-64-v2)**
+   - Some VPS CPUs cannot use the prebuilt `sharp` linux-x64 binary.
+   - Fix: install system libvips + compiler toolchain (section 3), then reinstall deps so `sharp` can compile:
+
+```bash
+sudo apt install -y build-essential python3 pkg-config libvips-dev
+cd ~/projects/cincailah
+rm -rf node_modules
+npm install
+npm run build
+```
 
 ---
 
