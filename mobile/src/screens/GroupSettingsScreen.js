@@ -67,8 +67,10 @@ export default function GroupSettingsScreen({ route, navigation }) {
 
   const handleShare = async () => {
     if (!group) return;
+    const makanCode = group.makanCode;
+    const webJoinLink = `https://cincailah.suntzutechnologies.com/join/${encodeURIComponent(makanCode)}`;
     await Share.share({
-      message: `Join my Cincailah group "${group.name}"!\nMakan Code: ${group.makanCode}\n\nOpen the Cincailah app and tap "Join Group".`,
+      message: `Join my Cincailah group "${group.name}"!\n\nTap to join: ${webJoinLink}\n\nMakan Code: ${makanCode}\n\nIf the app doesn't open, copy the code into Join Group.`,
     });
   };
 
