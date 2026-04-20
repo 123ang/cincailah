@@ -15,7 +15,7 @@ import { ListSkeleton } from "../components/Skeleton";
 
 const SAMBAL = "#DC2626";
 const BASE_URL =
-  (Constants.expoConfig?.extra?.apiUrl) || "https://cincailah.com";
+  (Constants.expoConfig?.extra?.apiUrl) || "https://cincailah.suntzutechnologies.com";
 
 export default function RestaurantsScreen({ route, navigation }) {
   const { groupId, groupName } = route.params || {};
@@ -41,7 +41,7 @@ export default function RestaurantsScreen({ route, navigation }) {
   );
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onLongPress={() => navigation.navigate('EditRestaurant', { restaurantId: item.id, groupId, groupName })}>
       {item.photoUrl ? (
         <Image
           source={{ uri: item.photoUrl.startsWith("/") ? `${BASE_URL}${item.photoUrl}` : item.photoUrl }}
@@ -62,7 +62,7 @@ export default function RestaurantsScreen({ route, navigation }) {
           {item.halal ? " · ✅ Halal" : ""}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 
   return (

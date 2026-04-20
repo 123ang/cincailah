@@ -7,6 +7,7 @@
 import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { apiFetch } from "./api";
+import { GUEST_REMINDER_KEY, setJson } from './guestStorage';
 
 export async function requestPushPermissions() {
   const { status: existing } = await Notifications.getPermissionsAsync();
@@ -52,7 +53,7 @@ const REMINDER_ID = "cincailah_lunch_reminder";
  * @param {number} hour   - 0-23
  * @param {number} minute - 0-59
  */
-export async function scheduleLunchReminder(hour = 11, minute = 45) {
+export async function scheduleLunchReminder(hour = 11, minute = 45, options = {}) {
   // Cancel any existing reminder first
   await cancelLunchReminder();
 
@@ -70,11 +71,16 @@ export async function scheduleLunchReminder(hour = 11, minute = 45) {
     },
   });
 
+  if (options.localOnly) {
+    await setJson(GUEST_REMINDER_KEY, { hour, minute, localOnly: true });
+  }
+
   return true;
 }
 
 export async function cancelLunchReminder() {
   await Notifications.cancelScheduledNotificationAsync(REMINDER_ID);
+  await setJson(GUEST_REMINDER_KEY, null);
 }
 
 export async function getReminderStatus() {

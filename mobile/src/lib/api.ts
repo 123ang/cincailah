@@ -8,7 +8,7 @@ import Constants from 'expo-constants';
 
 const BASE_URL: string =
   (Constants.expoConfig?.extra?.apiUrl as string | undefined) ||
-  'https://cincailah.com';
+  'https://cincailah.suntzutechnologies.com';
 
 const TOKEN_KEY = 'cincailah_jwt';
 

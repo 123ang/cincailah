@@ -6,10 +6,13 @@ import {
   StyleSheet,
   SafeAreaView,
 } from "react-native";
+import { useAuth } from '../../context/AuthContext';
 
 const SAMBAL = "#DC2626";
 
 export default function LandingScreen({ navigation }) {
+  const { continueAsGuest } = useAuth();
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.hero}>
@@ -40,6 +43,14 @@ export default function LandingScreen({ navigation }) {
           onPress={() => navigation.navigate("Login")}
         >
           <Text style={styles.secondaryBtnText}>I already have an account</Text>
+        </Pressable>
+
+        <Pressable
+          style={styles.guestBtn}
+          onPress={continueAsGuest}
+        >
+          <Text style={styles.guestBtnText}>Use solo (no account) →</Text>
+          <Text style={styles.guestSub}>Favourites, history and reminders will stay on this device</Text>
         </Pressable>
       </View>
 
@@ -132,6 +143,26 @@ const styles = StyleSheet.create({
     color: "#6B7280",
     fontWeight: "600",
     fontSize: 15,
+  },
+  guestBtn: {
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFF7F7',
+  },
+  guestBtnText: {
+    color: SAMBAL,
+    fontWeight: '800',
+    fontSize: 15,
+    textAlign: 'center',
+  },
+  guestSub: {
+    color: '#6B7280',
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
   },
   footer: {
     textAlign: "center",

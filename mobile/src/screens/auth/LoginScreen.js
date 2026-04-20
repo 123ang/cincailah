@@ -18,6 +18,7 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -25,9 +26,14 @@ export default function LoginScreen({ navigation }) {
       Alert.alert("Missing fields", "Please enter your email and password.");
       return;
     }
+    const emailNorm = email.trim().toLowerCase();
+
     setLoading(true);
-    const { error } = await login(email.trim().toLowerCase(), password);
+    const { error } = await login(emailNorm, password);
     setLoading(false);
+
+    console.log("[LoginScreen] result", { ok: !error, hasError: Boolean(error) });
+
     if (error) {
       Alert.alert("Login failed", error);
     }
@@ -53,16 +59,26 @@ export default function LoginScreen({ navigation }) {
           onChangeText={setEmail}
           editable={!loading}
         />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          placeholderTextColor="#9CA3AF"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-          editable={!loading}
-          onSubmitEditing={handleLogin}
-        />
+        <View style={styles.passwordWrap}>
+          <TextInput
+            style={styles.passwordInput}
+            placeholder="Password"
+            placeholderTextColor="#9CA3AF"
+            secureTextEntry={!showPassword}
+            value={password}
+            onChangeText={setPassword}
+            editable={!loading}
+            onSubmitEditing={handleLogin}
+          />
+          <Pressable
+            onPress={() => setShowPassword((v) => !v)}
+            style={styles.showPwdHit}
+            hitSlop={8}
+            disabled={loading}
+          >
+            <Text style={styles.showPwdLabel}>{showPassword ? "Hide" : "Show"}</Text>
+          </Pressable>
+        </View>
 
         <Pressable
           onPress={() => navigation.navigate("ForgotPassword")}
@@ -118,6 +134,31 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 12,
+  },
+  passwordWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    borderRadius: 14,
+    backgroundColor: "#F9FAFB",
+    paddingRight: 4,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: "#111827",
+  },
+  showPwdHit: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  showPwdLabel: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: SAMBAL,
   },
   input: {
     borderWidth: 1.5,

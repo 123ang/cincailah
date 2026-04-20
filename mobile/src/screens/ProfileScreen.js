@@ -23,8 +23,8 @@ import { isBiometricAvailable, authenticateWithBiometrics } from "../lib/biometr
 const SAMBAL = "#DC2626";
 const BIOMETRIC_KEY = "cincailah_biometric_enabled";
 
-export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+export default function ProfileScreen({ navigation }) {
+  const { user, logout, mode } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
@@ -165,8 +165,14 @@ export default function ProfileScreen() {
 
       {/* Account */}
       <SectionHeader title="Account" />
-      <RowItem label="Display name" value={user?.displayName} />
+      <RowItem label="Mode" value={mode === 'guest' ? 'Guest' : 'Signed in'} />
+      <RowItem label="Display name" value={user?.displayName ?? 'Guest'} />
       <RowItem label="Email" value={user?.email} />
+      {mode === 'authed' ? (
+        <Pressable style={styles.editBtn} onPress={() => navigation.navigate('EditProfile')}>
+          <Text style={styles.editBtnText}>Edit profile</Text>
+        </Pressable>
+      ) : null}
 
       {/* About */}
       <SectionHeader title="About Cincailah" />
@@ -300,6 +306,16 @@ const styles = StyleSheet.create({
   },
   toggleLabel: { fontSize: 14, fontWeight: "700", color: "#111827" },
   toggleSub: { fontSize: 12, color: "#9CA3AF", marginTop: 2 },
+  editBtn: {
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  editBtnText: { color: SAMBAL, fontWeight: '700' },
   logoutBtn: {
     marginTop: 32,
     borderWidth: 1.5,

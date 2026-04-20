@@ -12,7 +12,7 @@ function extractJoinCode(payload = "") {
   if (/^MAKAN-[A-Z0-9]+$/i.test(text)) return text.toUpperCase();
 
   // Accept URL forms:
-  // https://cincailah.com/join/MAKAN-ABCD
+  // https://cincailah.suntzutechnologies.com/join/MAKAN-ABCD (or cincailah.com)
   // jiakhami://join/MAKAN-ABCD
   const match = text.match(/\/join\/([A-Z0-9-]+)$/i);
   if (match?.[1]) return match[1].toUpperCase();

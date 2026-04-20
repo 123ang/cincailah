@@ -45,7 +45,7 @@
       "@sentry/react-native"
     ],
     "extra": {
-      "apiUrl": "https://cincailah.com",
+      "apiUrl": "https://cincailah.suntzutechnologies.com",
       "sentryDsn": "",
       "eas": {
         "projectId": "377df96a-a84c-4c03-bd17-ddc4813f2a89"
