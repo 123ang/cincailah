@@ -29,20 +29,48 @@ export default function VoteScreen({ route, navigation }) {
   const pollRef = useRef(null);
   const countdownRef = useRef(null);
 
+  const normalizeOptions = useCallback((payload) => {
+    const rawOptions = Array.isArray(payload?.options)
+      ? payload.options
+      : Array.isArray(payload?.decision?.decisionOptions)
+        ? payload.decision.decisionOptions
+        : [];
+
+    return rawOptions.map((opt) => {
+      const votes = Array.isArray(opt?.votes) ? opt.votes : [];
+      const yesCount =
+        typeof opt?.yesCount === "number"
+          ? opt.yesCount
+          : votes.filter((v) => v?.vote === "yes").length;
+      const noCount =
+        typeof opt?.noCount === "number"
+          ? opt.noCount
+          : votes.filter((v) => v?.vote === "no").length;
+      return { ...opt, yesCount, noCount };
+    });
+  }, []);
+
+  const isVoteClosed = useCallback((payload) => {
+    if (typeof payload?.closed === "boolean") return payload.closed;
+    if (typeof payload?.isExpired === "boolean") return payload.isExpired;
+    return false;
+  }, []);
+
   const fetchResults = useCallback(async (id, final = false) => {
     try {
       const { data, ok } = await apiFetch(`/api/vote/${id}`);
       if (!ok) return;
-      setOptions(data.options ?? []);
-      if (final || data.closed) {
+      const nextOptions = normalizeOptions(data);
+      setOptions(nextOptions);
+      if (final || isVoteClosed(data)) {
         clearInterval(pollRef.current);
-        setResults(data.options ?? []);
+        setResults(nextOptions);
         setPhase("results");
       }
     } catch (error) {
       console.debug('Failed to fetch vote results', error);
     }
-  }, []);
+  }, [isVoteClosed, normalizeOptions]);
 
   const startVote = useCallback(async () => {
     try {
@@ -210,6 +238,11 @@ export default function VoteScreen({ route, navigation }) {
           );
         }}
         contentContainerStyle={{ paddingBottom: 100 }}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyText}>No vote options yet. Pull to retry in a moment.</Text>
+          </View>
+        }
       />
 
       <Pressable style={styles.finishBtn} onPress={finishEarly}>
@@ -253,6 +286,8 @@ const styles = StyleSheet.create({
   voteBtnYes: { backgroundColor: "#D1FAE5" },
   voteBtnNo: { backgroundColor: "#FEE2E2" },
   voteBtnText: { fontWeight: "700", fontSize: 13, color: "#374151" },
+  emptyWrap: { paddingVertical: 28, alignItems: "center" },
+  emptyText: { fontSize: 13, color: "#6B7280", textAlign: "center" },
   finishBtn: {
     position: "absolute",
     bottom: 24,
