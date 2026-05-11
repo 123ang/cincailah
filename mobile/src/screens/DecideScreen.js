@@ -1,6 +1,6 @@
 /**
  * Group decision hub — mirrors web DecidePage.
- * Supports budget, tag, mode filters, nearby 500m filter via expo-location.
+ * Supports the Jiak Hami flowchart filters and decision modes.
  */
 import React, { useState } from "react";
 import {
@@ -10,37 +10,38 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Switch,
   Modal,
   FlatList,
 } from "react-native";
-import * as Location from "expo-location";
 import { apiFetch } from "../lib/api";
 import { useToast } from "../components/Toast";
 
 const SAMBAL = "#DC2626";
 const PANDAN = "#10B981";
 
-const TAGS = ["Halal", "Veg Options", "Mamak", "Japanese", "Western", "Aircond", "Cheap"];
+const CUISINE_TAGS = ["Mamak", "Japanese", "Western", "Chinese", "Thai", "Fast Food", "Cafe", "Indian"];
+const VIBE_TAGS = ["Aircond", "Cheap", "Atas", "Group Friendly", "Parking", "24hrs", "Delivery"];
 
 export default function DecideScreen({ route, navigation }) {
   const {
     groupId,
     groupName,
-    maxReroll = 2,
+    maxReroll = 3,
     decisionModeDefault = "you_pick",
+    role,
+    createdBy,
+    currentUserId,
   } = route.params || {};
 
   const [budget, setBudget] = useState("");
   const [halal, setHalal] = useState(false);
   const [veg, setVeg] = useState(false);
-  const [tags, setTags] = useState([]);
-  const [mode, setMode] = useState(decisionModeDefault);
+  const isOwner = role === "owner" || (createdBy && currentUserId && createdBy === currentUserId);
+  const [cuisineTags, setCuisineTags] = useState([]);
+  const [vibeTags, setVibeTags] = useState([]);
+  const [mode, setMode] = useState(isOwner && decisionModeDefault === "you_pick" ? "you_pick" : "we_fight");
   const [loading, setLoading] = useState(false);
-  const [nearby, setNearby] = useState(false);
-  const [userCoords, setUserCoords] = useState(null);
-  const [locLoading, setLocLoading] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [switcherLoading, setSwitcherLoading] = useState(false);
   const [myGroups, setMyGroups] = useState([]);
@@ -48,49 +49,18 @@ export default function DecideScreen({ route, navigation }) {
 
   const { showToast, ToastHost } = useToast();
 
-  const toggleTag = (t) => {
-    if (t === "Halal") { setHalal(!halal); return; }
-    if (t === "Veg Options") { setVeg(!veg); return; }
-    setTags((prev) => prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t]);
-  };
-
-  const isActive = (t) => {
-    if (t === "Halal") return halal;
-    if (t === "Veg Options") return veg;
-    return tags.includes(t);
-  };
-
-  const handleNearbyToggle = async (val) => {
-    if (val && !userCoords) {
-      setLocLoading(true);
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Location needed",
-          "Enable location permission to use the Nearby filter."
-        );
-        setLocLoading(false);
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-      setLocLoading(false);
-    }
-    setNearby(val);
+  const toggleTag = (tag, setter) => {
+    setter((prev) => prev.includes(tag) ? prev.filter((x) => x !== tag) : [...prev, tag]);
   };
 
   const buildFilters = () => {
     const f = {
       budgetFilter: budget,
-      selectedTags: tags,
+      cuisineTags,
+      vibeTags,
       halal,
       vegOptions: veg,
     };
-    if (nearby && userCoords) {
-      f.maxDistanceKm = 0.5;
-      f.userLat = userCoords.lat;
-      f.userLng = userCoords.lng;
-    }
     if (allowRepeatPicks) {
       f.allowRepeatPicks = true;
     }
@@ -120,7 +90,7 @@ export default function DecideScreen({ route, navigation }) {
         winner: data.winner,
         decisionId: data.decisionId,
         groupId,
-        maxReroll,
+        maxReroll: data.maxReroll ?? maxReroll,
         excludeIds: [],
         filters: buildFilters(),
       });
@@ -133,8 +103,8 @@ export default function DecideScreen({ route, navigation }) {
     setBudget("");
     setHalal(false);
     setVeg(false);
-    setTags([]);
-    setNearby(false);
+    setCuisineTags([]);
+    setVibeTags([]);
     setAllowRepeatPicks(false);
   };
 
@@ -154,9 +124,10 @@ export default function DecideScreen({ route, navigation }) {
     navigation.replace("Decide", {
       groupId: g.id,
       groupName: g.name,
-      maxReroll: g.maxReroll ?? 2,
-      noRepeatDays: g.noRepeatDays ?? 7,
+      maxReroll: 3,
       decisionModeDefault: g.decisionModeDefault ?? "you_pick",
+      role: g.role,
+      createdBy: g.createdBy,
     });
   };
 
@@ -205,43 +176,51 @@ export default function DecideScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Tags */}
+      {/* Cuisine type */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>🏷️ What mood?</Text>
+        <Text style={styles.sectionLabel}>🍜 Cuisine Type</Text>
+        <Text style={styles.helperText}>Pick any cuisine types. Leave empty to include all.</Text>
         <View style={styles.tagsWrap}>
-          {TAGS.map((t) => (
+          {CUISINE_TAGS.map((t) => (
             <Pressable
               key={t}
-              style={[styles.tag, isActive(t) && styles.tagActive]}
-              onPress={() => toggleTag(t)}
+              style={[styles.tag, cuisineTags.includes(t) && styles.tagActive]}
+              onPress={() => toggleTag(t, setCuisineTags)}
             >
-              <Text style={[styles.tagText, isActive(t) && styles.tagTextActive]}>{t}</Text>
+              <Text style={[styles.tagText, cuisineTags.includes(t) && styles.tagTextActive]}>{t}</Text>
             </Pressable>
           ))}
         </View>
       </View>
 
-      {/* Nearby toggle */}
+      {/* Cuisine vibe */}
       <View style={styles.section}>
-        <View style={styles.nearbyRow}>
-          <View>
-            <Text style={styles.nearbyLabel}>📍 Within 500m</Text>
-            <Text style={styles.nearbySub}>Only show nearby restaurants</Text>
-          </View>
-          {locLoading ? (
-            <ActivityIndicator color={SAMBAL} />
-          ) : (
-            <Switch
-              value={nearby}
-              onValueChange={handleNearbyToggle}
-              trackColor={{ true: SAMBAL, false: "#E5E7EB" }}
-              thumbColor="#fff"
-            />
-          )}
+        <Text style={styles.sectionLabel}>✨ Cuisine Vibe</Text>
+        <Text style={styles.helperText}>Pick any vibes. Cuisine and vibe filters work together.</Text>
+        <View style={styles.tagsWrap}>
+          {VIBE_TAGS.map((t) => (
+            <Pressable
+              key={t}
+              style={[styles.tag, vibeTags.includes(t) && styles.tagActive]}
+              onPress={() => toggleTag(t, setVibeTags)}
+            >
+              <Text style={[styles.tagText, vibeTags.includes(t) && styles.tagTextActive]}>{t}</Text>
+            </Pressable>
+          ))}
         </View>
-        {nearby && !userCoords && (
-          <Text style={styles.locWarning}>Requesting location…</Text>
-        )}
+      </View>
+
+      {/* Halal / vegetarian */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>🥗 Halal / Vegetarian</Text>
+        <View style={styles.tagsWrap}>
+          <Pressable style={[styles.tag, halal && styles.tagActive]} onPress={() => setHalal(!halal)}>
+            <Text style={[styles.tagText, halal && styles.tagTextActive]}>Halal</Text>
+          </Pressable>
+          <Pressable style={[styles.tag, veg && styles.tagActive]} onPress={() => setVeg(!veg)}>
+            <Text style={[styles.tagText, veg && styles.tagTextActive]}>Veg Options</Text>
+          </Pressable>
+        </View>
       </View>
 
       {/* Restaurants shortcut */}
@@ -278,8 +257,8 @@ export default function DecideScreen({ route, navigation }) {
         ].map(([val, label]) => (
           <Pressable
             key={val}
-            style={[styles.modeBtn, mode === val && styles.modeBtnActive]}
-            onPress={() => setMode(val)}
+            style={[styles.modeBtn, mode === val && styles.modeBtnActive, val === "you_pick" && !isOwner && styles.modeBtnDisabled]}
+            onPress={() => { if (val === "you_pick" && !isOwner) return; setMode(val); }}
           >
             <Text style={[styles.modeBtnText, mode === val && styles.modeBtnTextActive]}>
               {label}
@@ -287,6 +266,10 @@ export default function DecideScreen({ route, navigation }) {
           </Pressable>
         ))}
       </View>
+
+      {!isOwner && (
+        <Text style={styles.ownerHint}>Only the group owner can use You Pick.</Text>
+      )}
 
       {/* Big button */}
       <View style={styles.bigBtnWrap}>
@@ -427,6 +410,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modeBtnActive: { backgroundColor: SAMBAL },
+  modeBtnDisabled: { opacity: 0.45 },
   modeBtnText: { fontWeight: "700", color: "#6B7280", fontSize: 14 },
   modeBtnTextActive: { color: "#fff" },
   bigBtnWrap: { alignItems: "center", marginBottom: 16 },

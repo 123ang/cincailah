@@ -3,8 +3,8 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Te
 import { apiFetch } from '../lib/api';
 
 const SAMBAL = '#DC2626';
-const CUISINE_OPTIONS = ['Malay', 'Chinese', 'Indian', 'Japanese', 'Western', 'Thai', 'Korean', 'Mamak', 'Fusion'];
-const VIBE_OPTIONS = ['Aircond', 'Outdoor', 'Cheap', 'Date Night', 'Solo', 'Fast Food', 'Buffet', 'Halal'];
+const CUISINE_OPTIONS = ['Mamak', 'Japanese', 'Western', 'Chinese', 'Thai', 'Fast Food', 'Cafe', 'Indian'];
+const VIBE_OPTIONS = ['Aircond', 'Cheap', 'Atas', 'Group Friendly', 'Parking', '24hrs', 'Delivery'];
 
 export default function EditRestaurantScreen({ route, navigation }) {
   const { restaurantId } = route.params || {};
@@ -47,11 +47,24 @@ export default function EditRestaurantScreen({ route, navigation }) {
   };
 
   const save = async () => {
+    if (!form.name.trim()) {
+      Alert.alert('Name required', 'Enter the restaurant name.');
+      return;
+    }
+    if (form.cuisineTags.length === 0) {
+      Alert.alert('Cuisine required', 'Choose at least one cuisine tag.');
+      return;
+    }
+    if (form.vibeTags.length === 0) {
+      Alert.alert('Vibe required', 'Choose at least one vibe tag.');
+      return;
+    }
     setSaving(true);
     const { ok, data } = await apiFetch(`/api/restaurants/${restaurantId}`, {
       method: 'PATCH',
       body: {
         ...form,
+        name: form.name.trim(),
         priceMin: Number(form.priceMin),
         priceMax: Number(form.priceMax),
         walkMinutes: Number(form.walkMinutes),
@@ -80,9 +93,9 @@ export default function EditRestaurantScreen({ route, navigation }) {
       <TextInput style={styles.input} value={form.walkMinutes} onChangeText={(v) => setForm((p) => ({ ...p, walkMinutes: v }))} keyboardType="number-pad" />
       <View style={styles.toggleRow}><Text>Halal</Text><Switch value={form.halal} onValueChange={(v) => setForm((p) => ({ ...p, halal: v }))} /></View>
       <View style={styles.toggleRow}><Text>Veg options</Text><Switch value={form.vegOptions} onValueChange={(v) => setForm((p) => ({ ...p, vegOptions: v }))} /></View>
-      <Text style={styles.label}>Cuisine</Text>
+      <Text style={styles.label}>Cuisine *</Text>
       <View style={styles.tags}>{CUISINE_OPTIONS.map((t) => <Pressable key={t} style={[styles.tag, form.cuisineTags.includes(t) && styles.tagActive]} onPress={() => toggleTag('cuisineTags', t)}><Text style={[styles.tagText, form.cuisineTags.includes(t) && styles.tagTextActive]}>{t}</Text></Pressable>)}</View>
-      <Text style={styles.label}>Vibe</Text>
+      <Text style={styles.label}>Vibe *</Text>
       <View style={styles.tags}>{VIBE_OPTIONS.map((t) => <Pressable key={t} style={[styles.tag, form.vibeTags.includes(t) && styles.tagActive]} onPress={() => toggleTag('vibeTags', t)}><Text style={[styles.tagText, form.vibeTags.includes(t) && styles.tagTextActive]}>{t}</Text></Pressable>)}</View>
       <Text style={styles.label}>Maps URL</Text>
       <TextInput style={styles.input} value={form.mapsUrl} onChangeText={(v) => setForm((p) => ({ ...p, mapsUrl: v }))} autoCapitalize="none" />

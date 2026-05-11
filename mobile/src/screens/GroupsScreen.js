@@ -42,9 +42,10 @@ export default function GroupsScreen({ navigation }) {
         navigation.navigate("Decide", {
           groupId: item.id,
           groupName: item.name,
-          maxReroll: item.maxReroll,
-          noRepeatDays: item.noRepeatDays,
+          maxReroll: 3,
           decisionModeDefault: item.decisionModeDefault,
+          role: item.role,
+          createdBy: item.createdBy,
         })
       }
     >

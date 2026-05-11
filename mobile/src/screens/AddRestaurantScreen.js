@@ -14,8 +14,8 @@ import { apiFetch } from "../lib/api";
 
 const SAMBAL = "#DC2626";
 
-const CUISINE_OPTIONS = ["Malay", "Chinese", "Indian", "Japanese", "Western", "Thai", "Korean", "Mamak", "Fusion"];
-const VIBE_OPTIONS = ["Aircond", "Outdoor", "Cheap", "Date Night", "Solo", "Fast Food", "Buffet", "Halal"];
+const CUISINE_OPTIONS = ["Mamak", "Japanese", "Western", "Chinese", "Thai", "Fast Food", "Cafe", "Indian"];
+const VIBE_OPTIONS = ["Aircond", "Cheap", "Atas", "Group Friendly", "Parking", "24hrs", "Delivery"];
 
 export default function AddRestaurantScreen({ route, navigation }) {
   const { groupId, groupName } = route.params || {};
@@ -38,6 +38,14 @@ export default function AddRestaurantScreen({ route, navigation }) {
   const handleAdd = async () => {
     if (!name.trim()) {
       Alert.alert("Name required", "Enter the restaurant name.");
+      return;
+    }
+    if (cuisineTags.length === 0) {
+      Alert.alert("Cuisine required", "Choose at least one cuisine tag.");
+      return;
+    }
+    if (vibeTags.length === 0) {
+      Alert.alert("Vibe required", "Choose at least one vibe tag.");
       return;
     }
     setLoading(true);
@@ -131,7 +139,7 @@ export default function AddRestaurantScreen({ route, navigation }) {
       </View>
 
       {/* Cuisine tags */}
-      <Text style={styles.label}>Cuisine</Text>
+      <Text style={styles.label}>Cuisine *</Text>
       <View style={styles.tagWrap}>
         {CUISINE_OPTIONS.map((t) => (
           <Pressable
@@ -145,7 +153,7 @@ export default function AddRestaurantScreen({ route, navigation }) {
       </View>
 
       {/* Vibe tags */}
-      <Text style={styles.label}>Vibe</Text>
+      <Text style={styles.label}>Vibe *</Text>
       <View style={styles.tagWrap}>
         {VIBE_OPTIONS.map((t) => (
           <Pressable

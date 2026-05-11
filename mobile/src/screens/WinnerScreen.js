@@ -24,7 +24,7 @@ export default function WinnerScreen({ route, navigation }) {
   const {
     winner: initialWinner,
     groupId,
-    maxReroll = 2,
+    maxReroll = 3,
     excludeIds: initialExcludeIds = [],
     filters = {},
   } = route.params || {};

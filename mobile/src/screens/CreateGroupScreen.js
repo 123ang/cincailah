@@ -34,9 +34,10 @@ export default function CreateGroupScreen({ navigation }) {
       navigation.replace("Decide", {
         groupId: data.group.id,
         groupName: data.group.name,
-        maxReroll: data.group.maxReroll,
-        noRepeatDays: data.group.noRepeatDays,
+        maxReroll: 3,
         decisionModeDefault: data.group.decisionModeDefault,
+        role: "owner",
+        createdBy: data.group.createdBy,
       });
     } finally {
       setLoading(false);

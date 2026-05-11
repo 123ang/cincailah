@@ -19,8 +19,6 @@ export default function GroupSettingsScreen({ route, navigation }) {
 
   const [group, setGroup] = useState(null);
   const [name, setName] = useState(initialName ?? "");
-  const [noRepeatDays, setNoRepeatDays] = useState("7");
-  const [maxReroll, setMaxReroll] = useState("2");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -32,8 +30,6 @@ export default function GroupSettingsScreen({ route, navigation }) {
         const g = data.group;
         setGroup(g);
         setName(g.name);
-        setNoRepeatDays(String(g.noRepeatDays ?? 7));
-        setMaxReroll(String(g.maxReroll ?? 2));
       }
     } finally {
       setLoading(false);
@@ -51,8 +47,6 @@ export default function GroupSettingsScreen({ route, navigation }) {
         method: "PATCH",
         body: {
           name: name.trim() || undefined,
-          noRepeatDays: Number(noRepeatDays) || 7,
-          maxReroll: Number(maxReroll) || 2,
         },
       });
       if (!ok) {
@@ -113,23 +107,6 @@ export default function GroupSettingsScreen({ route, navigation }) {
         editable={!saving}
       />
 
-      <Text style={styles.label}>No-repeat window (days)</Text>
-      <TextInput
-        style={styles.input}
-        value={noRepeatDays}
-        onChangeText={setNoRepeatDays}
-        keyboardType="number-pad"
-        editable={!saving}
-      />
-
-      <Text style={styles.label}>Max rerolls per decision</Text>
-      <TextInput
-        style={styles.input}
-        value={maxReroll}
-        onChangeText={setMaxReroll}
-        keyboardType="number-pad"
-        editable={!saving}
-      />
 
       <Pressable
         style={[styles.btn, saving && styles.btnDisabled]}

@@ -42,9 +42,10 @@ export default function JoinGroupScreen({ navigation, route }) {
       navigation.replace("Decide", {
         groupId: data.group.id,
         groupName: data.group.name,
-        maxReroll: data.group.maxReroll,
-        noRepeatDays: data.group.noRepeatDays,
+        maxReroll: 3,
         decisionModeDefault: data.group.decisionModeDefault,
+        role: data.group.role ?? "member",
+        createdBy: data.group.createdBy,
       });
     } finally {
       setLoading(false);

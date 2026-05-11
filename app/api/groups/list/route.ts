@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
       memberCount: m.group._count.members,
       restaurantCount: m.group._count.restaurants,
       joinedAt: m.joinedAt,
+      createdBy: m.group.createdBy,
+      maxReroll: 3,
+      decisionModeDefault: m.group.decisionModeDefault,
     }));
 
     return NextResponse.json({ groups });

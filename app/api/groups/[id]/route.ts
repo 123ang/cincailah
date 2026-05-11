@@ -7,6 +7,46 @@ import { reportError } from '@/lib/logger';
 
 type Params = { params: Promise<{ id: string }> };
 
+// GET /api/groups/[id] — group details for members
+export async function GET(request: NextRequest, { params }: Params) {
+  try {
+    const { userId } = await resolveUserIdWithSession(request);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const membership = await prisma.groupMember.findFirst({
+      where: { groupId: id, userId },
+      include: {
+        group: {
+          include: {
+            _count: { select: { members: true, restaurants: true } },
+          },
+        },
+      },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      group: {
+        ...membership.group,
+        role: membership.role,
+        memberCount: membership.group._count.members,
+        restaurantCount: membership.group._count.restaurants,
+        maxReroll: 3,
+      },
+    });
+  } catch (error) {
+    reportError(error, { route: 'groups/[id]/get' });
+    return NextResponse.json({ error: 'Failed to fetch group' }, { status: 500 });
+  }
+}
+
 // DELETE /api/groups/[id] — delete group (admin only)
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {

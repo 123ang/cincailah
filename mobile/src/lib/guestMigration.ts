@@ -7,16 +7,19 @@ import {
   getJson,
 } from './guestStorage';
 
+type FavoriteSpot = { name?: string; note?: string };
+type HistoryEntry = { name?: string; category?: string };
+
 export async function hasPendingGuestData() {
-  const favorites = await getJson(FAVORITE_SPOTS_KEY, []);
-  const history = await getJson(FOOD_HISTORY_KEY, []);
+  const favorites = ((await getJson(FAVORITE_SPOTS_KEY)) ?? []) as FavoriteSpot[];
+  const history = ((await getJson(FOOD_HISTORY_KEY)) ?? []) as HistoryEntry[];
   const alreadyMigrated = await AsyncStorage.getItem(GUEST_MIGRATED_KEY);
   return alreadyMigrated !== 'true' && ((favorites?.length ?? 0) > 0 || (history?.length ?? 0) > 0);
 }
 
 export async function migrateGuestDataToServer() {
-  const favorites = await getJson(FAVORITE_SPOTS_KEY, []);
-  const history = await getJson(FOOD_HISTORY_KEY, []);
+  const favorites = ((await getJson(FAVORITE_SPOTS_KEY)) ?? []) as FavoriteSpot[];
+  const history = ((await getJson(FOOD_HISTORY_KEY)) ?? []) as HistoryEntry[];
 
   for (const favorite of favorites ?? []) {
     if (!favorite?.name) continue;

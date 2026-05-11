@@ -41,6 +41,8 @@ mobile/node_modules/
 mobile/*/node_modules/
 mobile/.expo/
 mobile/*/.expo/
+mobile/*.apk
+mobile/**/*.apk
 
 # Backup folder
 backup/

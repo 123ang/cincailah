@@ -1,6 +1,6 @@
 /**
  * "We Fight" voting screen — mirrors web VotePageClient.
- * Starts a vote session, polls results every 3s, handles tie-break.
+ * Starts a vote session, polls results every 3s, and uses the server winner.
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
@@ -21,7 +21,7 @@ export default function VoteScreen({ route, navigation }) {
   const [phase, setPhase] = useState("starting"); // starting | voting | results
   const [decisionId, setDecisionId] = useState(null);
   const [options, setOptions] = useState([]);
-  const [myVotes, setMyVotes] = useState({});
+  const [myVoteOptionId, setMyVoteOptionId] = useState(null);
   const [results, setResults] = useState(null);
   const [secondsLeft, setSecondsLeft] = useState(900);
   const [error, setError] = useState(null);
@@ -62,6 +62,15 @@ export default function VoteScreen({ route, navigation }) {
       if (!ok) return;
       const nextOptions = normalizeOptions(data);
       setOptions(nextOptions);
+      if (data?.winner) {
+        clearInterval(pollRef.current);
+        clearInterval(countdownRef.current);
+        navigation.replace("FinalDecision", {
+          winnerName: data.winner?.name,
+          winnerVotes: nextOptions.find((o) => o.restaurantId === data.winner?.id)?.yesCount ?? 0,
+        });
+        return;
+      }
       if (final || isVoteClosed(data)) {
         clearInterval(pollRef.current);
         setResults(nextOptions);
@@ -70,7 +79,7 @@ export default function VoteScreen({ route, navigation }) {
     } catch (error) {
       console.debug('Failed to fetch vote results', error);
     }
-  }, [isVoteClosed, normalizeOptions]);
+  }, [isVoteClosed, navigation, normalizeOptions]);
 
   const startVote = useCallback(async () => {
     try {
@@ -113,27 +122,13 @@ export default function VoteScreen({ route, navigation }) {
     };
   }, [startVote]);
 
-  const castVote = async (optionId, vote) => {
-    if (myVotes[optionId]) return; // already voted
-    setMyVotes((prev) => ({ ...prev, [optionId]: vote }));
+  const castVote = async (optionId) => {
+    setMyVoteOptionId(optionId);
     await apiFetch(`/api/vote/${decisionId}`, {
       method: "POST",
-      body: { optionId, vote },
+      body: { optionId, vote: "yes" },
     });
-  };
-
-  const finishEarly = () => {
-    clearInterval(countdownRef.current);
-    clearInterval(pollRef.current);
-    fetchResults(decisionId, true);
-  };
-
-  const breakTie = (tied) => {
-    const winner = tied[Math.floor(Math.random() * tied.length)];
-    navigation.replace("FinalDecision", {
-      winnerName: winner.restaurant?.name,
-      winnerVotes: winner.yesCount,
-    });
+    fetchResults(decisionId);
   };
 
   const formatTime = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -160,20 +155,10 @@ export default function VoteScreen({ route, navigation }) {
   }
 
   if (phase === "results") {
-    const maxYes = Math.max(...results.map((o) => o.yesCount ?? 0), 1);
-    const tied = results.filter((o) => (o.yesCount ?? 0) === maxYes && maxYes > 0);
-
-    if (tied.length === 1) {
-      navigation.replace("FinalDecision", {
-        winnerName: tied[0].restaurant?.name,
-        winnerVotes: tied[0].yesCount,
-      });
-      return null;
-    }
-
     return (
       <View style={styles.container}>
         <Text style={styles.heading}>Results 📊</Text>
+        <Text style={styles.sub}>Waiting for the server to finalize the winner.</Text>
         <FlatList
           data={results}
           keyExtractor={(o) => o.id}
@@ -185,15 +170,6 @@ export default function VoteScreen({ route, navigation }) {
           )}
           style={{ marginVertical: 16 }}
         />
-        {tied.length > 1 && (
-          <View style={styles.tieBox}>
-            <Text style={styles.tieTxt}>🤝 It is a tie!</Text>
-            <Text style={styles.tieSub}>{tied.map((t) => t.restaurant?.name).join(" vs ")}</Text>
-            <Pressable style={[styles.btn, { marginTop: 14 }]} onPress={() => breakTie(tied)}>
-              <Text style={styles.btnText}>Let Fate Decide 🎲</Text>
-            </Pressable>
-          </View>
-        )}
       </View>
     );
   }
@@ -206,13 +182,13 @@ export default function VoteScreen({ route, navigation }) {
           <Text style={styles.timerText}>{formatTime(secondsLeft)}</Text>
         </View>
       </View>
-      <Text style={styles.sub}>Thumb up to vote, thumb down to pass</Text>
+      <Text style={styles.sub}>Pick one spot only. You can change your vote before time ends.</Text>
 
       <FlatList
         data={options}
         keyExtractor={(o) => o.id}
         renderItem={({ item }) => {
-          const voted = myVotes[item.id];
+          const voted = myVoteOptionId === item.id;
           return (
             <View style={styles.optionCard}>
               <Text style={styles.optionName}>{item.restaurant?.name}</Text>
@@ -222,16 +198,10 @@ export default function VoteScreen({ route, navigation }) {
               </Text>
               <View style={styles.voteRow}>
                 <Pressable
-                  style={[styles.voteBtn, voted === "yes" && styles.voteBtnYes]}
-                  onPress={() => castVote(item.id, "yes")}
+                  style={[styles.voteBtn, voted && styles.voteBtnYes]}
+                  onPress={() => castVote(item.id)}
                 >
-                  <Text style={styles.voteBtnText}>👍 Yes ({item.yesCount ?? 0})</Text>
-                </Pressable>
-                <Pressable
-                  style={[styles.voteBtn, voted === "no" && styles.voteBtnNo]}
-                  onPress={() => castVote(item.id, "no")}
-                >
-                  <Text style={styles.voteBtnText}>👎 No ({item.noCount ?? 0})</Text>
+                  <Text style={styles.voteBtnText}>{voted ? "✓ Picked" : "Pick"} ({item.yesCount ?? 0})</Text>
                 </Pressable>
               </View>
             </View>
@@ -245,9 +215,6 @@ export default function VoteScreen({ route, navigation }) {
         }
       />
 
-      <Pressable style={styles.finishBtn} onPress={finishEarly}>
-        <Text style={styles.finishBtnText}>See Results Now</Text>
-      </Pressable>
     </View>
   );
 }
