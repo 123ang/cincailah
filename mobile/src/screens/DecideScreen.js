@@ -83,7 +83,7 @@ export default function DecideScreen({ route, navigation }) {
         return;
       }
       if (!ok) {
-        showToast(data?.error || "No restaurants match your filters.", "error");
+        showToast(data?.error || "No restaurants match these filters — try fewer cuisine or vibe tags.", "error");
         return;
       }
       navigation.navigate("Winner", {
@@ -137,11 +137,18 @@ export default function DecideScreen({ route, navigation }) {
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.greeting}>Makan mana hari ni? 🤔</Text>
-          <Pressable style={styles.groupBadge} onPress={openGroupSwitcher}>
-            <View style={styles.dot} />
-            <Text style={styles.groupBadgeText}>{groupName}</Text>
-            <Text style={styles.groupSwitchHint}>Switch</Text>
-          </Pressable>
+          <View style={styles.groupLine}>
+            <Pressable style={styles.groupBadge} onPress={openGroupSwitcher}>
+              <View style={styles.dot} />
+              <Text style={styles.groupBadgeText}>{groupName}</Text>
+              <Text style={styles.groupSwitchHint}>Switch</Text>
+            </Pressable>
+            <View style={[styles.roleBadge, isOwner ? styles.roleOwner : styles.roleMember]}>
+              <Text style={[styles.roleBadgeText, isOwner ? styles.roleOwnerText : styles.roleMemberText]}>
+                {isOwner ? "Owner" : "Member"}
+              </Text>
+            </View>
+          </View>
         </View>
         <Pressable
           onPress={() => navigation.navigate("GroupSettings", { groupId, groupName })}
@@ -341,6 +348,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   greeting: { fontSize: 20, fontWeight: "800", color: "#111827" },
+  groupLine: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   groupBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -357,6 +365,12 @@ const styles = StyleSheet.create({
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: PANDAN },
   groupBadgeText: { fontSize: 12, fontWeight: "600", color: "#374151" },
   groupSwitchHint: { fontSize: 10, color: SAMBAL, marginLeft: 6, fontWeight: "700" },
+  roleBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999, marginTop: 6 },
+  roleOwner: { backgroundColor: "#FEF3C7" },
+  roleMember: { backgroundColor: "#E0F2FE" },
+  roleBadgeText: { fontSize: 10, fontWeight: "800" },
+  roleOwnerText: { color: "#92400E" },
+  roleMemberText: { color: "#0369A1" },
   settingsBtn: { padding: 8 },
   settingsIcon: { fontSize: 22 },
   section: {
@@ -365,7 +379,8 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
-  sectionLabel: { fontSize: 13, fontWeight: "700", color: "#6B7280", marginBottom: 12 },
+  sectionLabel: { fontSize: 13, fontWeight: "700", color: "#6B7280", marginBottom: 8 },
+  helperText: { fontSize: 12, color: "#9CA3AF", marginBottom: 12 },
   budgetRow: { flexDirection: "row", gap: 8 },
   budgetBtn: {
     flex: 1,

@@ -99,12 +99,28 @@ if [[ -f .env ]]; then
   fi
 fi
 
-echo "==> Health check (127.0.0.1:${PORT}/api/health)"
+echo "==> Health check (/api/health on port ${PORT})"
 sleep 2
-if curl -sfS "http://127.0.0.1:${PORT}/api/health" >/dev/null; then
-  echo "==> OK: /api/health responded"
-else
-  echo "==> WARN: health check failed — inspect: pm2 logs $PM2_APP_NAME --lines 80"
+HEALTH_OK=0
+HEALTH_BODY=""
+for HEALTH_HOST in "localhost" "127.0.0.1" "[::1]"; do
+  HEALTH_URL="http://${HEALTH_HOST}:${PORT}/api/health"
+  echo "==> Trying ${HEALTH_URL}"
+  HTTP_CODE="$(curl -g -sS -m 10 -o /tmp/cincailah-health.$$ "-w%{http_code}" "$HEALTH_URL" || true)"
+  HEALTH_BODY="$(cat /tmp/cincailah-health.$$ 2>/dev/null || true)"
+  rm -f /tmp/cincailah-health.$$
+  if [[ "$HTTP_CODE" == "200" ]] && echo "$HEALTH_BODY" | grep -q '"status":"ok"'; then
+    echo "==> OK: /api/health responded from ${HEALTH_HOST}"
+    HEALTH_OK=1
+    break
+  fi
+  echo "==> WARN: ${HEALTH_HOST} returned HTTP ${HTTP_CODE:-000}: ${HEALTH_BODY:0:300}"
+done
+
+if [[ "$HEALTH_OK" -ne 1 ]]; then
+  echo "==> WARN: health check failed on localhost/127.0.0.1/[::1]"
+  echo "==> Inspect: pm2 logs $PM2_APP_NAME --lines 80"
+  echo "==> Also confirm .env PORT, DATABASE_URL, and SESSION_SECRET on the server."
 fi
 
 echo "==> Done."
