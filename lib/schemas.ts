@@ -37,7 +37,7 @@ export const JoinGroupSchema = z.object({
 export const UpdateGroupSchema = z.object({
   name: z.string().min(1).max(60).optional(),
   noRepeatDays: z.number().int().min(0).max(30).optional(),
-  maxReroll: z.number().int().min(0).max(10).optional(),
+  maxReroll: z.number().int().min(3).max(3).optional(),
   decisionModeDefault: z.enum(['you_pick', 'we_fight']).optional(),
 });
 
@@ -49,8 +49,8 @@ export const TransferAdminSchema = z.object({
 export const CreateRestaurantSchema = z.object({
   groupId: z.string().uuid(),
   name: z.string().min(1, 'Restaurant name required').max(100),
-  cuisineTags: z.array(z.string()).default([]),
-  vibeTags: z.array(z.string()).default([]),
+  cuisineTags: z.array(z.string()).min(1, 'Choose at least one cuisine tag'),
+  vibeTags: z.array(z.string()).min(1, 'Choose at least one vibe tag'),
   priceMin: z.number().int().min(1).max(500),
   priceMax: z.number().int().min(1).max(500),
   halal: z.boolean().default(false),
@@ -69,14 +69,12 @@ export const DecisionFiltersSchema = z.object({
     (val) => (val === '' || val === null ? undefined : val),
     z.enum(['kering', 'ok', 'belanja']).optional()
   ),
+  cuisineTags: z.array(z.string()).optional(),
+  vibeTags: z.array(z.string()).optional(),
   selectedTags: z.array(z.string()).optional(),
-  walkTimeMax: z.number().optional(),
   halal: z.boolean().optional(),
   vegOptions: z.boolean().optional(),
   favoritesOnly: z.boolean().optional(),
-  maxDistanceKm: z.number().min(0.1).max(50).optional(),
-  userLat: z.number().min(-90).max(90).optional(),
-  userLng: z.number().min(-180).max(180).optional(),
   /** When true, skip anti-repeat (recent picks) and allow rerolls to pick the same spot again. */
   allowRepeatPicks: z.boolean().optional(),
 });

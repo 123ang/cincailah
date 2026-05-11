@@ -78,6 +78,16 @@ export default function AddRestaurantForm({
       return;
     }
 
+    if (cuisineTags.length === 0) {
+      setError('Choose at least one cuisine tag');
+      return;
+    }
+
+    if (vibeTags.length === 0) {
+      setError('Choose at least one vibe tag');
+      return;
+    }
+
     if (Number(priceMin) >= Number(priceMax)) {
       setError('Price max must be greater than price min');
       return;
@@ -158,7 +168,7 @@ export default function AddRestaurantForm({
 
         <div>
           <label className="text-sm font-bold text-gray-600 mb-1.5 block">
-            Cuisine Tags
+            Cuisine Tags <span className="font-normal text-red-500">(required)</span>
           </label>
           <div className="flex flex-wrap gap-2">
             {CUISINE_TAGS.map((tag) => (
@@ -181,7 +191,7 @@ export default function AddRestaurantForm({
 
         <div>
           <label className="text-sm font-bold text-gray-600 mb-1.5 block">
-            Vibe Tags
+            Vibe Tags <span className="font-normal text-red-500">(required)</span>
           </label>
           <div className="flex flex-wrap gap-2">
             {VIBE_TAGS.map((tag) => (

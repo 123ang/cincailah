@@ -46,8 +46,6 @@ export default function SettingsPage({
   // Rules edit state
   const [editingRules, setEditingRules] = useState(false);
   const [rulesForm, setRulesForm] = useState({
-    noRepeatDays: group.noRepeatDays,
-    maxReroll: group.maxReroll,
     decisionModeDefault: group.decisionModeDefault,
   });
   const [rulesLoading, setRulesLoading] = useState(false);
@@ -112,7 +110,7 @@ export default function SettingsPage({
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); return; }
-      setGroup(g => ({ ...g, ...rulesForm }));
+      setGroup(g => ({ ...g, decisionModeDefault: rulesForm.decisionModeDefault }));
       setEditingRules(false);
     } finally {
       setRulesLoading(false);
@@ -387,50 +385,6 @@ export default function SettingsPage({
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-700">Anti-Repeat Days</p>
-                <p className="text-xs text-gray-400">
-                  How many days before a restaurant can be picked again
-                </p>
-              </div>
-              {editingRules ? (
-                <input
-                  type="number"
-                  min={0}
-                  max={30}
-                  value={rulesForm.noRepeatDays}
-                  onChange={e => setRulesForm(f => ({ ...f, noRepeatDays: Number(e.target.value) }))}
-                  className="w-16 text-center border border-gray-200 rounded-lg text-lg font-black text-sambal"
-                />
-              ) : (
-                <span className="text-lg font-black text-sambal">{group.noRepeatDays}</span>
-              )}
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-bold text-gray-700">Max Rerolls</p>
-                <p className="text-xs text-gray-400">
-                  Prevent infinite &quot;don&apos;t want&quot; syndrome
-                </p>
-              </div>
-              {editingRules ? (
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  value={rulesForm.maxReroll}
-                  onChange={e => setRulesForm(f => ({ ...f, maxReroll: Number(e.target.value) }))}
-                  className="w-16 text-center border border-gray-200 rounded-lg text-lg font-black text-sambal"
-                />
-              ) : (
-                <span className="text-lg font-black text-sambal">{group.maxReroll}</span>
-              )}
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm font-bold text-gray-700">Default Mode</p>
                 <p className="text-xs text-gray-400">
                   What happens when you press &quot;Cincai lah!&quot;
@@ -462,7 +416,7 @@ export default function SettingsPage({
                 {rulesLoading ? 'Saving…' : 'Save Rules'}
               </button>
               <button
-                onClick={() => { setEditingRules(false); setRulesForm({ noRepeatDays: group.noRepeatDays, maxReroll: group.maxReroll, decisionModeDefault: group.decisionModeDefault }); }}
+                onClick={() => { setEditingRules(false); setRulesForm({ decisionModeDefault: group.decisionModeDefault }); }}
                 className="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded-xl text-sm"
               >
                 Cancel

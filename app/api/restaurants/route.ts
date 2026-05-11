@@ -69,6 +69,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!Array.isArray(cuisineTags) || cuisineTags.length === 0) {
+      return NextResponse.json({ error: 'Choose at least one cuisine tag' }, { status: 400 });
+    }
+
+    if (!Array.isArray(vibeTags) || vibeTags.length === 0) {
+      return NextResponse.json({ error: 'Choose at least one vibe tag' }, { status: 400 });
+    }
+
     const membership = await requireGroupMembership(userId, groupId);
 
     if (!membership) {
@@ -79,8 +87,8 @@ export async function POST(request: NextRequest) {
       data: {
         groupId,
         name: name.trim(),
-        cuisineTags: cuisineTags || [],
-        vibeTags: vibeTags || [],
+        cuisineTags,
+        vibeTags,
         priceMin: Number(priceMin) || 5,
         priceMax: Number(priceMax) || 15,
         halal: Boolean(halal),

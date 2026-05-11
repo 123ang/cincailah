@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         makanCode,
+        maxReroll: 3,
         creator: { connect: { id: userId } },
         members: {
           create: { userId, role: 'owner' },

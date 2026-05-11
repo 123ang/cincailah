@@ -81,12 +81,10 @@ export default function VotePageClient({
         }
 
         const votes: Record<string, string> = {};
-        data.decision.decisionOptions.forEach((option: DecisionOption) => {
-          const myVote = option.votes.find((v) => v.user.id === userId);
-          if (myVote) {
-            votes[option.id] = myVote.vote;
-          }
-        });
+        const selected = data.decision.decisionOptions.find((option: DecisionOption) =>
+          option.votes.some((v) => v.user.id === userId && v.vote === 'yes')
+        );
+        if (selected) votes[selected.id] = 'yes';
         setMyVotes(votes);
       }
     } catch (err) {
@@ -167,18 +165,18 @@ export default function VotePageClient({
     }
   };
 
-  const handleVote = async (optionId: string, vote: 'yes' | 'no') => {
+  const handleVote = async (optionId: string) => {
     if (!decisionId || isExpired) return;
 
     try {
       const res = await fetch(`/api/vote/${decisionId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ optionId, vote }),
+        body: JSON.stringify({ optionId, vote: 'yes' }),
       });
 
       if (res.ok) {
-        setMyVotes((prev) => ({ ...prev, [optionId]: vote }));
+        setMyVotes({ [optionId]: 'yes' });
         await fetchVoteData();
       }
     } catch (err) {
@@ -220,7 +218,7 @@ export default function VotePageClient({
         <div className="pt-4 pb-2">
           <h1 className="text-2xl font-extrabold">⚔️ We Fight Mode</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Vote for your pick. Majority wins. No drama.
+            Vote once for your pick. Majority wins. No drama.
           </p>
         </div>
 
@@ -242,7 +240,7 @@ export default function VotePageClient({
                 <strong>⏱️ Voting window:</strong> 15 minutes
               </p>
               <p className="text-xs text-amber-700 mt-1">
-                <strong>📊 How it works:</strong> Pick your favorite(s), highest votes wins
+                <strong>📊 How it works:</strong> Pick one spot only; highest votes wins
               </p>
             </div>
             <button
@@ -428,7 +426,7 @@ export default function VotePageClient({
     <div className="max-w-md mx-auto px-4 pb-6">
       <div className="pt-4 pb-2">
         <h1 className="text-2xl font-extrabold">⚔️ We Fight Mode</h1>
-        <p className="text-sm text-gray-400 mt-1">Vote for your favorites!</p>
+        <p className="text-sm text-gray-400 mt-1">Vote once for your pick</p>
       </div>
 
       {/* Timer */}
@@ -491,16 +489,16 @@ export default function VotePageClient({
                   {!isExpired && (
                     <button
                       onClick={() =>
-                        handleVote(option.id, myVote === 'yes' ? 'no' : 'yes')
+                        handleVote(option.id)
                       }
                       disabled={isExpired}
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg transition disabled:opacity-50 ${
+                      className={`w-16 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition disabled:opacity-50 ${
                         myVote === 'yes'
                           ? 'bg-pandan text-white shadow-md'
                           : 'bg-gray-100 hover:bg-gray-200 text-gray-500'
                       }`}
                     >
-                      {myVote === 'yes' ? '✓' : '+'}
+                      {myVote === 'yes' ? '✓' : 'Pick'}
                     </button>
                   )}
                 </div>

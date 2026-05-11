@@ -1,17 +1,14 @@
 import { prisma } from '@/lib/prisma';
-import { haversineKm } from '@/lib/utils';
 import type { Prisma } from '@prisma/client';
 
 export type DecisionFilters = {
   budgetFilter?: 'kering' | 'ok' | 'belanja';
+  cuisineTags?: string[];
+  vibeTags?: string[];
   selectedTags?: string[];
-  walkTimeMax?: number;
   halal?: boolean;
   vegOptions?: boolean;
   favoritesOnly?: boolean;
-  maxDistanceKm?: number;
-  userLat?: number;
-  userLng?: number;
   /** Skip anti-repeat filter; reroll may land on the same restaurant. */
   allowRepeatPicks?: boolean;
 };
@@ -35,14 +32,12 @@ export async function getEligibleRestaurants({
 
   const {
     budgetFilter,
+    cuisineTags = [],
+    vibeTags = [],
     selectedTags = [],
-    walkTimeMax,
     halal,
     vegOptions,
     favoritesOnly,
-    maxDistanceKm,
-    userLat,
-    userLng,
     allowRepeatPicks,
   } = filters || {};
 
@@ -55,23 +50,36 @@ export async function getEligibleRestaurants({
     query.priceMin = { gte: 20 };
   }
 
-  if (walkTimeMax) {
-    query.walkMinutes = { lte: Number(walkTimeMax) };
-  }
-
   if (halal) query.halal = true;
   if (vegOptions) query.vegOptions = true;
 
   let candidates = await prisma.restaurant.findMany({ where: query });
 
-  if (selectedTags.length > 0) {
-    candidates = candidates.filter((r) => {
-      const allTags = [
-        ...(Array.isArray(r.cuisineTags) ? r.cuisineTags : []),
-        ...(Array.isArray(r.vibeTags) ? r.vibeTags : []),
-      ];
-      return selectedTags.some((tag: string) => allTags.includes(tag as never));
-    });
+  const selectedCuisineTags = cuisineTags.length > 0
+    ? cuisineTags
+    : selectedTags.filter((tag) =>
+        candidates.some((r) => Array.isArray(r.cuisineTags) && (r.cuisineTags as string[]).includes(tag))
+      );
+  const selectedVibeTags = vibeTags.length > 0
+    ? vibeTags
+    : selectedTags.filter((tag) =>
+        candidates.some((r) => Array.isArray(r.vibeTags) && (r.vibeTags as string[]).includes(tag))
+      );
+
+  if (selectedCuisineTags.length > 0) {
+    candidates = candidates.filter(
+      (r) =>
+        Array.isArray(r.cuisineTags) &&
+        selectedCuisineTags.some((tag) => (r.cuisineTags as string[]).includes(tag))
+    );
+  }
+
+  if (selectedVibeTags.length > 0) {
+    candidates = candidates.filter(
+      (r) =>
+        Array.isArray(r.vibeTags) &&
+        selectedVibeTags.some((tag) => (r.vibeTags as string[]).includes(tag))
+    );
   }
 
   if (favoritesOnly) {
@@ -81,13 +89,6 @@ export async function getEligibleRestaurants({
     });
     const favIds = new Set(userFavorites.map((f) => f.restaurantId));
     candidates = candidates.filter((r) => favIds.has(r.id));
-  }
-
-  if (maxDistanceKm && typeof userLat === 'number' && typeof userLng === 'number') {
-    candidates = candidates.filter((r) => {
-      if (r.latitude == null || r.longitude == null) return false;
-      return haversineKm(userLat, userLng, r.latitude, r.longitude) <= maxDistanceKm;
-    });
   }
 
   const cutoffDate = new Date();

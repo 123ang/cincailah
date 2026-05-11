@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 
+const CUISINE_TAG_OPTIONS = ['Mamak', 'Japanese', 'Western', 'Chinese', 'Thai', 'Fast Food', 'Cafe', 'Indian'];
+const VIBE_TAG_OPTIONS = ['Aircond', 'Cheap', 'Atas', 'Group Friendly', 'Parking', '24hrs', 'Delivery'];
+
 interface Restaurant {
   id: string;
   name: string;
@@ -30,6 +33,7 @@ interface Group {
   noRepeatDays: number;
   maxReroll: number;
   decisionModeDefault: string;
+  createdBy: string;
   members: any[];
 }
 
@@ -59,17 +63,15 @@ export default function DecidePage({
   userPrefs,
 }: DecidePageProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<'you_pick' | 'we_fight'>(
-    group.decisionModeDefault as 'you_pick' | 'we_fight'
-  );
+  const isOwner = group.createdBy === currentUserId;
+  const initialMode = isOwner && group.decisionModeDefault === 'you_pick' ? 'you_pick' : 'we_fight';
+  const [mode, setMode] = useState<'you_pick' | 'we_fight'>(initialMode);
   const [budgetFilter, setBudgetFilter] = useState<string>('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [walkTimeMax, setWalkTimeMax] = useState<number>(30);
+  const [selectedCuisineTags, setSelectedCuisineTags] = useState<string[]>([]);
+  const [selectedVibeTags, setSelectedVibeTags] = useState<string[]>([]);
   const [halal, setHalal] = useState<boolean>(userPrefs?.halal ?? false);
   const [vegOptions, setVegOptions] = useState<boolean>(userPrefs?.vegOptions ?? false);
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
-  const [nearby500m, setNearby500m] = useState<boolean>(false);
-  const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   /** When true, anti-repeat is skipped and "Not this" rerolls can land on the same spot again. */
   const [allowRepeatPicks, setAllowRepeatPicks] = useState(false);
 
@@ -78,19 +80,14 @@ export default function DecidePage({
     // enums (e.g. budgetFilter) to be one of the allowed values or omitted.
     // Sending '' triggers a 400 on some server builds.
     const filters: Record<string, unknown> = {
-      selectedTags,
-      walkTimeMax,
+      cuisineTags: selectedCuisineTags,
+      vibeTags: selectedVibeTags,
       halal,
       vegOptions,
       favoritesOnly,
     };
     if (budgetFilter === 'kering' || budgetFilter === 'ok' || budgetFilter === 'belanja') {
       filters.budgetFilter = budgetFilter;
-    }
-    if (nearby500m) filters.maxDistanceKm = 0.5;
-    if (userCoords) {
-      filters.userLat = userCoords.lat;
-      filters.userLng = userCoords.lng;
     }
     if (allowRepeatPicks) {
       filters.allowRepeatPicks = true;
@@ -103,20 +100,19 @@ export default function DecidePage({
     }
   };
 
-  const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
-    );
+  const toggleTag = (tag: string, type: 'cuisine' | 'vibe') => {
+    const setter = type === 'cuisine' ? setSelectedCuisineTags : setSelectedVibeTags;
+    setter((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
   };
+
 
   const resetFilters = () => {
     setBudgetFilter('');
-    setSelectedTags([]);
-    setWalkTimeMax(30);
+    setSelectedCuisineTags([]);
+    setSelectedVibeTags([]);
     setHalal(false);
     setVegOptions(false);
     setFavoritesOnly(false);
-    setNearby500m(false);
     setAllowRepeatPicks(false);
   };
 
@@ -202,65 +198,77 @@ export default function DecidePage({
           </div>
         </div>
 
-        {/* Type & Preference Filters */}
+        {/* Cuisine type */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🏷️</span>
-            <span className="text-sm font-bold text-gray-700">What mood?</span>
+            <span className="text-base">🍜</span>
+            <span className="text-sm font-bold text-gray-700">Cuisine Type</span>
           </div>
+          <p className="text-xs text-gray-400 mb-3">Pick any cuisine types. Leave empty to include all.</p>
           <div className="flex flex-wrap gap-2">
-            {['Halal', 'Veg Options', 'Aircond', 'Mamak', 'Japanese', 'Western', 'Atas', 'Cheap'].map((tag) => (
+            {CUISINE_TAG_OPTIONS.map((tag) => (
               <button
                 key={tag}
-                onClick={() => {
-                  if (tag === 'Halal') setHalal(!halal);
-                  else if (tag === 'Veg Options') setVegOptions(!vegOptions);
-                  else toggleTag(tag);
-                }}
+                onClick={() => toggleTag(tag, 'cuisine')}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                  (tag === 'Halal' && halal) ||
-                  (tag === 'Veg Options' && vegOptions) ||
-                  selectedTags.includes(tag)
+                  selectedCuisineTags.includes(tag)
                     ? 'bg-green-100 text-green-700 ring-2 ring-pandan'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {tag === 'Halal' && '🥗 '}
-                {tag === 'Veg Options' && '🌱 '}
-                {tag === 'Aircond' && '❄️ '}
-                {tag === 'Mamak' && '🍜 '}
-                {tag === 'Japanese' && '🍱 '}
-                {tag === 'Western' && '🥘 '}
-                {tag === 'Atas' && '✨ '}
-                {tag === 'Cheap' && '💨 '}
                 {tag}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Walk Time */}
+        {/* Cuisine vibe */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🚶</span>
-              <span className="text-sm font-bold text-gray-700">Walk Time</span>
-            </div>
-            <span className="text-sm font-bold text-sambal">≤ {walkTimeMax} min</span>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">✨</span>
+            <span className="text-sm font-bold text-gray-700">Cuisine Vibe</span>
           </div>
-          <input
-            type="range"
-            min="5"
-            max="30"
-            value={walkTimeMax}
-            onChange={(e) => setWalkTimeMax(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-sambal"
-          />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>5 min</span>
-            <span>30 min</span>
+          <p className="text-xs text-gray-400 mb-3">Pick any vibes. Cuisine and vibe filters work together.</p>
+          <div className="flex flex-wrap gap-2">
+            {VIBE_TAG_OPTIONS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag, 'vibe')}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                  selectedVibeTags.includes(tag)
+                    ? 'bg-green-100 text-green-700 ring-2 ring-pandan'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Halal / vegetarian */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">🥗</span>
+            <span className="text-sm font-bold text-gray-700">Halal / Vegetarian</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {['Halal', 'Veg Options'].map((tag) => (
+              <button
+                key={tag}
+                onClick={() => (tag === 'Halal' ? setHalal(!halal) : setVegOptions(!vegOptions))}
+                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
+                  (tag === 'Halal' && halal) || (tag === 'Veg Options' && vegOptions)
+                    ? 'bg-green-100 text-green-700 ring-2 ring-pandan'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {tag === 'Halal' ? '🥗 ' : '🌱 '}{tag}
+              </button>
+            ))}
+          </div>
+        </div>
+
 
         {/* Favorites Only */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
@@ -286,55 +294,9 @@ export default function DecidePage({
           </button>
         </div>
 
-        {/* Nearby 500m */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mt-3">
-          <button
-            onClick={() => {
-              if (!nearby500m && !userCoords && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    setNearby500m(true);
-                  },
-                  () => setNearby500m(false)
-                );
-              } else {
-                setNearby500m(!nearby500m);
-              }
-            }}
-            className="flex items-center justify-between w-full"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">📍</span>
-              <span className="text-sm font-bold text-gray-700">Within 500m</span>
-            </div>
-            <div
-              className={`w-12 h-6 rounded-full flex items-center px-0.5 transition ${
-                nearby500m ? 'bg-blue-500' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full shadow-sm transition transform ${
-                  nearby500m ? 'translate-x-6' : ''
-                }`}
-              />
-            </div>
-          </button>
-          {nearby500m && !userCoords && (
-            <p className="text-xs text-amber-600 mt-2">
-              Location permission is needed for nearby filter.
-            </p>
-          )}
-        </div>
+
       </div>
 
-      {/* Anti-Repeat Notice */}
-      <div className="mt-4 flex items-center gap-2 bg-amber-50 rounded-xl px-4 py-2.5 border border-amber-200">
-        <span className="text-base">🔁</span>
-        <p className="text-xs text-amber-700">
-          <strong>Anti-Repeat ON:</strong> Ate Already protection — skipping last {group.noRepeatDays} days of picks.
-        </p>
-      </div>
 
       {/* Same spot can win again */}
       <div className="mt-3 bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
@@ -360,8 +322,9 @@ export default function DecidePage({
       <div className="mt-6">
         <div className="bg-white rounded-2xl p-1.5 flex gap-1 border border-gray-200 shadow-sm">
           <button
-            onClick={() => setMode('you_pick')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${
+            onClick={() => isOwner && setMode('you_pick')}
+            disabled={!isOwner}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
               mode === 'you_pick'
                 ? 'bg-sambal text-white'
                 : 'text-gray-500 hover:bg-gray-50'
@@ -382,9 +345,12 @@ export default function DecidePage({
         </div>
         <p className="text-xs text-gray-400 text-center mt-2">
           {mode === 'you_pick'
-            ? 'Smart random pick — let fate decide!'
-            : 'Vote with your group — majority wins!'}
+            ? 'Owner-only random pick — reroll up to 3 times.'
+            : 'Vote once with your group — majority wins!'}
         </p>
+        {!isOwner && (
+          <p className="text-xs text-amber-600 text-center mt-1">Only the group owner can use You Pick.</p>
+        )}
       </div>
 
       {/* MAIN ACTION BUTTON */}

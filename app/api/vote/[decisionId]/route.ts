@@ -61,7 +61,8 @@ export async function GET(
       }));
 
       const maxVotes = Math.max(...voteCounts.map((v) => v.count));
-      const winningOption = voteCounts.find((v) => v.count === maxVotes);
+      const tiedOptions = voteCounts.filter((v) => v.count === maxVotes);
+      const winningOption = tiedOptions[Math.floor(Math.random() * tiedOptions.length)];
 
       if (winningOption) {
         await prisma.lunchDecision.update({
@@ -137,15 +138,23 @@ export async function POST(
       return NextResponse.json({ error: 'Voting has ended' }, { status: 400 });
     }
 
-    await prisma.vote.upsert({
+    const option = await prisma.decisionOption.findFirst({
+      where: { id: optionId, decisionId },
+      select: { id: true },
+    });
+    if (!option) {
+      return NextResponse.json({ error: 'Invalid option for this decision' }, { status: 400 });
+    }
+
+    await prisma.vote.deleteMany({
       where: {
-        decisionOptionId_userId: {
-          decisionOptionId: optionId,
-          userId,
-        },
+        userId,
+        decisionOption: { decisionId },
       },
-      update: { vote },
-      create: { decisionOptionId: optionId, userId, vote },
+    });
+
+    await prisma.vote.create({
+      data: { decisionOptionId: optionId, userId, vote: vote === 'no' ? 'no' : 'yes' },
     });
 
     void trackEvent(userId, 'vote_cast', { decisionId, optionId, vote });

@@ -43,7 +43,7 @@ model Group {
   makanCode           String   @unique @map("makan_code")
   createdBy           String   @map("created_by") @db.Uuid
   noRepeatDays        Int      @default(7) @map("no_repeat_days")
-  maxReroll           Int      @default(2) @map("max_reroll")
+  maxReroll           Int      @default(3) @map("max_reroll")
   decisionModeDefault String   @default("you_pick") @map("decision_mode_default")
   coverUrl            String?  @map("cover_url")
   createdAt           DateTime @default(now()) @map("created_at")

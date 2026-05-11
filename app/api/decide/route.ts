@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { resolveUserId } from '@/lib/session';
 import { DecideSchema, zodError } from '@/lib/schemas';
 import { trackEvent } from '@/lib/analytics';
-import { requireGroupMembership } from '@/lib/group-access';
+import { requireGroupAdmin, requireGroupMembership } from '@/lib/group-access';
 import { getEligibleRestaurants } from '@/lib/decision-service';
 import { reportError } from '@/lib/logger';
 
@@ -28,6 +28,10 @@ export async function POST(request: NextRequest) {
     const membership = await requireGroupMembership(userId, groupId);
     if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    const isOwner = await requireGroupAdmin(userId, groupId);
+    if (isOwner !== true) {
+      return NextResponse.json({ error: 'Only the group owner can use You Pick' }, { status: 403 });
     }
 
     const { group, candidates: eligibleCandidates } = await getEligibleRestaurants({
@@ -153,7 +157,7 @@ export async function POST(request: NextRequest) {
       winner,
       decisionId: savedDecisionId,
       candidates: candidates.slice(0, 8),
-      maxReroll: group.maxReroll,
+      maxReroll: 3,
       rerollReplaced,
     });
   } catch (error) {

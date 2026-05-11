@@ -51,6 +51,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Invalid name' }, { status: 400 });
     }
 
+    if (cuisineTags !== undefined && (!Array.isArray(cuisineTags) || cuisineTags.length === 0)) {
+      return NextResponse.json({ error: 'Choose at least one cuisine tag' }, { status: 400 });
+    }
+
+    if (vibeTags !== undefined && (!Array.isArray(vibeTags) || vibeTags.length === 0)) {
+      return NextResponse.json({ error: 'Choose at least one vibe tag' }, { status: 400 });
+    }
+
     const pMin = priceMin !== undefined ? Number(priceMin) : existing.priceMin;
     const pMax = priceMax !== undefined ? Number(priceMax) : existing.priceMax;
     if (Number.isNaN(pMin) || Number.isNaN(pMax) || pMin >= pMax) {
@@ -76,8 +84,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       where: { id: restaurantId },
       data: {
         ...(name !== undefined && { name: String(name).trim() }),
-        ...(cuisineTags !== undefined && { cuisineTags: cuisineTags || [] }),
-        ...(vibeTags !== undefined && { vibeTags: vibeTags || [] }),
+        ...(cuisineTags !== undefined && { cuisineTags }),
+        ...(vibeTags !== undefined && { vibeTags }),
         ...(priceMin !== undefined && { priceMin: pMin }),
         ...(priceMax !== undefined && { priceMax: pMax }),
         ...(halal !== undefined && { halal: Boolean(halal) }),
