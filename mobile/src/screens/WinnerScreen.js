@@ -1,6 +1,6 @@
 /**
- * Winner reveal screen — mirrors web RouletteSpinner result phase.
- * Supports "Not this 🙅" reroll up to maxReroll times.
+ * Winner reveal screen — logo roulette result flow.
+ * The answer stays inside the spin screen instead of appearing as a separate card.
  */
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -12,13 +12,30 @@ import {
   ActivityIndicator,
   Animated,
   Alert,
+  ScrollView,
+  Easing,
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useAudioPlayer } from "expo-audio";
 import { apiFetch } from "../lib/api";
 
-const SAMBAL = "#FF5A00";
-const PANDAN = "#45B619";
+const LOGO = require("../../assets/brand/cincailah-logo.jpeg");
+
+const BRAND = {
+  orange: "#FF5A00",
+  orangeDark: "#E64000",
+  orangeSoft: "#FFE1CC",
+  cream: "#FFF4DF",
+  creamDeep: "#FFE2BC",
+  ink: "#251308",
+  muted: "#835F4B",
+  green: "#45B619",
+  blue: "#078BCE",
+  purple: "#6D2CB7",
+  red: "#E9321B",
+  yellow: "#FFC233",
+  white: "#FFFFFF",
+};
 
 export default function WinnerScreen({ route, navigation }) {
   const {
@@ -34,33 +51,64 @@ export default function WinnerScreen({ route, navigation }) {
   const [rerollsUsed, setRerollsUsed] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const scale = useRef(new Animated.Value(0.6)).current;
+  const wheelSpin = useRef(new Animated.Value(0)).current;
+  const reveal = useRef(new Animated.Value(0)).current;
+  const tick = useRef(new Animated.Value(0)).current;
   const player = useAudioPlayer(require("../../assets/sounds/winner.mp3"));
 
   useEffect(() => {
-    // Bounce-in animation
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      friction: 6,
-      tension: 80,
-    }).start();
+    wheelSpin.setValue(0);
+    reveal.setValue(0);
+    tick.setValue(0);
 
-    // Sound + haptics
+    Animated.parallel([
+      Animated.timing(wheelSpin, {
+        toValue: 1,
+        duration: 2300,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(tick, {
+              toValue: 1,
+              duration: 90,
+              easing: Easing.linear,
+              useNativeDriver: true,
+            }),
+            Animated.timing(tick, {
+              toValue: 0,
+              duration: 90,
+              easing: Easing.linear,
+              useNativeDriver: true,
+            }),
+          ]),
+          { iterations: 12 }
+        ),
+        Animated.timing(reveal, {
+          toValue: 1,
+          duration: 360,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+
     try {
       player.play();
     } catch (error) {
-      console.debug('Winner sound playback unavailable', error);
+      console.debug("Winner sound playback unavailable", error);
     }
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.debug('Winner haptics unavailable', error);
+      console.debug("Winner haptics unavailable", error);
     }
-  }, [winner, player, scale]);
+  }, [player, reveal, tick, wheelSpin, winner]);
 
   const handleReroll = async () => {
-    if (rerollsUsed >= maxReroll) return;
+    if (rerollsUsed >= maxReroll || loading || !winner) return;
     setLoading(true);
     try {
       const allowRepeat = Boolean(filters?.allowRepeatPicks);
@@ -70,10 +118,9 @@ export default function WinnerScreen({ route, navigation }) {
         body: { groupId, filters, excludeIds: nextExclude },
       });
       if (!ok) {
-        Alert.alert("Aiyah…", data?.error || "No more restaurants.");
+        Alert.alert("Aiyah...", data?.error || "No more restaurants.");
         return;
       }
-      scale.setValue(0.6);
       setWinner(data.winner);
       if (!allowRepeat) {
         setExcludeIds(nextExclude);
@@ -84,58 +131,95 @@ export default function WinnerScreen({ route, navigation }) {
     }
   };
 
-  const rerollsLeft = maxReroll - rerollsUsed;
-
+  const rerollsLeft = Math.max(0, maxReroll - rerollsUsed);
   const cuisineTags = Array.isArray(winner?.cuisineTags) ? winner.cuisineTags : [];
   const vibeTags = Array.isArray(winner?.vibeTags) ? winner.vibeTags : [];
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.crown}>🎉 The boss has spoken!</Text>
+  const wheelRotate = wheelSpin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "1780deg"],
+  });
+  const needleRotate = tick.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-5deg", "5deg"],
+  });
+  const revealTranslate = reveal.interpolate({
+    inputRange: [0, 1],
+    outputRange: [22, 0],
+  });
 
-      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
-        <View style={styles.cardHero}>
-          <Text style={styles.heroEmoji}>🍜</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>You Pick</Text>
+  return (
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.container}
+      contentInsetAdjustmentBehavior="automatic"
+    >
+      <View style={styles.hero}>
+        <View style={styles.whiteArc} />
+        <View style={styles.softOrb} />
+
+        <View style={styles.topRow}>
+          <View style={styles.statusPill}>
+            <Text style={styles.statusText}>You Pick</Text>
           </View>
           {rerollsUsed > 0 && (
-            <View style={styles.rerollBadge}>
-              <Text style={styles.rerollBadgeText}>Reroll {rerollsUsed}/{maxReroll}</Text>
+            <View style={styles.statusPill}>
+              <Text style={styles.statusText}>Reroll {rerollsUsed}/{maxReroll}</Text>
             </View>
           )}
         </View>
 
-        <View style={styles.cardBody}>
-          <Text style={styles.name}>{winner?.name ?? "Unknown"}</Text>
+        <Text style={styles.kicker}>FAST FOOD ROULETTE</Text>
+        <Text style={styles.title}>Spin once. Go makan.</Text>
+        <Text style={styles.subtitle}>The needle lands and the answer stays on the wheel screen.</Text>
+
+        <View style={styles.wheelStage}>
+          <Animated.View style={[styles.needle, { transform: [{ rotate: needleRotate }] }]}>
+            <View style={styles.needleShape} />
+            <View style={styles.needleDot} />
+          </Animated.View>
+
+          <Animated.View style={[styles.logoWheel, { transform: [{ rotate: wheelRotate }] }]}>
+            <Animated.Image source={LOGO} style={styles.logoImage} resizeMode="cover" />
+          </Animated.View>
+        </View>
+
+        <Animated.View
+          style={[
+            styles.answerDock,
+            {
+              opacity: reveal,
+              transform: [{ translateY: revealTranslate }],
+            },
+          ]}
+        >
+          <Text style={styles.answerKicker}>The needle says</Text>
+          <Text style={styles.name} selectable>{winner?.name ?? "Unknown"}</Text>
           {cuisineTags.length > 0 && (
             <Text style={styles.cuisine}>{cuisineTags.join(" · ")}</Text>
           )}
 
           <View style={styles.tagRow}>
-            {winner?.halal && <Chip label="✅ Halal" color="#D1FAE5" textColor="#065F46" />}
-            {winner?.vegOptions && <Chip label="🌱 Veg" color="#D1FAE5" textColor="#065F46" />}
+            {winner?.halal && <Chip label="Halal" color="#D1FAE5" textColor="#065F46" />}
+            {winner?.vegOptions && <Chip label="Veg options" color="#D1FAE5" textColor="#065F46" />}
             {vibeTags.slice(0, 3).map((t) => (
               <Chip key={t} label={t} color="#DBEAFE" textColor="#1E40AF" />
             ))}
           </View>
 
           <View style={styles.metaRow}>
-            <MetaBox label="Budget" value={`RM${winner?.priceMin ?? 0}–${winner?.priceMax ?? 0}`} />
-            <MetaBox label="Walk" value={`${winner?.walkMinutes ?? "?"} min 🚶`} />
+            <MetaBox label="Budget" value={`RM${winner?.priceMin ?? 0}-${winner?.priceMax ?? 0}`} />
+            <MetaBox label="Walk" value={`${winner?.walkMinutes ?? "?"} min`} />
           </View>
 
           <View style={styles.actionRow}>
             {winner?.mapsUrl ? (
-              <Pressable
-                style={styles.goBtn}
-                onPress={() => Linking.openURL(winner.mapsUrl)}
-              >
-                <Text style={styles.goBtnText}>📍 Let us go!</Text>
+              <Pressable style={styles.goBtn} onPress={() => Linking.openURL(winner.mapsUrl)}>
+                <Text style={styles.goBtnText}>Let us go</Text>
               </Pressable>
             ) : (
               <Pressable style={styles.goBtn} onPress={() => navigation.goBack()}>
-                <Text style={styles.goBtnText}>✅ Confirmed!</Text>
+                <Text style={styles.goBtnText}>Confirmed</Text>
               </Pressable>
             )}
 
@@ -145,10 +229,10 @@ export default function WinnerScreen({ route, navigation }) {
               disabled={rerollsLeft <= 0 || loading}
             >
               {loading ? (
-                <ActivityIndicator color="#374151" size="small" />
+                <ActivityIndicator color={BRAND.ink} size="small" />
               ) : (
                 <>
-                  <Text style={styles.rerollBtnText}>Not this 🙅</Text>
+                  <Text style={styles.rerollBtnText}>Spin again</Text>
                   <Text style={styles.rerollSub}>
                     {rerollsLeft > 0 ? `${rerollsLeft} left` : "No more"}
                   </Text>
@@ -156,13 +240,13 @@ export default function WinnerScreen({ route, navigation }) {
               )}
             </Pressable>
           </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </View>
 
       <Pressable onPress={() => navigation.goBack()} style={styles.backBtn}>
-        <Text style={styles.backBtnText}>← Back to filters</Text>
+        <Text style={styles.backBtnText}>Back to filters</Text>
       </Pressable>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -184,87 +268,246 @@ function MetaBox({ label, value }) {
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1, backgroundColor: BRAND.cream },
   container: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
+    flexGrow: 1,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 28,
     justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
+    gap: 16,
   },
-  crown: { fontSize: 15, color: "#6B7280", marginBottom: 16 },
-  card: {
-    width: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 28,
+  hero: {
+    position: "relative",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
+    backgroundColor: BRAND.orange,
+    borderRadius: 32,
+    padding: 20,
+    minHeight: 690,
   },
-  cardHero: {
+  whiteArc: {
+    position: "absolute",
+    width: 310,
+    height: 310,
+    borderRadius: 155,
+    borderWidth: 32,
+    borderColor: "rgba(255,255,255,0.72)",
+    borderLeftColor: "transparent",
+    right: -156,
+    top: 116,
+    transform: [{ rotate: "-26deg" }],
+  },
+  softOrb: {
+    position: "absolute",
+    width: 140,
     height: 140,
-    backgroundColor: SAMBAL,
+    borderRadius: 70,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    left: -55,
+    bottom: 150,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  statusPill: {
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  statusText: {
+    color: BRAND.white,
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  kicker: {
+    alignSelf: "flex-start",
+    marginTop: 26,
+    color: BRAND.white,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  title: {
+    maxWidth: 260,
+    marginTop: 14,
+    color: BRAND.white,
+    fontSize: 43,
+    lineHeight: 42,
+    fontWeight: "900",
+    letterSpacing: -1.3,
+  },
+  subtitle: {
+    maxWidth: 265,
+    marginTop: 10,
+    color: "rgba(255,255,255,0.78)",
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: "800",
+  },
+  wheelStage: {
+    alignSelf: "center",
+    width: 282,
+    height: 282,
+    marginTop: 30,
+    alignItems: "center",
     justifyContent: "center",
+  },
+  logoWheel: {
+    width: 258,
+    height: 258,
+    borderRadius: 129,
+    borderWidth: 9,
+    borderColor: BRAND.white,
+    overflow: "hidden",
+    backgroundColor: BRAND.orange,
+  },
+  logoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  needle: {
+    position: "absolute",
+    top: -4,
+    zIndex: 5,
+    width: 42,
+    height: 76,
     alignItems: "center",
   },
-  heroEmoji: { fontSize: 60 },
-  badge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    backgroundColor: "rgba(255,255,255,0.9)",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+  needleShape: {
+    width: 42,
+    height: 76,
+    backgroundColor: BRAND.white,
+    borderRadius: 18,
+    transform: [{ scaleX: 0.72 }],
   },
-  badgeText: { fontSize: 11, fontWeight: "700", color: SAMBAL },
-  rerollBadge: {
+  needleDot: {
     position: "absolute",
-    top: 12,
-    left: 12,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    top: 20,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: BRAND.orange,
   },
-  rerollBadgeText: { fontSize: 11, fontWeight: "700", color: "#fff" },
-  cardBody: { padding: 20 },
-  name: { fontSize: 26, fontWeight: "900", color: "#111827" },
-  cuisine: { fontSize: 14, color: "#6B7280", marginTop: 4 },
-  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 12 },
-  chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
-  chipText: { fontSize: 12, fontWeight: "700" },
-  metaRow: { flexDirection: "row", gap: 10, marginTop: 16 },
+  answerDock: {
+    marginTop: -38,
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.96)",
+    padding: 16,
+  },
+  answerKicker: {
+    color: BRAND.orangeDark,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    textTransform: "uppercase",
+  },
+  name: {
+    color: BRAND.ink,
+    fontSize: 30,
+    lineHeight: 32,
+    fontWeight: "900",
+    letterSpacing: -0.9,
+    marginTop: 3,
+  },
+  cuisine: {
+    fontSize: 14,
+    color: BRAND.muted,
+    marginTop: 5,
+    fontWeight: "800",
+  },
+  tagRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 12,
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+  },
+  chipText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  metaRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 15,
+  },
   metaBox: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
-    borderRadius: 14,
+    backgroundColor: "#FFF7EB",
+    borderRadius: 16,
     padding: 12,
     alignItems: "center",
   },
-  metaLabel: { fontSize: 11, color: "#9CA3AF", marginBottom: 2 },
-  metaValue: { fontSize: 14, fontWeight: "700", color: "#111827" },
-  actionRow: { flexDirection: "row", gap: 10, marginTop: 16 },
+  metaLabel: {
+    fontSize: 11,
+    color: BRAND.muted,
+    marginBottom: 2,
+    fontWeight: "800",
+  },
+  metaValue: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: BRAND.ink,
+  },
+  actionRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+  },
   goBtn: {
     flex: 1,
-    backgroundColor: PANDAN,
-    borderRadius: 14,
+    backgroundColor: BRAND.green,
+    borderRadius: 16,
     paddingVertical: 14,
     alignItems: "center",
   },
-  goBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  goBtnText: {
+    color: BRAND.white,
+    fontWeight: "900",
+    fontSize: 14,
+  },
   rerollBtn: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 14,
-    paddingVertical: 14,
+    backgroundColor: "#F4EADC",
+    borderRadius: 16,
+    paddingVertical: 12,
     alignItems: "center",
   },
-  rerollBtnDisabled: { opacity: 0.5 },
-  rerollBtnText: { fontWeight: "700", color: "#374151", fontSize: 14 },
-  rerollSub: { fontSize: 11, color: "#9CA3AF", marginTop: 2 },
-  backBtn: { marginTop: 20 },
-  backBtnText: { color: "#9CA3AF", fontSize: 14, fontWeight: "600" },
+  rerollBtnDisabled: {
+    opacity: 0.5,
+  },
+  rerollBtnText: {
+    fontWeight: "900",
+    color: BRAND.ink,
+    fontSize: 14,
+  },
+  rerollSub: {
+    fontSize: 11,
+    color: BRAND.muted,
+    marginTop: 2,
+    fontWeight: "800",
+  },
+  backBtn: {
+    alignSelf: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  backBtnText: {
+    color: BRAND.muted,
+    fontSize: 14,
+    fontWeight: "800",
+  },
 });

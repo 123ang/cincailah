@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cincailah Roulette Concepts</title>
+  <style>
+    :root {
+      --orange: #ff5a00;
+      --orange-dark: #e64000;
+      --cream: #fff4df;
+      --cream-2: #ffe2bc;
+      --ink: #251308;
+      --muted: #835f4b;
+      --green: #45b619;
+      --blue: #078bce;
+      --purple: #6d2cb7;
+      --red: #e9321b;
+      --yellow: #ffc233;
+      --white: #ffffff;
+      --shadow: 0 28px 80px rgba(140, 54, 0, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(255, 194, 51, 0.48), transparent 26rem),
+        linear-gradient(135deg, #fff8ea 0%, #ffe5bd 48%, #ffd49c 100%);
+      color: var(--ink);
+      font-family: ui-rounded, "Arial Rounded MT Bold", "Avenir Next", system-ui, sans-serif;
+    }
+
+    .page {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 36px 20px 56px;
+    }
+
+    .intro {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 26px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      background: rgba(255, 90, 0, 0.1);
+      color: var(--orange-dark);
+      padding: 9px 13px;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .logo-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 9px;
+      object-fit: cover;
+      box-shadow: 0 6px 14px rgba(255, 90, 0, 0.2);
+    }
+
+    h1 {
+      margin: 16px 0 8px;
+      max-width: 680px;
+      font-size: clamp(36px, 6vw, 72px);
+      line-height: 0.92;
+      letter-spacing: -0.05em;
+    }
+
+    .intro p {
+      margin: 0;
+      max-width: 580px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.55;
+      font-weight: 750;
+    }
+
+    .note {
+      flex: 0 0 250px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.72);
+      padding: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      box-shadow: 0 18px 50px rgba(140, 54, 0, 0.12);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+      align-items: stretch;
+    }
+
+    .concept {
+      border-radius: 34px;
+      background: rgba(255, 255, 255, 0.72);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+    }
+
+    .concept-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 2px 4px 14px;
+    }
+
+    .concept-head-left {
+      min-width: 0;
+    }
+
+    .concept-title {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .concept-tag {
+      border-radius: 999px;
+      background: var(--ink);
+      color: #fff;
+      padding: 8px 11px;
+      font-size: 11px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    .head-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .replay-top {
+      border-radius: 999px;
+      background: var(--orange);
+      color: #fff;
+      padding: 8px 11px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      box-shadow: 0 10px 24px rgba(255, 90, 0, 0.22);
+    }
+
+    .phone {
+      position: relative;
+      overflow: hidden;
+      min-height: 690px;
+      border-radius: 34px;
+      background: var(--cream);
+      border: 10px solid var(--ink);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.32);
+    }
+
+    .status {
+      position: absolute;
+      inset: 18px 18px auto;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: rgba(255,255,255,0.9);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+
+    .pill {
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      padding: 8px 11px;
+      backdrop-filter: blur(10px);
+    }
+
+    .compact-hero {
+      position: relative;
+      min-height: 500px;
+      border-radius: 22px 22px 36px 36px;
+      background: var(--orange);
+      padding: 76px 22px 28px;
+      overflow: hidden;
+    }
+
+    .compact-hero::before,
+    .dramatic-screen::before {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      width: 330px;
+      height: 330px;
+      border-radius: 50%;
+      border: 34px solid rgba(255,255,255,0.78);
+      border-left-color: transparent;
+      border-bottom-color: rgba(255,255,255,0.78);
+      transform: rotate(-28deg);
+      pointer-events: none;
+    }
+
+    .compact-hero::before {
+      right: -190px;
+      top: 106px;
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+      color: #fff;
+    }
+
+    .small-label {
+      display: inline-block;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.18);
+      padding: 8px 11px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-copy h2 {
+      margin: 14px 0 7px;
+      max-width: 290px;
+      font-size: 48px;
+      line-height: 0.92;
+      letter-spacing: -0.06em;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      max-width: 260px;
+      color: rgba(255,255,255,0.78);
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 760;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      z-index: 3;
+      width: min(330px, 92%);
+      aspect-ratio: 1;
+      margin: 30px auto 0;
+    }
+
+    .wheel {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        conic-gradient(
+          from -30deg,
+          var(--yellow) 0deg 60deg,
+          var(--orange) 60deg 120deg,
+          var(--red) 120deg 180deg,
+          var(--purple) 180deg 240deg,
+          var(--blue) 240deg 300deg,
+          var(--green) 300deg 360deg
+        );
+      border: 12px solid #fff;
+      box-shadow: 0 22px 50px rgba(80, 24, 0, 0.35);
+      transition: transform 2.2s cubic-bezier(0.13, 0.9, 0.22, 1);
+    }
+
+    .wheel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background:
+        radial-gradient(circle, transparent 0 26%, rgba(255,255,255,0.95) 26.3% 37%, transparent 37.5%),
+        repeating-conic-gradient(from -30deg, transparent 0deg 58deg, rgba(255,255,255,0.78) 58deg 60deg);
+    }
+
+    .spin-1 .wheel-one {
+      transform: rotate(1578deg);
+    }
+
+    .spin-2 .wheel-two {
+      transform: rotate(2220deg) scale(1.03);
+    }
+
+    .spin-1 .needle,
+    .spin-2 .needle {
+      animation: needle-tick 0.16s steps(2, end) 0s 18 alternate;
+    }
+
+    @keyframes needle-tick {
+      from {
+        transform: translateX(-50%) rotate(-5deg);
+      }
+      to {
+        transform: translateX(-50%) rotate(5deg);
+      }
+    }
+
+    .center-cap {
+      position: absolute;
+      inset: 36%;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(60, 18, 0, 0.22);
+      display: grid;
+      place-items: center;
+      z-index: 3;
+    }
+
+    .center-cap img {
+      width: 58%;
+      height: 58%;
+      border-radius: 18px;
+      object-fit: cover;
+    }
+
+    .needle {
+      position: absolute;
+      left: 50%;
+      top: -8px;
+      z-index: 4;
+      width: 42px;
+      height: 78px;
+      transform: translateX(-50%);
+      filter: drop-shadow(0 10px 14px rgba(95, 30, 0, 0.28));
+    }
+
+    .needle::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(50% 100%, 8% 12%, 92% 12%);
+      background: #fff;
+      border-radius: 18px;
+    }
+
+    .needle::after {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      left: 50%;
+      top: 20px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: var(--orange);
+    }
+
+    .food-label {
+      position: absolute;
+      z-index: 2;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 950;
+      text-shadow: 0 2px 7px rgba(0,0,0,0.3);
+      pointer-events: none;
+    }
+
+    .f1 { top: 19%; left: 53%; transform: rotate(31deg); }
+    .f2 { top: 36%; right: 8%; transform: rotate(91deg); }
+    .f3 { bottom: 19%; right: 18%; transform: rotate(151deg); }
+    .f4 { bottom: 19%; left: 17%; transform: rotate(211deg); }
+    .f5 { top: 36%; left: 8%; transform: rotate(271deg); }
+    .f6 { top: 19%; left: 20%; transform: rotate(331deg); }
+
+    .answer-dock {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      z-index: 5;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.95);
+      padding: 16px;
+      box-shadow: 0 20px 44px rgba(90, 24, 0, 0.24);
+      transform: translateY(8px);
+    }
+
+    .answer-kicker {
+      color: var(--orange-dark);
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .answer-name {
+      margin-top: 4px;
+      color: var(--ink);
+      font-size: 29px;
+      line-height: 1;
+      font-weight: 950;
+      letter-spacing: -0.05em;
+    }
+
+    .answer-meta {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .answer-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 0;
+      font: inherit;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      border-radius: 16px;
+      padding: 12px 13px;
+      font-size: 13px;
+      font-weight: 950;
+    }
+
+    .primary-btn {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 12px 26px rgba(69, 182, 25, 0.24);
+    }
+
+    .secondary-btn {
+      background: #f4eadc;
+      color: var(--ink);
+    }
+
+    .compact-bottom {
+      padding: 16px 18px 20px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border-radius: 999px;
+      background: #fff;
+      color: var(--orange-dark);
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 8px 22px rgba(120, 49, 0, 0.08);
+    }
+
+    .dramatic-screen {
+      position: relative;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 50% 36%, rgba(255,255,255,0.24), transparent 17rem),
+        linear-gradient(180deg, #ff7a1e 0%, #ff5a00 48%, #e64000 100%);
+      overflow: hidden;
+      padding: 76px 20px 24px;
+    }
+
+    .dramatic-screen::before {
+      width: 390px;
+      height: 390px;
+      right: -184px;
+      top: 250px;
+      border-width: 40px;
+      opacity: 0.74;
+    }
+
+    .dramatic-title {
+      position: relative;
+      z-index: 3;
+      color: #fff;
+      text-align: center;
+    }
+
+    .dramatic-title h2 {
+      margin: 10px auto 0;
+      max-width: 340px;
+      font-size: 54px;
+      line-height: 0.9;
+      letter-spacing: -0.065em;
+    }
+
+    .dramatic-title p {
+      margin: 10px auto 0;
+      max-width: 260px;
+      color: rgba(255,255,255,0.76);
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 780;
+    }
+
+    .dramatic-wheel {
+      width: min(420px, 118%);
+      margin: 42px auto 0;
+      transform: translateX(-7%);
+    }
+
+    .dramatic-wheel .wheel {
+      border-width: 15px;
+      box-shadow: 0 28px 70px rgba(70, 18, 0, 0.42);
+    }
+
+    .dramatic-result {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 18px;
+      z-index: 6;
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 13px;
+      align-items: center;
+      border-radius: 28px;
+      background: rgba(255,255,255,0.94);
+      padding: 13px;
+      box-shadow: 0 24px 58px rgba(60, 12, 0, 0.35);
+    }
+
+    .mini-photo {
+      width: 70px;
+      height: 70px;
+      border-radius: 22px;
+      background:
+        linear-gradient(rgba(0,0,0,0.04), rgba(0,0,0,0.04)),
+        url("/foods/nasi-lemak.jpg") center / cover;
+      box-shadow: 0 13px 28px rgba(80, 24, 0, 0.18);
+    }
+
+    .dramatic-actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 11px;
+    }
+
+    .dramatic-actions .primary-btn,
+    .dramatic-actions .secondary-btn {
+      flex: 1;
+      padding: 10px 9px;
+      font-size: 12px;
+    }
+
+    .bottom-caption {
+      margin: 16px 4px 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      font-weight: 760;
+    }
+
+    .bottom-caption strong {
+      color: var(--ink);
+    }
+
+    @media (max-width: 900px) {
+      .intro {
+        display: block;
+      }
+
+      .note {
+        margin-top: 16px;
+        flex: none;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 470px) {
+      .page {
+        padding: 22px 10px 40px;
+      }
+
+      .concept {
+        border-radius: 26px;
+        padding: 10px;
+      }
+
+      .phone {
+        min-height: 650px;
+        border-width: 7px;
+        border-radius: 28px;
+      }
+
+      .hero-copy h2,
+      .dramatic-title h2 {
+        font-size: 42px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="intro">
+      <div>
+        <div class="eyebrow">
+          <img class="logo-dot" src="/brand/cincailah-logo.jpeg" alt="" />
+          Roulette result concepts
+        </div>
+        <h1>Two ways the food wheel can answer.</h1>
+        <p>
+          Both versions keep the answer inside the spin experience. Version 1 feels like the normal app screen.
+          Version 2 turns the moment into a full-screen roulette event.
+        </p>
+      </div>
+      <div class="note">
+        Tap the spin buttons in each phone. These are visual mockups only, so the final restaurant is fixed to show the reveal behavior.
+      </div>
+    </header>
+
+    <section class="grid" aria-label="Roulette concept comparison">
+      <article class="concept" id="concept-one">
+        <div class="concept-head">
+          <div class="concept-head-left">
+            <h2 class="concept-title">Version 1: Logo Roulette</h2>
+          </div>
+          <div class="head-actions">
+            <button class="replay-top js-spin-one" type="button">Replay spin</button>
+            <span class="concept-tag">Recommended</span>
+          </div>
+        </div>
+
+        <div class="phone">
+          <div class="status">
+            <span class="pill">12:45</span>
+            <span class="pill">Cincailah</span>
+          </div>
+
+          <div class="compact-hero">
+            <div class="hero-copy">
+              <span class="small-label">Fast food roulette</span>
+              <h2>Spin once. Go makan.</h2>
+              <p>The wheel lands, the answer appears here, and the user can go or reroll without a pop-up.</p>
+            </div>
+
+            <div class="wheel-wrap" aria-hidden="true">
+              <div class="needle"></div>
+              <div class="wheel wheel-one">
+                <span class="food-label f1">Noodles</span>
+                <span class="food-label f2">Burger</span>
+                <span class="food-label f3">Pizza</span>
+                <span class="food-label f4">Nasi</span>
+                <span class="food-label f5">Sushi</span>
+                <span class="food-label f6">Tea</span>
+              </div>
+              <div class="center-cap">
+                <img src="/brand/cincailah-logo.jpeg" alt="" />
+              </div>
+            </div>
+
+            <div class="answer-dock">
+              <div class="answer-kicker">The needle says</div>
+              <div class="answer-name">Nasi Lemak Kak Ani</div>
+              <div class="answer-meta">RM8-14 · 7 min walk · Halal · Comfort food</div>
+              <div class="answer-actions">
+                <button class="primary-btn" type="button">Let us go</button>
+                <button class="secondary-btn js-spin-one" type="button">Spin again</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="compact-bottom">
+            <div class="chips">
+              <span class="chip">Any budget</span>
+              <span class="chip">Halal</span>
+              <span class="chip">Near me</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="bottom-caption">
+          <strong>Best for daily use.</strong> The spin is playful, but the screen still keeps filters, reroll, and go-to-map actions easy to reach.
+        </p>
+      </article>
+
+      <article class="concept" id="concept-two">
+        <div class="concept-head">
+          <div class="concept-head-left">
+            <h2 class="concept-title">Version 2: Full-screen Spin</h2>
+          </div>
+          <div class="head-actions">
+            <button class="replay-top js-spin-two" type="button">Replay spin</button>
+            <span class="concept-tag">Dramatic</span>
+          </div>
+        </div>
+
+        <div class="phone">
+          <div class="status">
+            <span class="pill">12:45</span>
+            <span class="pill">Live spin</span>
+          </div>
+
+          <div class="dramatic-screen">
+            <div class="dramatic-title">
+              <span class="small-label">Decision mode</span>
+              <h2>Everybody watch the wheel.</h2>
+              <p>The app becomes the roulette table. Bigger suspense, stronger brand moment.</p>
+            </div>
+
+            <div class="wheel-wrap dramatic-wheel" aria-hidden="true">
+              <div class="needle"></div>
+              <div class="wheel wheel-two">
+                <span class="food-label f1">Noodles</span>
+                <span class="food-label f2">Burger</span>
+                <span class="food-label f3">Pizza</span>
+                <span class="food-label f4">Nasi</span>
+                <span class="food-label f5">Sushi</span>
+                <span class="food-label f6">Tea</span>
+              </div>
+              <div class="center-cap">
+                <img src="/brand/cincailah-logo.jpeg" alt="" />
+              </div>
+            </div>
+
+            <div class="dramatic-result">
+              <div class="mini-photo"></div>
+              <div>
+                <div class="answer-kicker">Final answer</div>
+                <div class="answer-name">Nasi Lemak Kak Ani</div>
+                <div class="answer-meta">The wheel landed. No pop-up, just the answer.</div>
+                <div class="dramatic-actions">
+                  <button class="primary-btn" type="button">Go now</button>
+                  <button class="secondary-btn js-spin-two" type="button">Again</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="bottom-caption">
+          <strong>Best for wow factor.</strong> More memorable, but it temporarily hides the normal app controls while the spin is happening.
+        </p>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    function replay(containerSelector, className) {
+      var container = document.querySelector(containerSelector);
+      if (!container) return;
+      container.querySelector(".wheel").style.transition = "none";
+      container.classList.remove(className);
+      void container.offsetWidth;
+      container.querySelector(".wheel").style.transition = "";
+      window.requestAnimationFrame(function () {
+        container.classList.add(className);
+      });
+    }
+
+    document.querySelector(".js-spin-one").addEventListener("click", function () {
+      replay("#concept-one .phone", "spin-1");
+    });
+
+    document.querySelector(".js-spin-two").addEventListener("click", function () {
+      replay("#concept-two .phone", "spin-2");
+    });
+
+    window.setTimeout(function () {
+      replay("#concept-one .phone", "spin-1");
+      replay("#concept-two .phone", "spin-2");
+    }, 450);
+  </script>
+</body>
+</html>

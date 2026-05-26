@@ -71,7 +71,7 @@ export default function RouletteSpinner({
     a.preload = 'auto';
     a.volume = 0.6;
     audioRef.current = a;
-    // Ask for geolocation silently — used to show distance on winner card
+    // Ask for geolocation silently — used to show distance on the winner reveal
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -444,141 +444,149 @@ export default function RouletteSpinner({
   }
 
   return (
-    <div className="max-w-md mx-auto px-4">
-      <div className="flex flex-col items-center justify-center min-h-[70vh]">
+    <div className="mx-auto max-w-md px-4">
+      <div className="flex min-h-[76vh] flex-col justify-center py-6">
         <div
-          className="w-full animate-bounce-in"
+          className="relative overflow-hidden rounded-[2rem] bg-sambal p-5 pt-6 text-white shadow-2xl shadow-sambal/25 animate-bounce-in"
           role="status"
           aria-live="assertive"
           aria-label={`Winner: ${winner.name}`}
         >
-          <p className="text-center text-sm text-gray-400 mb-4">
-            🎉 The boss has spoken!
-          </p>
+          <div className="pointer-events-none absolute -right-36 top-20 h-80 w-80 rotate-[-22deg] rounded-full border-[34px] border-white/70 border-l-transparent" />
+          <div className="pointer-events-none absolute -left-16 bottom-20 h-36 w-36 rounded-full bg-white/10" />
 
-          <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="h-40 bg-gradient-to-br from-sambal to-red-400 relative overflow-hidden">
-              {winner.photoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={winner.photoUrl}
-                  alt={winner.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-7xl">🍜</span>
-                </div>
-              )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none z-[1]" />
-              <div className="absolute top-3 right-3 z-[2] bg-white/90 rounded-full px-3 py-1 text-xs font-bold text-sambal">
+          <div className="relative z-[1]">
+            <div className="flex items-center justify-between gap-3">
+              <span className="rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em]">
+                Fast food roulette
+              </span>
+              <div className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-black">
                 You Pick
               </div>
               {rerollsUsed > 0 && (
-                <div className="absolute top-3 left-3 z-[2] bg-black/40 backdrop-blur rounded-full px-3 py-1 text-xs font-bold text-white">
+                <div className="rounded-full bg-black/25 px-3 py-1.5 text-xs font-black">
                   Reroll {rerollsUsed}/{maxReroll}
                 </div>
               )}
             </div>
 
-            <div className="p-5">
-              <h2 className="text-2xl font-black text-slate">{winner.name}</h2>
-              <p className="text-gray-400 text-sm mt-1">
-                {Array.isArray(winner.cuisineTags) &&
-                winner.cuisineTags.length > 0
+            <div className="mt-5">
+              <h2 className="max-w-[13rem] text-4xl font-black leading-[0.92] tracking-[-0.06em]">
+                The wheel has spoken.
+              </h2>
+              <p className="mt-3 max-w-[17rem] text-sm font-bold leading-5 text-white/78">
+                No pop-up. The needle lands and your makan answer stays right here.
+              </p>
+            </div>
+
+            <div className="relative mx-auto mt-8 h-72 w-72 max-w-full">
+              <div className="absolute left-1/2 top-[-0.45rem] z-[4] h-16 w-10 -translate-x-1/2 drop-shadow-lg">
+                <div className="h-full w-full rounded-2xl bg-white [clip-path:polygon(50%_100%,8%_12%,92%_12%)]" />
+                <div className="absolute left-1/2 top-5 h-3 w-3 -translate-x-1/2 rounded-full bg-sambal" />
+              </div>
+
+              <div className="absolute inset-0 rounded-full border-[10px] border-white bg-[conic-gradient(from_-30deg,#ffc233_0deg_60deg,#ff5a00_60deg_120deg,#e9321b_120deg_180deg,#6d2cb7_180deg_240deg,#078bce_240deg_300deg,#45b619_300deg_360deg)] shadow-2xl shadow-black/25">
+                <div className="absolute inset-0 rounded-full bg-[repeating-conic-gradient(from_-30deg,transparent_0deg_58deg,rgba(255,255,255,.82)_58deg_60deg)]" />
+                <div className="absolute inset-[28%] rounded-full border-[18px] border-white/95 bg-transparent" />
+                {winner.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={winner.photoUrl}
+                    alt=""
+                    className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-2xl border-4 border-white object-cover shadow-lg"
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src="/brand/cincailah-logo.jpeg"
+                    alt=""
+                    className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-2xl border-4 border-white object-cover shadow-lg"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="-mt-10 rounded-[1.6rem] bg-white/95 p-4 text-slate shadow-2xl shadow-black/20 backdrop-blur">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sambal">
+                The needle says
+              </p>
+              <h3 className="mt-1 text-3xl font-black leading-none tracking-[-0.05em]">
+                {winner.name}
+              </h3>
+              <p className="mt-2 text-sm font-semibold text-gray-500">
+                {Array.isArray(winner.cuisineTags) && winner.cuisineTags.length > 0
                   ? (winner.cuisineTags as string[]).join(' · ')
                   : 'Restaurant'}
               </p>
               {userCoords && winner.latitude != null && winner.longitude != null && (
-                <p className="text-xs text-blue-500 mt-1 font-semibold">
-                  📍 {haversineKm(userCoords.lat, userCoords.lng, winner.latitude, winner.longitude).toFixed(1)} km away
+                <p className="mt-1 text-xs font-bold text-blue-500">
+                  {haversineKm(userCoords.lat, userCoords.lng, winner.latitude, winner.longitude).toFixed(1)} km away
                 </p>
               )}
 
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {winner.halal && (
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                    ✅ Halal
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">
+                    Halal
                   </span>
                 )}
                 {winner.vegOptions && (
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                    🌱 Veg Options
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">
+                    Veg options
                   </span>
                 )}
                 {Array.isArray(winner.vibeTags) &&
-                  (winner.vibeTags as string[])
-                    .slice(0, 3)
-                    .map((tag: string) => (
-                      <span
-                        key={tag}
-                        className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700"
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                  (winner.vibeTags as string[]).slice(0, 3).map((tag: string) => (
+                    <span
+                      key={tag}
+                      className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700"
+                    >
+                      {tag}
+                    </span>
+                  ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="bg-gray-50 rounded-xl p-3 text-center">
-                  <p className="text-xs text-gray-400">Budget</p>
-                  <p className="text-sm font-bold text-slate mt-0.5">
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-gray-50 p-3 text-center">
+                  <p className="text-xs font-semibold text-gray-400">Budget</p>
+                  <p className="mt-0.5 text-sm font-black text-slate">
                     {formatPrice(winner.priceMin, winner.priceMax)}
                   </p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-3 text-center">
-                  <p className="text-xs text-gray-400">Walk</p>
-                  <p className="text-sm font-bold text-slate mt-0.5">
-                    {winner.walkMinutes} min 🚶
+                <div className="rounded-2xl bg-gray-50 p-3 text-center">
+                  <p className="text-xs font-semibold text-gray-400">Walk</p>
+                  <p className="mt-0.5 text-sm font-black text-slate">
+                    {winner.walkMinutes} min
                   </p>
                 </div>
               </div>
 
-              <div className="flex gap-3 mt-5">
+              <div className="mt-5 flex gap-3">
                 {winner.mapsUrl ? (
                   <a
                     href={winner.mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-1 bg-pandan hover:bg-pandan-dark text-white font-bold py-3 rounded-xl text-center text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-pandan/30"
+                    className="flex flex-1 items-center justify-center rounded-2xl bg-pandan py-3 text-center text-sm font-black text-white shadow-lg shadow-pandan/30 transition hover:bg-pandan-dark"
                   >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    Let&apos;s Go!
+                    Let&apos;s go
                   </a>
                 ) : (
                   <button
                     onClick={() => router.push(`/group/${groupId}`)}
-                    className="flex-1 bg-pandan hover:bg-pandan-dark text-white font-bold py-3 rounded-xl text-center text-sm transition"
+                    className="flex-1 rounded-2xl bg-pandan py-3 text-center text-sm font-black text-white transition hover:bg-pandan-dark"
                   >
-                    Confirmed! ✅
+                    Confirmed
                   </button>
                 )}
                 <button
                   onClick={handleNotThis}
                   disabled={!canReroll}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl text-center text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 rounded-2xl bg-gray-100 py-3 text-center text-sm font-black text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {canReroll ? (
                     <>
-                      Not this 🙅
+                      Spin again
                       <span className="block text-[11px] font-medium text-gray-500">
                         {rerollsLeft} reroll{rerollsLeft === 1 ? '' : 's'} left
                       </span>
@@ -599,7 +607,7 @@ export default function RouletteSpinner({
 
         <button
           onClick={() => router.push(`/group/${groupId}/decide`)}
-          className="mt-6 text-sm text-gray-400 hover:text-gray-600 font-medium transition"
+          className="mt-6 text-sm font-semibold text-gray-400 transition hover:text-gray-600"
         >
           ← Back to filters
         </button>
