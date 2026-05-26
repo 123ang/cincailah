@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import SettingsPage from '@/components/SettingsPage';
+import { memberUserSelect } from '@/lib/response-shapes';
 
 export default async function Settings({
   params,
@@ -20,7 +21,7 @@ export default async function Settings({
     include: {
       members: {
         include: {
-          user: true,
+          user: { select: memberUserSelect },
         },
         orderBy: {
           joinedAt: 'asc',

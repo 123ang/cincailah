@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-const SAMBAL = '#DC2626';
+const SAMBAL = '#FF5A00';
 
 export default function AuthRequiredScreen({ navigation }) {
   return (

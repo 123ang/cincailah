@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#DC2626"
+      "backgroundColor": "#FF5A00"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -22,7 +22,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#DC2626",
+          "color": "#FF5A00",
           "sounds": [
             "./assets/sounds/winner.mp3"
           ]
@@ -58,7 +58,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png",
-        "backgroundColor": "#DC2626"
+        "backgroundColor": "#FF5A00"
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",

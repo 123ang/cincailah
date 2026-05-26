@@ -31,7 +31,7 @@ export function useToast() {
   const ToastHost = useCallback(() => {
     if (!visible) return null;
     const bg =
-      type === "success" ? "#10B981" : type === "error" ? "#DC2626" : "#374151";
+      type === "success" ? "#45B619" : type === "error" ? "#FF5A00" : "#374151";
     return (
       <Animated.View style={[styles.toast, { backgroundColor: bg, opacity: fadeAnim }]}>
         <Text style={styles.toastText}>{message}</Text>

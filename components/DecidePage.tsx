@@ -1,17 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/utils';
 
 const CUISINE_TAG_OPTIONS = ['Mamak', 'Japanese', 'Western', 'Chinese', 'Thai', 'Fast Food', 'Cafe', 'Indian'];
 const VIBE_TAG_OPTIONS = ['Aircond', 'Cheap', 'Atas', 'Group Friendly', 'Parking', '24hrs', 'Delivery'];
 
+type BudgetFilter = '' | 'kering' | 'ok' | 'belanja';
+type DecisionMode = 'you_pick' | 'we_fight';
+
+type FilterState = {
+  budgetFilter: BudgetFilter;
+  cuisineTags: string[];
+  vibeTags: string[];
+  halal: boolean;
+  vegOptions: boolean;
+  favoritesOnly: boolean;
+  allowRepeatPicks: boolean;
+};
+
 interface Restaurant {
   id: string;
   name: string;
-  cuisineTags: any;
-  vibeTags: any;
+  cuisineTags: unknown;
+  vibeTags: unknown;
   priceMin: number;
   priceMax: number;
   halal: boolean;
@@ -34,7 +48,7 @@ interface Group {
   maxReroll: number;
   decisionModeDefault: string;
   createdBy: string;
-  members: any[];
+  members: unknown[];
 }
 
 interface UserPrefs {
@@ -53,6 +67,44 @@ interface DecidePageProps {
   userPrefs?: UserPrefs | null;
 }
 
+function budgetFromDefault(defaultBudget?: number): BudgetFilter {
+  if (!defaultBudget) return '';
+  if (defaultBudget <= 10) return 'kering';
+  if (defaultBudget <= 20) return 'ok';
+  return 'belanja';
+}
+
+function getDefaultFilters(userPrefs?: UserPrefs | null): FilterState {
+  return {
+    budgetFilter: budgetFromDefault(userPrefs?.defaultBudget),
+    cuisineTags: [],
+    vibeTags: [],
+    halal: userPrefs?.halal ?? false,
+    vegOptions: userPrefs?.vegOptions ?? false,
+    favoritesOnly: false,
+    allowRepeatPicks: false,
+  };
+}
+
+function toApiFilters(filters: FilterState): Record<string, unknown> {
+  return {
+    cuisineTags: filters.cuisineTags,
+    vibeTags: filters.vibeTags,
+    halal: filters.halal,
+    vegOptions: filters.vegOptions,
+    favoritesOnly: filters.favoritesOnly,
+    ...(filters.budgetFilter && { budgetFilter: filters.budgetFilter }),
+    ...(filters.allowRepeatPicks && { allowRepeatPicks: true }),
+  };
+}
+
+function budgetLabel(value: BudgetFilter) {
+  if (value === 'kering') return 'Kering';
+  if (value === 'ok') return 'OK lah';
+  if (value === 'belanja') return 'Belanja';
+  return 'Any budget';
+}
+
 export default function DecidePage({
   groupId,
   group,
@@ -65,329 +117,314 @@ export default function DecidePage({
   const router = useRouter();
   const isOwner = group.createdBy === currentUserId;
   const initialMode = isOwner && group.decisionModeDefault === 'you_pick' ? 'you_pick' : 'we_fight';
-  const [mode, setMode] = useState<'you_pick' | 'we_fight'>(initialMode);
-  const [budgetFilter, setBudgetFilter] = useState<string>('');
-  const [selectedCuisineTags, setSelectedCuisineTags] = useState<string[]>([]);
-  const [selectedVibeTags, setSelectedVibeTags] = useState<string[]>([]);
-  const [halal, setHalal] = useState<boolean>(userPrefs?.halal ?? false);
-  const [vegOptions, setVegOptions] = useState<boolean>(userPrefs?.vegOptions ?? false);
-  const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false);
-  /** When true, anti-repeat is skipped and "Not this" rerolls can land on the same spot again. */
-  const [allowRepeatPicks, setAllowRepeatPicks] = useState(false);
+  const storageKey = `cincailah:lastFilters:${currentUserId}:${groupId}`;
+
+  const defaultFilters = useMemo(() => getDefaultFilters(userPrefs), [userPrefs]);
+  const [mode, setMode] = useState<DecisionMode>(initialMode);
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [filterSource, setFilterSource] = useState<'defaults' | 'last' | 'custom'>('defaults');
+  const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    setFilters(defaultFilters);
+    setFilterSource('defaults');
+  }, [defaultFilters]);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<FilterState>;
+      setFilters({
+        ...defaultFilters,
+        ...saved,
+        budgetFilter:
+          saved.budgetFilter === 'kering' ||
+          saved.budgetFilter === 'ok' ||
+          saved.budgetFilter === 'belanja'
+            ? saved.budgetFilter
+            : defaultFilters.budgetFilter,
+        cuisineTags: Array.isArray(saved.cuisineTags) ? saved.cuisineTags : [],
+        vibeTags: Array.isArray(saved.vibeTags) ? saved.vibeTags : [],
+      });
+      setFilterSource('last');
+    } catch {
+      window.localStorage.removeItem(storageKey);
+    }
+  }, [defaultFilters, storageKey]);
+
+  const updateFilters = (next: FilterState | ((current: FilterState) => FilterState)) => {
+    setFilterSource('custom');
+    setFilters((current) => (typeof next === 'function' ? next(current) : next));
+  };
 
   const handleDecide = () => {
-    // Only include fields when actually set — the server schema expects
-    // enums (e.g. budgetFilter) to be one of the allowed values or omitted.
-    // Sending '' triggers a 400 on some server builds.
-    const filters: Record<string, unknown> = {
-      cuisineTags: selectedCuisineTags,
-      vibeTags: selectedVibeTags,
-      halal,
-      vegOptions,
-      favoritesOnly,
-    };
-    if (budgetFilter === 'kering' || budgetFilter === 'ok' || budgetFilter === 'belanja') {
-      filters.budgetFilter = budgetFilter;
-    }
-    if (allowRepeatPicks) {
-      filters.allowRepeatPicks = true;
-    }
+    const apiFilters = toApiFilters(filters);
+    window.localStorage.setItem(storageKey, JSON.stringify(filters));
 
-    if (mode === 'you_pick') {
-      router.push(`/group/${groupId}/decide?filters=${encodeURIComponent(JSON.stringify(filters))}`);
-    } else {
-      router.push(`/group/${groupId}/vote?filters=${encodeURIComponent(JSON.stringify(filters))}`);
-    }
+    const target = mode === 'you_pick' ? 'decide' : 'vote';
+    router.push(`/group/${groupId}/${target}?filters=${encodeURIComponent(JSON.stringify(apiFilters))}`);
   };
 
   const toggleTag = (tag: string, type: 'cuisine' | 'vibe') => {
-    const setter = type === 'cuisine' ? setSelectedCuisineTags : setSelectedVibeTags;
-    setter((prev) => (prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]));
+    updateFilters((current) => {
+      const key = type === 'cuisine' ? 'cuisineTags' : 'vibeTags';
+      const currentTags = current[key];
+      return {
+        ...current,
+        [key]: currentTags.includes(tag)
+          ? currentTags.filter((item) => item !== tag)
+          : [...currentTags, tag],
+      };
+    });
   };
 
+  const resetFilters = () => updateFilters(defaultFilters);
 
-  const resetFilters = () => {
-    setBudgetFilter('');
-    setSelectedCuisineTags([]);
-    setSelectedVibeTags([]);
-    setHalal(false);
-    setVegOptions(false);
-    setFavoritesOnly(false);
-    setAllowRepeatPicks(false);
+  const applyPreset = (preset: 'anything' | 'cheap' | 'comfort' | 'favorites') => {
+    const base = getDefaultFilters(userPrefs);
+    if (preset === 'anything') {
+      updateFilters({ ...base, budgetFilter: '', cuisineTags: [], vibeTags: [] });
+    }
+    if (preset === 'cheap') {
+      updateFilters({ ...base, budgetFilter: 'kering', vibeTags: ['Cheap'] });
+    }
+    if (preset === 'comfort') {
+      updateFilters({ ...base, budgetFilter: 'ok', vibeTags: ['Aircond', 'Group Friendly'] });
+    }
+    if (preset === 'favorites') {
+      updateFilters({ ...base, favoritesOnly: true });
+    }
   };
+
+  const activeChips = [
+    budgetLabel(filters.budgetFilter),
+    ...filters.cuisineTags,
+    ...filters.vibeTags,
+    filters.halal ? 'Halal' : null,
+    filters.vegOptions ? 'Veg options' : null,
+    filters.favoritesOnly ? 'Favorites' : null,
+    filters.allowRepeatPicks ? 'Repeats OK' : null,
+  ].filter((chip): chip is string => Boolean(chip));
+
+  const activeFilterCount = Math.max(0, activeChips.length - (filters.budgetFilter ? 0 : 1));
 
   return (
-    <div className="max-w-md mx-auto px-4">
-      {/* Greeting */}
-      <div className="pt-4 pb-2">
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
+    <div className="max-w-md mx-auto px-4 pb-6">
+      <div className="pt-4 pb-3">
+        <p className="text-slate/55 dark:text-gray-400 text-sm">
           Good afternoon, <span className="font-semibold text-slate dark:text-white">{displayName}</span>
         </p>
-        <h1 className="text-2xl font-extrabold mt-1 dark:text-white">Makan mana hari ni? 🤔</h1>
+        <h1 className="text-2xl font-black mt-1 tracking-tight dark:text-white">Makan mana hari ni?</h1>
       </div>
 
-      {/* Group Badge */}
-      <div className="mt-3 inline-flex items-center gap-2 bg-white dark:bg-gray-800 rounded-full px-3 py-1.5 border border-gray-200 dark:border-gray-700 shadow-sm">
-        <span className="w-2 h-2 rounded-full bg-pandan animate-pulse"></span>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{group.name}</span>
-        <span className="text-xs text-gray-400">·</span>
-        <span className="text-xs text-gray-400">{group.members.length} members</span>
-        <span className="text-xs bg-gray-100 text-gray-500 rounded px-1.5 py-0.5 font-mono">
-          {group.makanCode}
-        </span>
-      </div>
+      <section className="brand-card rounded-[1.75rem] p-5 shadow-2xl shadow-sambal/20 overflow-hidden relative">
+        <div className="absolute -right-14 -top-12 h-44 w-44 rounded-full border-[22px] border-white/70 border-l-transparent rotate-[-24deg]" />
+        <div className="absolute -left-12 bottom-3 h-28 w-28 rounded-full bg-white/10" />
 
-      {/* Quick Filters */}
-      <div className="mt-6">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Quick Filters</h2>
-          <button
-            onClick={resetFilters}
-            className="text-xs text-sambal font-semibold hover:underline"
-          >
-            Reset All
-          </button>
-        </div>
-
-        {/* Dompet Status (Budget) */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">💰</span>
-            <span className="text-sm font-bold text-gray-700">Dompet Status</span>
+        <div className="relative">
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 font-black">
+              <span className="h-2 w-2 rounded-full bg-pandan" />
+              {group.name}
+            </span>
+            <span className="rounded-full bg-white/20 px-3 py-1 font-semibold">{group.members.length} members</span>
+            <span className="rounded-full bg-white/20 px-3 py-1 font-mono font-semibold">{group.makanCode}</span>
           </div>
-          <div className="flex gap-2">
+
+          <div className="mt-7 text-center">
+            <p className="text-sm font-semibold text-white/75">
+              {filterSource === 'last' ? 'Using your last setup' : 'Ready with your usual preferences'}
+            </p>
             <button
-              onClick={() => setBudgetFilter(budgetFilter === 'kering' ? '' : 'kering')}
-              className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition ${
-                budgetFilter === 'kering'
-                  ? 'bg-sambal text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              onClick={handleDecide}
+              disabled={activeRestaurantsCount === 0}
+              className="mt-4 mx-auto flex h-44 w-44 flex-col items-center justify-center rounded-full bg-white text-sambal shadow-2xl shadow-slate/20 ring-8 ring-white/20 transition hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Kering<br />
-              <span className={`text-xs font-normal ${budgetFilter === 'kering' ? 'opacity-80' : 'text-gray-400'}`}>
-                &lt; RM10
-              </span>
-            </button>
-            <button
-              onClick={() => setBudgetFilter(budgetFilter === 'ok' ? '' : 'ok')}
-              className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition ${
-                budgetFilter === 'ok'
-                  ? 'bg-sambal text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              OK lah<br />
-              <span className={`text-xs font-normal ${budgetFilter === 'ok' ? 'opacity-80' : 'text-gray-400'}`}>
-                RM10-20
-              </span>
-            </button>
-            <button
-              onClick={() => setBudgetFilter(budgetFilter === 'belanja' ? '' : 'belanja')}
-              className={`flex-1 py-2 px-3 rounded-xl text-sm font-semibold transition ${
-                budgetFilter === 'belanja'
-                  ? 'bg-sambal text-white shadow-sm'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              Belanja<br />
-              <span className={`text-xs font-normal ${budgetFilter === 'belanja' ? 'opacity-80' : 'text-gray-400'}`}>
-                RM20+
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* Cuisine type */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🍜</span>
-            <span className="text-sm font-bold text-gray-700">Cuisine Type</span>
-          </div>
-          <p className="text-xs text-gray-400 mb-3">Pick any cuisine types. Leave empty to include all.</p>
-          <div className="flex flex-wrap gap-2">
-            {CUISINE_TAG_OPTIONS.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => toggleTag(tag, 'cuisine')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                  selectedCuisineTags.includes(tag)
-                    ? 'bg-green-100 text-green-700 ring-2 ring-pandan'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Cuisine vibe */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">✨</span>
-            <span className="text-sm font-bold text-gray-700">Cuisine Vibe</span>
-          </div>
-          <p className="text-xs text-gray-400 mb-3">Pick any vibes. Cuisine and vibe filters work together.</p>
-          <div className="flex flex-wrap gap-2">
-            {VIBE_TAG_OPTIONS.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => toggleTag(tag, 'vibe')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                  selectedVibeTags.includes(tag)
-                    ? 'bg-green-100 text-green-700 ring-2 ring-pandan'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Halal / vegetarian */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🥗</span>
-            <span className="text-sm font-bold text-gray-700">Halal / Vegetarian</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {['Halal', 'Veg Options'].map((tag) => (
-              <button
-                key={tag}
-                onClick={() => (tag === 'Halal' ? setHalal(!halal) : setVegOptions(!vegOptions))}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                  (tag === 'Halal' && halal) || (tag === 'Veg Options' && vegOptions)
-                    ? 'bg-green-100 text-green-700 ring-2 ring-pandan'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {tag === 'Halal' ? '🥗 ' : '🌱 '}{tag}
-              </button>
-            ))}
-          </div>
-        </div>
-
-
-        {/* Favorites Only */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <button
-            onClick={() => setFavoritesOnly(!favoritesOnly)}
-            className="flex items-center justify-between w-full"
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">❤️</span>
-              <span className="text-sm font-bold text-gray-700">My Favorites Only</span>
-            </div>
-            <div
-              className={`w-12 h-6 rounded-full flex items-center px-0.5 transition ${
-                favoritesOnly ? 'bg-sambal' : 'bg-gray-300'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full shadow-sm transition transform ${
-                  favoritesOnly ? 'translate-x-6' : ''
-                }`}
+              <Image
+                src="/brand/cincailah-logo.jpeg"
+                alt=""
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-2xl object-cover shadow-lg shadow-sambal/20"
               />
-            </div>
-          </button>
+              <span className="mt-1 text-xl font-black tracking-tight">Cincai lah!</span>
+              <span className="mt-1 text-xs font-black text-slate/45">Tap once to decide</span>
+            </button>
+            <p className="mt-4 text-xs font-semibold text-white/70">
+              {activeRestaurantsCount > 0
+                ? `${activeRestaurantsCount} restaurants available`
+                : 'No restaurants yet - add some first'}
+            </p>
+          </div>
         </div>
+      </section>
 
-
-      </div>
-
-
-      {/* Same spot can win again */}
-      <div className="mt-3 bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={allowRepeatPicks}
-            onChange={(e) => setAllowRepeatPicks(e.target.checked)}
-            className="mt-0.5 w-5 h-5 rounded accent-sambal shrink-0"
-          />
-          <span className="min-w-0">
-            <span className="text-sm font-bold text-gray-800 dark:text-gray-100 block">
-              Same spot can win again
-            </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 block mt-0.5 leading-snug">
-              Tick this to include recently picked places and to allow &quot;Not this&quot; rerolls to pick the same restaurant again.
-            </span>
-          </span>
-        </label>
-      </div>
-
-      {/* Decision Mode Toggle */}
-      <div className="mt-6">
-        <div className="bg-white rounded-2xl p-1.5 flex gap-1 border border-gray-200 shadow-sm">
+      <div className="mt-4 rounded-2xl border border-white bg-white/90 p-1.5 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="grid grid-cols-2 gap-1">
           <button
             onClick={() => isOwner && setMode('you_pick')}
             disabled={!isOwner}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed ${
+            className={`rounded-xl px-3 py-2.5 text-sm font-bold transition disabled:cursor-not-allowed disabled:opacity-50 ${
               mode === 'you_pick'
                 ? 'bg-sambal text-white'
-                : 'text-gray-500 hover:bg-gray-50'
+                : 'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
             }`}
           >
-            🎲 You Pick
+            You Pick
           </button>
           <button
             onClick={() => setMode('we_fight')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${
+            className={`rounded-xl px-3 py-2.5 text-sm font-bold transition ${
               mode === 'we_fight'
                 ? 'bg-sambal text-white'
-                : 'text-gray-500 hover:bg-gray-50'
+                : 'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
             }`}
           >
-            ⚔️ We Fight
+            We Fight
           </button>
         </div>
-        <p className="text-xs text-gray-400 text-center mt-2">
-          {mode === 'you_pick'
-            ? 'Owner-only random pick — reroll up to 3 times.'
-            : 'Vote once with your group — majority wins!'}
-        </p>
-        {!isOwner && (
-          <p className="text-xs text-amber-600 text-center mt-1">Only the group owner can use You Pick.</p>
-        )}
       </div>
+      {!isOwner && (
+        <p className="mt-2 text-center text-xs text-amber-600">Only the group owner can use You Pick.</p>
+      )}
 
-      {/* MAIN ACTION BUTTON */}
-      <div className="mt-8 mb-6 flex flex-col items-center">
-        <div className="relative">
-          <div className="absolute inset-0 rounded-full bg-sambal/20 animate-pulse"></div>
+      <section className="mt-4 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-black text-gray-800 dark:text-gray-100">Today&apos;s makan mood</h2>
+            <p className="mt-1 text-xs text-gray-400">
+              {activeFilterCount > 0 ? `${activeFilterCount} active filters` : 'One-tap surprise mode'}
+            </p>
+          </div>
           <button
-            onClick={handleDecide}
-            disabled={activeRestaurantsCount === 0}
-            className="btn-cincai relative z-10 w-44 h-44 rounded-full text-white flex flex-col items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setShowFilters((value) => !value)}
+            className="rounded-full bg-gray-100 px-3 py-1.5 text-xs font-bold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100"
           >
-            <span className="text-3xl mb-1">🍛</span>
-            <span className="text-xl font-black tracking-tight">Cincai lah!</span>
-            <span className="text-xs font-medium opacity-80 mt-0.5">Tap to decide</span>
+            {showFilters ? 'Hide filters' : 'Edit filters'}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-4">
-          {activeRestaurantsCount > 0
-            ? `${activeRestaurantsCount} restaurants available`
-            : 'No restaurants yet — add some first!'}
-        </p>
-      </div>
 
-      {/* Recently Makan */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {activeChips.map((chip) => (
+        <span
+              key={chip}
+              className="rounded-full bg-sambal-soft px-3 py-1 text-xs font-black text-sambal dark:bg-orange-900/30"
+            >
+              {chip}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button onClick={() => applyPreset('anything')} className="rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100">
+            Surprise me
+          </button>
+          <button onClick={() => applyPreset('cheap')} className="rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100">
+            Cheap & easy
+          </button>
+          <button onClick={() => applyPreset('comfort')} className="rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100">
+            Comfy group
+          </button>
+          <button onClick={() => applyPreset('favorites')} className="rounded-xl bg-gray-100 px-3 py-2 text-xs font-bold text-gray-700 transition hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-100">
+            My favorites
+          </button>
+        </div>
+
+        {showFilters && (
+          <div className="mt-5 space-y-5 border-t border-gray-100 pt-5 dark:border-gray-700">
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wide text-gray-400">Budget</span>
+                <button onClick={resetFilters} className="text-xs font-bold text-sambal">
+                  Reset to usual
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  ['kering', 'Kering', '< RM10'],
+                  ['ok', 'OK lah', 'RM10-20'],
+                  ['belanja', 'Belanja', 'RM20+'],
+                ].map(([value, label, sublabel]) => (
+                  <button
+                    key={value}
+                    onClick={() =>
+                      updateFilters((current) => ({
+                        ...current,
+                        budgetFilter: current.budgetFilter === value ? '' : (value as BudgetFilter),
+                      }))
+                    }
+                    className={`rounded-xl px-2 py-2 text-sm font-bold transition ${
+                      filters.budgetFilter === value
+                        ? 'bg-sambal text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
+                    }`}
+                  >
+                    {label}
+                    <span className="block text-[10px] font-medium opacity-70">{sublabel}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <FilterTagGroup
+              title="Cuisine"
+              options={CUISINE_TAG_OPTIONS}
+              selected={filters.cuisineTags}
+              onToggle={(tag) => toggleTag(tag, 'cuisine')}
+            />
+
+            <FilterTagGroup
+              title="Vibe"
+              options={VIBE_TAG_OPTIONS}
+              selected={filters.vibeTags}
+              onToggle={(tag) => toggleTag(tag, 'vibe')}
+            />
+
+            <div className="grid grid-cols-2 gap-2">
+              <ToggleButton
+                label="Halal"
+                active={filters.halal}
+                onClick={() => updateFilters((current) => ({ ...current, halal: !current.halal }))}
+              />
+              <ToggleButton
+                label="Veg options"
+                active={filters.vegOptions}
+                onClick={() => updateFilters((current) => ({ ...current, vegOptions: !current.vegOptions }))}
+              />
+              <ToggleButton
+                label="Favorites only"
+                active={filters.favoritesOnly}
+                onClick={() => updateFilters((current) => ({ ...current, favoritesOnly: !current.favoritesOnly }))}
+              />
+              <ToggleButton
+                label="Repeats OK"
+                active={filters.allowRepeatPicks}
+                onClick={() =>
+                  updateFilters((current) => ({
+                    ...current,
+                    allowRepeatPicks: !current.allowRepeatPicks,
+                  }))
+                }
+              />
+            </div>
+          </div>
+        )}
+      </section>
+
       {recentDecisions.length > 0 && (
-        <div className="mt-2 mb-6">
-          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
-            Recently Makan 🕐
+        <section className="mt-5 mb-6">
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-gray-500">
+            Recently Makan
           </h2>
           <div className="space-y-2">
             {recentDecisions.map((decision) => (
               <div
                 key={decision.id}
-                className="bg-white rounded-xl px-4 py-3 flex items-center justify-between border border-gray-100 shadow-sm"
+                className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm dark:border-gray-700 dark:bg-gray-800"
               >
                 <div>
-                  <p className="font-semibold text-sm">
+                  <p className="text-sm font-semibold dark:text-white">
                     {decision.chosenRestaurant?.name || 'Unknown'}
                   </p>
                   <p className="text-xs text-gray-400">
@@ -395,22 +432,78 @@ export default function DecidePage({
                   </p>
                 </div>
                 {decision.chosenRestaurant && (
-                  <div className="flex items-center gap-2">
+                  <div className="text-right">
                     {decision.chosenRestaurant.halal && (
-                      <span className="text-xs bg-green-100 text-green-700 rounded-full px-2 py-0.5 font-medium">
+                      <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                         Halal
                       </span>
                     )}
-                    <span className="text-xs text-gray-400">
+                    <p className="mt-1 text-xs text-gray-400">
                       RM{decision.chosenRestaurant.priceMin}-{decision.chosenRestaurant.priceMax}
-                    </span>
+                    </p>
                   </div>
                 )}
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
     </div>
+  );
+}
+
+function FilterTagGroup({
+  title,
+  options,
+  selected,
+  onToggle,
+}: {
+  title: string;
+  options: string[];
+  selected: string[];
+  onToggle: (tag: string) => void;
+}) {
+  return (
+    <div>
+      <p className="mb-2 text-xs font-black uppercase tracking-wide text-gray-400">{title}</p>
+      <div className="flex flex-wrap gap-2">
+        {options.map((tag) => (
+          <button
+            key={tag}
+            onClick={() => onToggle(tag)}
+            className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+              selected.includes(tag)
+                ? 'bg-pandan text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
+            }`}
+          >
+            {tag}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ToggleButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl px-3 py-2 text-sm font-bold transition ${
+        active
+          ? 'bg-green-100 text-green-700 ring-2 ring-pandan/60 dark:bg-green-900/30 dark:text-green-200'
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200'
+      }`}
+    >
+      {label}
+    </button>
   );
 }

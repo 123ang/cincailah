@@ -127,7 +127,7 @@ export function getPasswordResetEmail(resetUrl: string, displayName: string) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reset your password</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #FFF7EB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0; padding: 40px 20px;">
     <tr>
       <td align="center">
@@ -135,35 +135,35 @@ export function getPasswordResetEmail(resetUrl: string, displayName: string) {
           <tr>
             <td style="padding: 48px 40px; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">🍛</div>
-              <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: #0F172A;">Reset your password</h1>
-              <p style="margin: 0; font-size: 16px; color: #64748B;">Hi ${displayName},</p>
+              <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: #26140B;">Reset your password</h1>
+              <p style="margin: 0; font-size: 16px; color: #7A6254;">Hi ${displayName},</p>
             </td>
           </tr>
           <tr>
             <td style="padding: 0 40px 32px 40px;">
-              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #475569;">
+              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #5C463A;">
                 We received a request to reset your password for your ${APP_NAME} account. Click the button below to set a new password:
               </p>
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                <a href="${resetUrl}" style="display: inline-block; background: linear-gradient(135deg, #FF5A00 0%, #E64000 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(255, 90, 0, 0.3);">
                   Reset Password
                 </a>
               </div>
-              <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #64748B;">
+              <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #7A6254;">
                 This link will expire in <strong>1 hour</strong>. If you didn't request a password reset, you can safely ignore this email.
               </p>
             </td>
           </tr>
           <tr>
-            <td style="padding: 32px 40px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; border-radius: 0 0 16px 16px;">
-              <p style="margin: 0; font-size: 13px; color: #94A3B8; text-align: center;">
+            <td style="padding: 32px 40px; background-color: #FFF7EB; border-top: 1px solid #E2E8F0; border-radius: 0 0 16px 16px;">
+              <p style="margin: 0; font-size: 13px; color: #A98E7C; text-align: center;">
                 If the button doesn't work, copy and paste this link:<br/>
-                <a href="${resetUrl}" style="color: #DC2626; word-break: break-all;">${resetUrl}</a>
+                <a href="${resetUrl}" style="color: #FF5A00; word-break: break-all;">${resetUrl}</a>
               </p>
             </td>
           </tr>
         </table>
-        <p style="margin: 24px 0 0 0; font-size: 13px; color: #94A3B8; text-align: center;">
+        <p style="margin: 24px 0 0 0; font-size: 13px; color: #A98E7C; text-align: center;">
           ${APP_NAME} &middot; Cincai lah!
         </p>
       </td>
@@ -188,7 +188,7 @@ export function getWelcomeEmail(displayName: string) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to ${APP_NAME}!</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #FFF7EB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0; padding: 40px 20px;">
     <tr>
       <td align="center">
@@ -196,17 +196,17 @@ export function getWelcomeEmail(displayName: string) {
           <tr>
             <td style="padding: 48px 40px; text-align: center;">
               <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
-              <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 800; color: #0F172A;">Welcome to ${APP_NAME}!</h1>
-              <p style="margin: 0; font-size: 18px; color: #64748B;">Hi ${displayName}, glad you're here! 👋</p>
+              <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 800; color: #26140B;">Welcome to ${APP_NAME}!</h1>
+              <p style="margin: 0; font-size: 18px; color: #7A6254;">Hi ${displayName}, glad you're here! 👋</p>
             </td>
           </tr>
           <tr>
             <td style="padding: 0 40px 32px 40px;">
-              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #475569;">
+              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #5C463A;">
                 You've just joined the easiest way to decide where to makan with your crew. No more endless WhatsApp polls!
               </p>
               
-              <div style="background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%); border-radius: 12px; padding: 24px; margin: 24px 0;">
+              <div style="background: linear-gradient(135deg, #FF5A00 0%, #E64000 100%); border-radius: 12px; padding: 24px; margin: 24px 0;">
                 <h2 style="margin: 0 0 12px 0; font-size: 18px; font-weight: 700; color: #ffffff;">Quick Start:</h2>
                 <ol style="margin: 0; padding-left: 20px; color: #ffffff; font-size: 15px; line-height: 1.8;">
                   <li>Create your first makan group</li>
@@ -215,27 +215,27 @@ export function getWelcomeEmail(displayName: string) {
                 </ol>
               </div>
 
-              <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.6; color: #475569;">
+              <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.6; color: #5C463A;">
                 Pro tip: Try <strong>Solo Mode</strong> first to see the magic. No group required! 🎲
               </p>
 
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${APP_URL}" style="display: inline-block; background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);">
+                <a href="${APP_URL}" style="display: inline-block; background: linear-gradient(135deg, #FF5A00 0%, #E64000 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(255, 90, 0, 0.3);">
                   Get Started
                 </a>
               </div>
             </td>
           </tr>
           <tr>
-            <td style="padding: 32px 40px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; border-radius: 0 0 16px 16px;">
-              <p style="margin: 0; font-size: 13px; color: #94A3B8; text-align: center;">
+            <td style="padding: 32px 40px; background-color: #FFF7EB; border-top: 1px solid #E2E8F0; border-radius: 0 0 16px 16px;">
+              <p style="margin: 0; font-size: 13px; color: #A98E7C; text-align: center;">
                 Questions? Feedback? We'd love to hear from you!<br/>
-                <a href="mailto:support@cincailah.com" style="color: #DC2626;">support@cincailah.com</a>
+                <a href="mailto:support@cincailah.com" style="color: #FF5A00;">support@cincailah.com</a>
               </p>
             </td>
           </tr>
         </table>
-        <p style="margin: 24px 0 0 0; font-size: 13px; color: #94A3B8; text-align: center;">
+        <p style="margin: 24px 0 0 0; font-size: 13px; color: #A98E7C; text-align: center;">
           ${APP_NAME} &middot; Cincai lah!
         </p>
       </td>
@@ -260,7 +260,7 @@ export function getVerificationEmail(verifyUrl: string, displayName: string) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verify your email</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+<body style="margin: 0; padding: 0; background-color: #FFF7EB; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
   <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0; padding: 40px 20px;">
     <tr>
       <td align="center">
@@ -268,35 +268,35 @@ export function getVerificationEmail(verifyUrl: string, displayName: string) {
           <tr>
             <td style="padding: 48px 40px; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
-              <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: #0F172A;">Verify your email</h1>
-              <p style="margin: 0; font-size: 16px; color: #64748B;">Hi ${displayName},</p>
+              <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: #26140B;">Verify your email</h1>
+              <p style="margin: 0; font-size: 16px; color: #7A6254;">Hi ${displayName},</p>
             </td>
           </tr>
           <tr>
             <td style="padding: 0 40px 32px 40px;">
-              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #475569;">
+              <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #5C463A;">
                 Thanks for signing up! Please verify your email address to unlock all ${APP_NAME} features:
               </p>
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${verifyUrl}" style="display: inline-block; background: linear-gradient(135deg, #10B981 0%, #34D399 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">
+                <a href="${verifyUrl}" style="display: inline-block; background: linear-gradient(135deg, #45B619 0%, #34D399 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 16px; box-shadow: 0 4px 12px rgba(69, 182, 25, 0.3);">
                   Verify Email
                 </a>
               </div>
-              <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #64748B;">
+              <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #7A6254;">
                 This link will expire in <strong>24 hours</strong>. If you didn't create an account, you can safely ignore this email.
               </p>
             </td>
           </tr>
           <tr>
-            <td style="padding: 32px 40px; background-color: #F8FAFC; border-top: 1px solid #E2E8F0; border-radius: 0 0 16px 16px;">
-              <p style="margin: 0; font-size: 13px; color: #94A3B8; text-align: center;">
+            <td style="padding: 32px 40px; background-color: #FFF7EB; border-top: 1px solid #E2E8F0; border-radius: 0 0 16px 16px;">
+              <p style="margin: 0; font-size: 13px; color: #A98E7C; text-align: center;">
                 If the button doesn't work, copy and paste this link:<br/>
-                <a href="${verifyUrl}" style="color: #10B981; word-break: break-all;">${verifyUrl}</a>
+                <a href="${verifyUrl}" style="color: #45B619; word-break: break-all;">${verifyUrl}</a>
               </p>
             </td>
           </tr>
         </table>
-        <p style="margin: 24px 0 0 0; font-size: 13px; color: #94A3B8; text-align: center;">
+        <p style="margin: 24px 0 0 0; font-size: 13px; color: #A98E7C; text-align: center;">
           ${APP_NAME} &middot; Cincai lah!
         </p>
       </td>

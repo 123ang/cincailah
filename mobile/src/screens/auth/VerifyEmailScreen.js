@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { apiFetch } from '../../lib/api';
 
-const SAMBAL = '#DC2626';
+const SAMBAL = '#FF5A00';
 
 export default function VerifyEmailScreen({ route, navigation }) {
   const token = route?.params?.token ?? '';

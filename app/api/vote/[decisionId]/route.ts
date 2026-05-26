@@ -4,6 +4,7 @@ import { resolveUserId } from '@/lib/session';
 import { trackEvent } from '@/lib/analytics';
 import { getDecisionWithMembership } from '@/lib/group-access';
 import { reportError } from '@/lib/logger';
+import { publicVoteUserSelect } from '@/lib/response-shapes';
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +34,7 @@ export async function GET(
             restaurant: true,
             votes: {
               include: {
-                user: true,
+                user: { select: publicVoteUserSelect },
               },
             },
           },

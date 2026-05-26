@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { apiFetch } from "../lib/api";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 
 export default function JoinGroupScreen({ navigation, route }) {
   const [code, setCode] = useState("");

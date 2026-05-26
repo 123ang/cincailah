@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { apiFetch } from "../lib/api";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 
 export default function GroupSettingsScreen({ route, navigation }) {
   const { groupId, groupName: initialName } = route.params || {};

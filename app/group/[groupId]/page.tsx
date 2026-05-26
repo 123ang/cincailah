@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import DecidePage from '@/components/DecidePage';
 import type { Metadata } from 'next';
 import { requireGroupMembership } from '@/lib/group-access';
+import { memberUserSelect } from '@/lib/response-shapes';
 
 export const metadata: Metadata = { title: 'Decide' };
 
@@ -30,7 +31,7 @@ export default async function GroupHome({
       include: {
         members: {
           include: {
-            user: true,
+            user: { select: memberUserSelect },
           },
         },
       },

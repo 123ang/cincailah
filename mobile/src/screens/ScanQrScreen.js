@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, Pressable, Alert } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 
 function extractJoinCode(payload = "") {
   const text = String(payload).trim();

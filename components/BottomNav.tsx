@@ -55,8 +55,8 @@ export default function BottomNav({ groupId }: { groupId: string }) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 glass border-t border-gray-200/50 dark:bg-gray-900/90 dark:border-gray-700/50" aria-label="Main navigation">
-      <div className="max-w-md mx-auto px-4 h-16 flex items-center justify-around">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 px-3 pb-3" aria-label="Main navigation">
+      <div className="glass max-w-md mx-auto px-3 h-16 flex items-center justify-around rounded-[1.35rem] border border-white/80 shadow-2xl shadow-sambal/10 dark:bg-gray-900/90 dark:border-gray-700/50">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -65,8 +65,10 @@ export default function BottomNav({ groupId }: { groupId: string }) {
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
-              className={`flex flex-col items-center gap-0.5 transition ${
-                isActive ? 'text-sambal' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+              className={`flex min-w-[3.7rem] flex-col items-center gap-0.5 rounded-2xl px-2 py-2 transition ${
+                isActive
+                  ? 'bg-sambal text-white shadow-lg shadow-sambal/25'
+                  : 'text-gray-400 hover:bg-white/70 hover:text-slate dark:hover:bg-gray-800 dark:hover:text-gray-300'
               }`}
             >
               {item.icon}

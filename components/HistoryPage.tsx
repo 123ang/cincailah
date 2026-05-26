@@ -126,7 +126,7 @@ function DayOfWeekChart({ decisions }: { decisions: Decision[] }) {
     counts[idx]++;
   });
   const max = Math.max(...counts, 1);
-  const barColors = ['#3B82F6', '#10B981', '#10B981', '#10B981', '#10B981', '#FACC15', '#EF4444'];
+  const barColors = ['#3B82F6', '#45B619', '#45B619', '#45B619', '#45B619', '#FFC233', '#EF4444'];
 
   return (
     <div className="flex items-end gap-2 h-24" aria-label="Picks by day of week chart">

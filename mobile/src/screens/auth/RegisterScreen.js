@@ -10,10 +10,16 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Image,
 } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
+const CREAM = "#FFF7EB";
+const CREAM_DEEP = "#FFEBCF";
+const INK = "#26140B";
+const MUTED = "#7A6254";
+const LOGO = require("../../../assets/brand/cincailah-logo.jpeg");
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
@@ -48,8 +54,12 @@ export default function RegisterScreen({ navigation }) {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.heading}>Create account 🍛</Text>
-        <Text style={styles.sub}>Join and decide lunch in seconds</Text>
+        <View style={styles.brandHeader}>
+          <Image source={LOGO} style={styles.logo} />
+          <Text style={styles.kicker}>NEW MAKAN CREW</Text>
+          <Text style={styles.heading}>Create account</Text>
+          <Text style={styles.sub}>Join and decide lunch in seconds.</Text>
+        </View>
 
         <View style={styles.form}>
           <TextInput
@@ -111,38 +121,61 @@ export default function RegisterScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    backgroundColor: "#fff",
+    backgroundColor: CREAM,
     paddingHorizontal: 24,
     justifyContent: "center",
     paddingVertical: 40,
   },
+  brandHeader: {
+    backgroundColor: "#fff",
+    borderRadius: 28,
+    padding: 22,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: CREAM_DEEP,
+  },
+  logo: {
+    width: 62,
+    height: 62,
+    borderRadius: 20,
+    marginBottom: 14,
+  },
+  kicker: {
+    color: SAMBAL,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1.3,
+  },
   heading: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#111827",
+    fontSize: 34,
+    fontWeight: "900",
+    color: INK,
     marginBottom: 6,
+    marginTop: 8,
+    letterSpacing: -0.8,
   },
   sub: {
     fontSize: 15,
-    color: "#6B7280",
-    marginBottom: 32,
+    color: MUTED,
+    fontWeight: "700",
+    lineHeight: 21,
   },
   form: {
     gap: 12,
   },
   input: {
     borderWidth: 1.5,
-    borderColor: "#E5E7EB",
-    borderRadius: 14,
+    borderColor: CREAM_DEEP,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: "#111827",
-    backgroundColor: "#F9FAFB",
+    color: INK,
+    backgroundColor: "#fff",
   },
   btn: {
     backgroundColor: SAMBAL,
-    borderRadius: 14,
+    borderRadius: 18,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 4,
@@ -152,7 +185,7 @@ const styles = StyleSheet.create({
   },
   btnText: {
     color: "#fff",
-    fontWeight: "700",
+    fontWeight: "900",
     fontSize: 16,
   },
   switchRow: {
@@ -161,7 +194,8 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 14,
-    color: "#6B7280",
+    color: MUTED,
+    fontWeight: "700",
   },
   switchLink: {
     color: SAMBAL,

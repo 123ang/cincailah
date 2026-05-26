@@ -4,6 +4,7 @@ import { resolveUserId } from '@/lib/session';
 import { ensureRestaurantAccessible } from '@/lib/group-access';
 import { deleteUpload } from '@/lib/upload';
 import { reportError } from '@/lib/logger';
+import { UpdateRestaurantSchema, zodError } from '@/lib/schemas';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -31,7 +32,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Restaurant not found' }, { status: 404 });
     }
 
-    const body = await request.json();
+    const parsed = UpdateRestaurantSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+
     const {
       name,
       cuisineTags,
@@ -45,23 +50,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       photoUrl,
       latitude,
       longitude,
-    } = body;
-
-    if (name !== undefined && (!String(name).trim() || String(name).length > 100)) {
-      return NextResponse.json({ error: 'Invalid name' }, { status: 400 });
-    }
-
-    if (cuisineTags !== undefined && (!Array.isArray(cuisineTags) || cuisineTags.length === 0)) {
-      return NextResponse.json({ error: 'Choose at least one cuisine tag' }, { status: 400 });
-    }
-
-    if (vibeTags !== undefined && (!Array.isArray(vibeTags) || vibeTags.length === 0)) {
-      return NextResponse.json({ error: 'Choose at least one vibe tag' }, { status: 400 });
-    }
+    } = parsed.data;
 
     const pMin = priceMin !== undefined ? Number(priceMin) : existing.priceMin;
     const pMax = priceMax !== undefined ? Number(priceMax) : existing.priceMax;
-    if (Number.isNaN(pMin) || Number.isNaN(pMax) || pMin >= pMax) {
+    if (pMin >= pMax) {
       return NextResponse.json(
         { error: 'Price max must be greater than price min' },
         { status: 400 }
@@ -69,7 +62,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
 
     const nextPhoto =
-      photoUrl !== undefined ? (photoUrl ? String(photoUrl).trim() : null) : existing.photoUrl;
+      photoUrl !== undefined ? (photoUrl ? photoUrl.trim() : null) : existing.photoUrl;
 
     if (
       photoUrl !== undefined &&
@@ -88,20 +81,13 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         ...(vibeTags !== undefined && { vibeTags }),
         ...(priceMin !== undefined && { priceMin: pMin }),
         ...(priceMax !== undefined && { priceMax: pMax }),
-        ...(halal !== undefined && { halal: Boolean(halal) }),
-        ...(vegOptions !== undefined && { vegOptions: Boolean(vegOptions) }),
-        ...(walkMinutes !== undefined && {
-          walkMinutes: Math.min(60, Math.max(1, Number(walkMinutes) || 5)),
-        }),
-        ...(mapsUrl !== undefined && { mapsUrl: mapsUrl ? String(mapsUrl).trim() : null }),
+        ...(halal !== undefined && { halal }),
+        ...(vegOptions !== undefined && { vegOptions }),
+        ...(walkMinutes !== undefined && { walkMinutes }),
+        ...(mapsUrl !== undefined && { mapsUrl: mapsUrl ? mapsUrl.trim() : null }),
         ...(photoUrl !== undefined && { photoUrl: nextPhoto }),
-        ...(latitude !== undefined && {
-          latitude: typeof latitude === 'number' && !Number.isNaN(latitude) ? latitude : null,
-        }),
-        ...(longitude !== undefined && {
-          longitude:
-            typeof longitude === 'number' && !Number.isNaN(longitude) ? longitude : null,
-        }),
+        ...(latitude !== undefined && { latitude }),
+        ...(longitude !== undefined && { longitude }),
       },
     });
 

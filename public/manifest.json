@@ -4,16 +4,10 @@
   "description": "Stop debating where to eat. Spin the wheel or vote with your group in seconds.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F8FAFC",
-  "theme_color": "#DC2626",
+  "background_color": "#FFF7EB",
+  "theme_color": "#FF5A00",
   "orientation": "portrait",
   "icons": [
-    {
-      "src": "/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",

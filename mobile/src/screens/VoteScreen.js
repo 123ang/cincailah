@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { apiFetch } from "../lib/api";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 
 export default function VoteScreen({ route, navigation }) {
   const { groupId, groupName, filters = {} } = route.params || {};
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   resultName: { fontSize: 16, fontWeight: "700", color: "#111827" },
-  resultVotes: { fontSize: 16, fontWeight: "700", color: "#10B981" },
+  resultVotes: { fontSize: 16, fontWeight: "700", color: "#45B619" },
   tieBox: {
     backgroundColor: "#FEF3C7",
     borderRadius: 16,

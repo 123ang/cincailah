@@ -28,7 +28,7 @@ export async function requestPushPermissions() {
       name: "Cincailah",
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#DC2626",
+      lightColor: "#FF5A00",
     });
   }
 

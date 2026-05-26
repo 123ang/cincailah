@@ -114,7 +114,7 @@ export default function InviteShare({ makanCode, groupName }: InviteShareProps) 
             level="M"
             marginSize={2}
             bgColor="#ffffff"
-            fgColor="#0F172A"
+            fgColor="#26140B"
           />
           <p className="text-[11px] text-gray-500 mt-2 text-center">
             Scan to join <span className="font-semibold">{groupName}</span>

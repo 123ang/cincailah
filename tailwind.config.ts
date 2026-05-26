@@ -11,22 +11,31 @@ const config: Config = {
     extend: {
       colors: {
         sambal: {
-          DEFAULT: '#DC2626',
-          dark: '#B91C1C',
+          DEFAULT: '#FF5A00',
+          dark: '#E64000',
+          soft: '#FFE1CC',
         },
         mamak: {
-          DEFAULT: '#FACC15',
-          dark: '#EAB308',
+          DEFAULT: '#FFC233',
+          dark: '#F59E0B',
         },
         pandan: {
-          DEFAULT: '#10B981',
-          dark: '#059669',
+          DEFAULT: '#45B619',
+          dark: '#2F8F0B',
+        },
+        ocean: {
+          DEFAULT: '#078BCE',
+          dark: '#056DA3',
+        },
+        terung: {
+          DEFAULT: '#6D2CB7',
+          dark: '#4B1889',
         },
         slate: {
-          DEFAULT: '#0F172A',
+          DEFAULT: '#26140B',
         },
         cream: {
-          DEFAULT: '#F8FAFC',
+          DEFAULT: '#FFF7EB',
         },
       },
       fontFamily: {

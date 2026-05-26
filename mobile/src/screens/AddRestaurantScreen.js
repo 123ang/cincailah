@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { apiFetch } from "../lib/api";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 
 const CUISINE_OPTIONS = ["Mamak", "Japanese", "Western", "Chinese", "Thai", "Fast Food", "Cafe", "Indian"];
 const VIBE_OPTIONS = ["Aircond", "Cheap", "Atas", "Group Friendly", "Parking", "24hrs", "Delivery"];
@@ -131,11 +131,11 @@ export default function AddRestaurantScreen({ route, navigation }) {
       {/* Toggles */}
       <View style={styles.toggleRow}>
         <Text style={styles.toggleLabel}>Halal ✅</Text>
-        <Switch value={halal} onValueChange={setHalal} trackColor={{ true: "#10B981" }} thumbColor="#fff" />
+        <Switch value={halal} onValueChange={setHalal} trackColor={{ true: "#45B619" }} thumbColor="#fff" />
       </View>
       <View style={styles.toggleRow}>
         <Text style={styles.toggleLabel}>Veg options 🌱</Text>
-        <Switch value={vegOptions} onValueChange={setVegOptions} trackColor={{ true: "#10B981" }} thumbColor="#fff" />
+        <Switch value={vegOptions} onValueChange={setVegOptions} trackColor={{ true: "#45B619" }} thumbColor="#fff" />
       </View>
 
       {/* Cuisine tags */}

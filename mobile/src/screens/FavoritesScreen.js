@@ -13,7 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiFetch } from '../lib/api';
 import { FAVORITE_SPOTS_KEY } from '../lib/guestStorage';
 
-const SAMBAL = '#DC2626';
+const SAMBAL = '#FF5A00';
 
 export default function FavoritesScreen() {
   const { mode, token } = useAuth();

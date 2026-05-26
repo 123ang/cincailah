@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { apiFetch } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 
-const SAMBAL = '#DC2626';
+const SAMBAL = '#FF5A00';
 const BASE_URL = 'https://cincailah.suntzutechnologies.com';
 
 export default function EditProfileScreen({ navigation }) {

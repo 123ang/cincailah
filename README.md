@@ -218,11 +218,11 @@ npm run db:studio    # Open Prisma Studio
 
 | Purpose | Color | Hex |
 |---------|-------|-----|
-| Primary (Sambal) | Red | `#DC2626` |
-| Accent (Mamak) | Yellow | `#FACC15` |
-| Success (Pandan) | Green | `#10B981` |
-| Background | Off-White | `#F8FAFC` |
-| Text | Dark Slate | `#0F172A` |
+| Primary (Sambal) | Hot Orange | `#FF5A00` |
+| Accent (Mamak) | Yellow | `#FFC233` |
+| Success (Pandan) | Green | `#45B619` |
+| Background | Warm Cream | `#FFF7EB` |
+| Text | Kopi Ink | `#26140B` |
 
 ## Documentation
 

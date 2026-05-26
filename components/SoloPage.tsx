@@ -323,12 +323,18 @@ export default function SoloPage() {
     picked.kind === 'favorite' ? picked.item.note : undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-mamak/10 to-cream">
+    <div className="min-h-screen bg-gradient-to-br from-cream via-sambal/10 to-cream">
       {/* Top bar */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+      <nav className="glass border-b border-white/70 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🍛</span>
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/brand/cincailah-logo.jpeg"
+              alt=""
+              width={40}
+              height={40}
+              className="rounded-2xl"
+            />
             <span className="text-lg font-black text-slate">cincailah</span>
           </Link>
           <div className="flex items-center gap-2">
@@ -349,73 +355,20 @@ export default function SoloPage() {
       </nav>
 
       <main className="max-w-2xl mx-auto px-4 pt-6 pb-24">
-        <header className="text-center mb-6">
-          <h1 className="text-3xl md:text-4xl font-black text-slate">
-            Decide for Yourself 🍽️
-          </h1>
-          <p className="text-gray-500 mt-2 text-sm md:text-base">
-            No account. No group. Just spin and makan.
-          </p>
-        </header>
-
-        {/* Mode toggle */}
-        <div className="bg-white rounded-2xl p-1.5 flex gap-1 border border-gray-200 shadow-sm mb-4">
-          {(
-            [
-              { key: 'food', label: '🎲 Spin Food' },
-              { key: 'favorite', label: '❤️ Favorites' },
-              { key: 'category', label: '🏷️ Category' },
-            ] as { key: Mode; label: string }[]
-          ).map((m) => (
-            <button
-              key={m.key}
-              onClick={() => switchMode(m.key)}
-              disabled={isShuffling}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${
-                mode === m.key
-                  ? 'bg-sambal text-white shadow-sm'
-                  : 'text-gray-500 hover:bg-gray-50'
-              } disabled:opacity-60`}
-            >
-              {m.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Category selector */}
-        {mode === 'category' && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-bold text-gray-700">
-                Pick your cuisines
-              </span>
-              <button
-                onClick={() => setSelectedCategories([])}
-                className="text-xs text-sambal font-semibold hover:underline"
-              >
-                Clear
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {SOLO_CATEGORIES.map((cat) => {
-                const active = selectedCategories.includes(cat);
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => toggleCategory(cat)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-semibold transition ${
-                      active
-                        ? 'bg-sambal text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
+        <header className="brand-card overflow-hidden rounded-[1.75rem] px-6 py-8 mb-5 text-white relative">
+          <div className="absolute -right-16 top-10 h-44 w-44 rounded-full border-[22px] border-white/70 border-l-transparent rotate-[-24deg]" />
+          <div className="relative max-w-sm">
+            <p className="inline-flex rounded-full bg-white/20 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em]">
+              Solo food roulette
+            </p>
+            <h1 className="mt-5 text-5xl font-black leading-[0.9] tracking-tight">
+              Spin once. Go makan.
+            </h1>
+            <p className="text-white/80 mt-4 text-sm md:text-base font-bold leading-6">
+              No account. No group. The button stays first, and the food pool sits underneath when you need it.
+            </p>
           </div>
-        )}
+        </header>
 
         {/* Winner card */}
         <div
@@ -476,16 +429,81 @@ export default function SoloPage() {
             disabled={isShuffling}
             className="btn-cincai text-white font-black text-lg py-4 rounded-2xl disabled:opacity-60"
           >
-            {isShuffling ? 'Shuffling…' : 'Decide for me 🎲'}
+            {isShuffling ? 'Shuffling…' : 'Spin once'}
           </button>
           <button
             onClick={rerollQuick}
             disabled={isShuffling || currentPool.length === 0}
             className="bg-white border-2 border-gray-200 text-slate font-bold py-3 rounded-2xl hover:bg-gray-50 disabled:opacity-60"
           >
-            Not this 🙅 Try another
+            Not this, try another
           </button>
         </div>
+
+        <section className="mb-4 rounded-3xl border border-sambal/10 bg-white p-4 shadow-sm">
+          <div className="mb-3">
+            <h2 className="text-base font-black text-slate">Tune the roulette</h2>
+            <p className="mt-1 text-xs font-semibold text-gray-500">
+              Leave this alone for pure cincai mode.
+            </p>
+          </div>
+          <div className="mb-4 flex gap-1 rounded-2xl bg-cream p-1.5">
+            {(
+              [
+                { key: 'food', label: 'Spin' },
+                { key: 'favorite', label: 'Favorites' },
+                { key: 'category', label: 'Category' },
+              ] as { key: Mode; label: string }[]
+            ).map((m) => (
+              <button
+                key={m.key}
+                onClick={() => switchMode(m.key)}
+                disabled={isShuffling}
+                className={`flex-1 rounded-xl py-2.5 text-sm font-black transition ${
+                  mode === m.key
+                    ? 'bg-sambal text-white shadow-sm'
+                    : 'text-gray-500 hover:bg-white'
+                } disabled:opacity-60`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
+          {mode === 'category' && (
+            <div>
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-sm font-bold text-gray-700">
+                  Pick your cuisines
+                </span>
+                <button
+                  onClick={() => setSelectedCategories([])}
+                  className="text-xs font-semibold text-sambal hover:underline"
+                >
+                  Clear
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {SOLO_CATEGORIES.map((cat) => {
+                  const active = selectedCategories.includes(cat);
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => toggleCategory(cat)}
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                        active
+                          ? 'bg-sambal text-white'
+                          : 'bg-cream text-gray-700 hover:bg-sambal-soft'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* Favorites manager */}
         <section className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-4">
@@ -649,7 +667,7 @@ export default function SoloPage() {
         </div>
 
         {/* Upsell */}
-        <div className="bg-gradient-to-r from-sambal to-sambal/90 text-white rounded-3xl p-6 text-center shadow-md">
+        <div className="brand-card text-white rounded-3xl p-6 text-center shadow-md">
           <div className="text-3xl mb-2">👥</div>
           <h3 className="font-black text-xl mb-1">
             Deciding with your crew?

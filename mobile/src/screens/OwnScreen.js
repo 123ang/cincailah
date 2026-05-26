@@ -11,6 +11,7 @@ import {
   ScrollView,
   Animated,
   Easing,
+  Image,
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -19,8 +20,13 @@ import { FOODS } from "../data/foods";
 import { CATEGORIES } from "../data/categories";
 import { apiFetch, getToken } from "../lib/api";
 
-const SAMBAL = "#DC2626";
-const PANDAN = "#10B981";
+const LOGO = require("../../assets/brand/cincailah-logo.jpeg");
+
+const SAMBAL = "#FF5A00";
+const PANDAN = "#45B619";
+const CREAM = "#FFF7EB";
+const INK = "#26140B";
+const MUTED = "#7A6254";
 
 export default function OwnScreen() {
   const [mode, setMode] = useState("food"); // food | favorite | category
@@ -183,40 +189,14 @@ export default function OwnScreen() {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
-      <Text style={styles.heading}>Solo Mode 🎲</Text>
-      <Text style={styles.sub}>Decide what to eat by yourself</Text>
-
-      {/* Mode pills */}
-      <View style={styles.modeRow}>
-        {[["food", "🎲 Spin"], ["favorite", "❤️ Fav"], ["category", "🏷️ Category"]].map(([val, label]) => (
-          <Pressable
-            key={val}
-            style={[styles.modeBtn, mode === val && styles.modeBtnActive]}
-            onPress={() => switchMode(val)}
-          >
-            <Text style={[styles.modeBtnText, mode === val && styles.modeBtnTextActive]}>
-              {label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* Category filter */}
-      {mode === "category" && (
-        <View style={styles.catWrap}>
-          {CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat}
-              style={[styles.catBtn, selectedCategories.includes(cat) && styles.catBtnActive]}
-              onPress={() => toggleCategory(cat)}
-            >
-              <Text style={[styles.catText, selectedCategories.includes(cat) && styles.catTextActive]}>
-                {cat}
-              </Text>
-            </Pressable>
-          ))}
+      <View style={styles.hero}>
+        <View>
+          <Text style={styles.kicker}>SOLO FOOD ROULETTE</Text>
+          <Text style={styles.heading}>Spin once. Go makan.</Text>
+          <Text style={styles.sub}>No group needed. Tune the pool only when your mood changes.</Text>
         </View>
-      )}
+        <Image source={LOGO} style={styles.logo} />
+      </View>
 
       {/* Current food card */}
       <View style={styles.foodCard}>
@@ -266,29 +246,94 @@ export default function OwnScreen() {
           </Pressable>
         )}
       </View>
+
+      <View style={styles.tuneCard}>
+        <Text style={styles.tuneTitle}>Tune the roulette</Text>
+        <Text style={styles.tuneSub}>Leave this alone for pure cincai mode.</Text>
+
+        <View style={styles.modeRow}>
+          {[["food", "Spin"], ["favorite", "Fav"], ["category", "Category"]].map(([val, label]) => (
+            <Pressable
+              key={val}
+              style={[styles.modeBtn, mode === val && styles.modeBtnActive]}
+              onPress={() => switchMode(val)}
+            >
+              <Text style={[styles.modeBtnText, mode === val && styles.modeBtnTextActive]}>
+                {label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {mode === "category" && (
+          <View style={styles.catWrap}>
+            {CATEGORIES.map((cat) => (
+              <Pressable
+                key={cat}
+                style={[styles.catBtn, selectedCategories.includes(cat) && styles.catBtnActive]}
+                onPress={() => toggleCategory(cat)}
+              >
+                <Text style={[styles.catText, selectedCategories.includes(cat) && styles.catTextActive]}>
+                  {cat}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: "#F9FAFB" },
-  container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 60 },
-  heading: { fontSize: 24, fontWeight: "800", color: "#111827" },
-  sub: { fontSize: 14, color: "#6B7280", marginTop: 4, marginBottom: 20 },
-  modeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  scroll: { flex: 1, backgroundColor: CREAM },
+  container: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 60, gap: 14 },
+  hero: {
+    backgroundColor: SAMBAL,
+    borderRadius: 28,
+    padding: 22,
+    minHeight: 250,
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  kicker: {
+    alignSelf: "flex-start",
+    color: "#fff",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  heading: { fontSize: 42, lineHeight: 42, fontWeight: "900", color: "#fff", letterSpacing: -1.2, marginTop: 18, maxWidth: 260 },
+  sub: { fontSize: 15, color: "rgba(255,255,255,0.84)", marginTop: 10, lineHeight: 22, fontWeight: "700", maxWidth: 280 },
+  logo: { width: 88, height: 88, borderRadius: 24, alignSelf: "flex-end", borderWidth: 3, borderColor: "rgba(255,255,255,0.65)" },
+  tuneCard: {
+    backgroundColor: "#fff",
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#FFEBCF",
+  },
+  tuneTitle: { color: INK, fontSize: 16, fontWeight: "900" },
+  tuneSub: { color: MUTED, fontSize: 12, fontWeight: "700", marginTop: 2, marginBottom: 14 },
+  modeRow: { flexDirection: "row", gap: 8 },
   modeBtn: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: CREAM,
     borderRadius: 12,
     paddingVertical: 10,
     alignItems: "center",
   },
   modeBtnActive: { backgroundColor: SAMBAL },
-  modeBtnText: { fontSize: 12, fontWeight: "700", color: "#374151" },
+  modeBtnText: { fontSize: 12, fontWeight: "900", color: INK },
   modeBtnTextActive: { color: "#fff" },
-  catWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
+  catWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14 },
   catBtn: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: CREAM,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
@@ -306,7 +351,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 4 },
     elevation: 4,
-    marginBottom: 16,
   },
   foodImage: { width: 140, height: 140, borderRadius: 70, marginBottom: 16 },
   foodImagePlaceholder: {
@@ -319,9 +363,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   foodEmoji: { fontSize: 52 },
-  foodName: { fontSize: 26, fontWeight: "800", color: "#111827" },
+  foodName: { fontSize: 26, fontWeight: "900", color: INK },
   foodNameShuffle: { color: SAMBAL },
-  foodCategory: { fontSize: 14, color: "#6B7280", marginTop: 6 },
+  foodCategory: { fontSize: 14, color: MUTED, marginTop: 6 },
   resultBanner: {
     backgroundColor: "#D1FAE5",
     borderRadius: 16,

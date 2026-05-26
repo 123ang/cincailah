@@ -13,7 +13,11 @@ import { apiFetch } from "../lib/api";
 import Constants from "expo-constants";
 import { ListSkeleton } from "../components/Skeleton";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
+const CREAM = "#FFF7EB";
+const CREAM_DEEP = "#FFEBCF";
+const INK = "#26140B";
+const MUTED = "#7A6254";
 const BASE_URL =
   (Constants.expoConfig?.extra?.apiUrl) || "https://cincailah.suntzutechnologies.com";
 
@@ -93,7 +97,7 @@ export default function RestaurantsScreen({ route, navigation }) {
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.heading}>{groupName} Restaurants</Text>
-            <Text style={styles.sub}>{restaurants.length} spots in your list</Text>
+            <Text style={styles.sub}>{restaurants.length} spots ready for the wheel</Text>
           </View>
         }
       />
@@ -109,15 +113,15 @@ export default function RestaurantsScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
+  container: { flex: 1, backgroundColor: CREAM },
   header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
-  heading: { fontSize: 20, fontWeight: "800", color: "#111827" },
-  sub: { fontSize: 13, color: "#6B7280", marginTop: 2 },
+  heading: { fontSize: 24, fontWeight: "900", color: INK, letterSpacing: -0.4 },
+  sub: { fontSize: 13, color: MUTED, marginTop: 4, fontWeight: "700" },
   card: {
     marginHorizontal: 16,
     marginVertical: 6,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 20,
     flexDirection: "row",
     overflow: "hidden",
     shadowColor: "#000",
@@ -126,12 +130,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   photo: { width: 80, height: 80 },
-  photoPlaceholder: { backgroundColor: "#FEE2E2", justifyContent: "center", alignItems: "center" },
+  photoPlaceholder: { backgroundColor: CREAM_DEEP, justifyContent: "center", alignItems: "center" },
   photoPlaceholderText: { fontSize: 28 },
   info: { flex: 1, padding: 12, justifyContent: "center" },
-  name: { fontSize: 15, fontWeight: "700", color: "#111827" },
-  cuisine: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  meta: { fontSize: 12, color: "#9CA3AF", marginTop: 4 },
+  name: { fontSize: 15, fontWeight: "900", color: INK },
+  cuisine: { fontSize: 12, color: MUTED, marginTop: 2, fontWeight: "700" },
+  meta: { fontSize: 12, color: "#9C8878", marginTop: 4, fontWeight: "700" },
   empty: { alignItems: "center", paddingTop: 80 },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151" },
@@ -142,9 +146,9 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     backgroundColor: SAMBAL,
-    borderRadius: 14,
+    borderRadius: 18,
     paddingVertical: 14,
     alignItems: "center",
   },
-  fabText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  fabText: { color: "#fff", fontWeight: "900", fontSize: 15 },
 });

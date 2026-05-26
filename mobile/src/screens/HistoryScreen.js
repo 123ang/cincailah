@@ -16,7 +16,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { apiFetch } from "../lib/api";
 import { ListSkeleton } from "../components/Skeleton";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 
 export default function HistoryScreen({ route }) {
   const groupId = route?.params?.groupId ?? null;

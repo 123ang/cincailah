@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { apiFetch } from '../../lib/api';
 
-const SAMBAL = '#DC2626';
+const SAMBAL = '#FF5A00';
 
 export default function ResetPasswordScreen({ route, navigation }) {
   const token = route?.params?.token ?? '';

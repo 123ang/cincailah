@@ -17,8 +17,8 @@ import * as Haptics from "expo-haptics";
 import { useAudioPlayer } from "expo-audio";
 import { apiFetch } from "../lib/api";
 
-const SAMBAL = "#DC2626";
-const PANDAN = "#10B981";
+const SAMBAL = "#FF5A00";
+const PANDAN = "#45B619";
 
 export default function WinnerScreen({ route, navigation }) {
   const {

@@ -117,9 +117,9 @@ export default function RouletteSpinner({
 
       const sliceAngle = (2 * Math.PI) / items.length;
       const colors = [
-        '#DC2626',
-        '#FACC15',
-        '#10B981',
+        '#FF5A00',
+        '#FFC233',
+        '#45B619',
         '#3B82F6',
         '#8B5CF6',
         '#EC4899',
@@ -153,7 +153,7 @@ export default function RouletteSpinner({
       ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
       ctx.fillStyle = '#fff';
       ctx.fill();
-      ctx.strokeStyle = '#DC2626';
+      ctx.strokeStyle = '#FF5A00';
       ctx.lineWidth = 4;
       ctx.stroke();
 
@@ -167,7 +167,7 @@ export default function RouletteSpinner({
       ctx.lineTo(centerX + baseHalf, baseY);
       ctx.lineTo(centerX, tipY);
       ctx.closePath();
-      ctx.fillStyle = '#DC2626';
+      ctx.fillStyle = '#FF5A00';
       ctx.fill();
       ctx.strokeStyle = '#991B1B';
       ctx.lineWidth = 2;

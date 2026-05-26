@@ -5,44 +5,78 @@
 @layer base {
   body {
     @apply bg-cream text-slate;
+    background-image:
+      radial-gradient(circle at top left, rgba(255, 194, 51, 0.28), transparent 34rem),
+      radial-gradient(circle at bottom right, rgba(255, 90, 0, 0.14), transparent 28rem);
   }
 
   /* Dark mode body */
   .dark body {
     @apply bg-gray-950 text-gray-100;
+    background-image:
+      radial-gradient(circle at top left, rgba(255, 90, 0, 0.15), transparent 30rem),
+      radial-gradient(circle at bottom right, rgba(109, 44, 183, 0.18), transparent 28rem);
   }
 
   /* Focus ring — visible for keyboard users, respects theme */
   :focus-visible {
-    outline: 2px solid #DC2626;
+    outline: 2px solid #FF5A00;
     outline-offset: 2px;
     border-radius: 4px;
   }
 
   .dark :focus-visible {
-    outline-color: #f87171;
+    outline-color: #FFB36E;
   }
 }
 
 @layer utilities {
   .glass {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 250, 242, 0.9);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
   .btn-cincai {
-    background: linear-gradient(135deg, #DC2626, #B91C1C);
-    box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4);
+    background: linear-gradient(135deg, #FF6A00 0%, #FF4B00 58%, #E64000 100%);
+    box-shadow: 0 14px 34px rgba(255, 90, 0, 0.36);
     transition: all 0.2s ease;
   }
 
   .btn-cincai:hover {
-    box-shadow: 0 12px 40px rgba(220, 38, 38, 0.5);
+    box-shadow: 0 18px 44px rgba(255, 90, 0, 0.44);
     transform: translateY(-2px);
   }
 
   .btn-cincai:active {
     transform: translateY(0);
+  }
+
+  .brand-card {
+    background:
+      radial-gradient(circle at 16% 18%, rgba(255, 255, 255, 0.26), transparent 12rem),
+      linear-gradient(135deg, #ff7a00 0%, #ff5a00 48%, #ff3d00 100%);
+    color: white;
+  }
+
+  .brand-logo {
+    object-fit: cover;
+    box-shadow: 0 16px 38px rgba(255, 90, 0, 0.22);
+  }
+
+  .brand-ring {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .brand-ring::after {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    z-index: -1;
+    border-radius: 9999px;
+    border: 18px solid rgba(255, 255, 255, 0.82);
+    border-left-color: transparent;
+    transform: rotate(-22deg);
   }
 }

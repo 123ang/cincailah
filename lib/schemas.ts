@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+const HttpUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => value.startsWith('http://') || value.startsWith('https://'), {
+    message: 'URL must start with http:// or https://',
+  });
+
+const RestaurantPhotoUrlSchema = z.union([
+  HttpUrlSchema,
+  z.string().regex(/^\/uploads\/restaurants\/[A-Za-z0-9._-]+$/, 'Invalid restaurant photo path'),
+]);
+
+const nullableOptional = <T extends z.ZodTypeAny>(schema: T) =>
+  z.union([schema, z.null()]).optional();
+
 // Auth
 export const RegisterSchema = z.object({
   email: z.string().email('Invalid email'),
@@ -46,8 +61,7 @@ export const TransferAdminSchema = z.object({
 });
 
 // Restaurants
-export const CreateRestaurantSchema = z.object({
-  groupId: z.string().uuid(),
+const RestaurantFieldsSchema = z.object({
   name: z.string().min(1, 'Restaurant name required').max(100),
   cuisineTags: z.array(z.string()).min(1, 'Choose at least one cuisine tag'),
   vibeTags: z.array(z.string()).min(1, 'Choose at least one vibe tag'),
@@ -56,11 +70,30 @@ export const CreateRestaurantSchema = z.object({
   halal: z.boolean().default(false),
   vegOptions: z.boolean().default(false),
   walkMinutes: z.number().int().min(1).max(60),
-  mapsUrl: z.string().url().nullable().optional(),
-  photoUrl: z.string().url().nullable().optional(),
+  mapsUrl: nullableOptional(HttpUrlSchema),
+  photoUrl: nullableOptional(RestaurantPhotoUrlSchema),
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
 });
+
+export const CreateRestaurantSchema = RestaurantFieldsSchema.extend({
+  groupId: z.string().uuid(),
+}).refine((data) => data.priceMax > data.priceMin, {
+  message: 'Price max must be greater than price min',
+  path: ['priceMax'],
+});
+
+export const UpdateRestaurantSchema = RestaurantFieldsSchema.partial()
+  .refine(
+    (data) =>
+      data.priceMin === undefined ||
+      data.priceMax === undefined ||
+      data.priceMax > data.priceMin,
+    {
+      message: 'Price max must be greater than price min',
+      path: ['priceMax'],
+    }
+  );
 
 // Decisions
 export const DecisionFiltersSchema = z.object({

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { resolveUserId } from '@/lib/session';
 import { requireGroupMembership } from '@/lib/group-access';
 import { reportError } from '@/lib/logger';
+import { CreateRestaurantSchema, zodError } from '@/lib/schemas';
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,7 +46,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const parsed = CreateRestaurantSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
+    }
+
     const {
       groupId,
       name,
@@ -60,22 +65,7 @@ export async function POST(request: NextRequest) {
       photoUrl,
       latitude,
       longitude,
-    } = body;
-
-    if (!groupId || !name) {
-      return NextResponse.json(
-        { error: 'Group ID and name are required' },
-        { status: 400 }
-      );
-    }
-
-    if (!Array.isArray(cuisineTags) || cuisineTags.length === 0) {
-      return NextResponse.json({ error: 'Choose at least one cuisine tag' }, { status: 400 });
-    }
-
-    if (!Array.isArray(vibeTags) || vibeTags.length === 0) {
-      return NextResponse.json({ error: 'Choose at least one vibe tag' }, { status: 400 });
-    }
+    } = parsed.data;
 
     const membership = await requireGroupMembership(userId, groupId);
 
@@ -89,15 +79,15 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         cuisineTags,
         vibeTags,
-        priceMin: Number(priceMin) || 5,
-        priceMax: Number(priceMax) || 15,
-        halal: Boolean(halal),
-        vegOptions: Boolean(vegOptions),
-        walkMinutes: Number(walkMinutes) || 5,
-        mapsUrl: mapsUrl || null,
-        photoUrl: photoUrl || null,
-        latitude: typeof latitude === 'number' ? latitude : null,
-        longitude: typeof longitude === 'number' ? longitude : null,
+        priceMin,
+        priceMax,
+        halal,
+        vegOptions,
+        walkMinutes,
+        mapsUrl: mapsUrl ?? null,
+        photoUrl: photoUrl ?? null,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
         createdBy: userId,
       },
     });

@@ -6,12 +6,18 @@ import {
   Pressable,
   StyleSheet,
   RefreshControl,
+  Image,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { apiFetch } from "../lib/api";
 import { ListSkeleton } from "../components/Skeleton";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
+const CREAM = "#FFF7EB";
+const CREAM_DEEP = "#FFEBCF";
+const INK = "#26140B";
+const MUTED = "#7A6254";
+const LOGO = require("../../assets/brand/cincailah-logo.jpeg");
 
 export default function GroupsScreen({ navigation }) {
   const [groups, setGroups] = useState([]);
@@ -96,8 +102,14 @@ export default function GroupsScreen({ navigation }) {
         }
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Your Groups 👥</Text>
-            <Text style={styles.sub}>Pick a group to decide lunch</Text>
+            <View style={styles.hero}>
+              <View>
+                <Text style={styles.kicker}>GROUP ROULETTE</Text>
+                <Text style={styles.heading}>Your makan crews</Text>
+                <Text style={styles.sub}>Pick a group and spin without rebuilding filters.</Text>
+              </View>
+              <Image source={LOGO} style={styles.logo} />
+            </View>
           </View>
         }
       />
@@ -121,15 +133,36 @@ export default function GroupsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F9FAFB" },
-  header: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 10 },
-  heading: { fontSize: 24, fontWeight: "800", color: "#111827" },
-  sub: { fontSize: 14, color: "#6B7280", marginTop: 4 },
+  container: { flex: 1, backgroundColor: CREAM },
+  header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10 },
+  hero: {
+    backgroundColor: SAMBAL,
+    borderRadius: 28,
+    padding: 20,
+    minHeight: 190,
+    justifyContent: "space-between",
+    overflow: "hidden",
+  },
+  kicker: {
+    alignSelf: "flex-start",
+    color: "#fff",
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 999,
+    overflow: "hidden",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  heading: { fontSize: 36, lineHeight: 37, fontWeight: "900", color: "#fff", letterSpacing: -1, marginTop: 18, maxWidth: 240 },
+  sub: { fontSize: 14, color: "rgba(255,255,255,0.82)", marginTop: 8, fontWeight: "700", lineHeight: 20, maxWidth: 260 },
+  logo: { width: 72, height: 72, borderRadius: 22, alignSelf: "flex-end", borderWidth: 3, borderColor: "rgba(255,255,255,0.65)" },
   groupCard: {
     marginHorizontal: 16,
     marginVertical: 6,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -145,14 +178,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FEE2E2",
+    backgroundColor: CREAM_DEEP,
     justifyContent: "center",
     alignItems: "center",
   },
   avatarText: { fontSize: 18, fontWeight: "800", color: SAMBAL },
-  groupName: { fontSize: 16, fontWeight: "700", color: "#111827" },
-  groupMeta: { fontSize: 12, color: "#6B7280", marginTop: 2 },
-  chevron: { fontSize: 22, color: "#D1D5DB" },
+  groupName: { fontSize: 16, fontWeight: "900", color: INK },
+  groupMeta: { fontSize: 12, color: MUTED, marginTop: 2, fontWeight: "700" },
+  chevron: { fontSize: 22, color: SAMBAL },
   empty: { alignItems: "center", paddingTop: 80 },
   emptyEmoji: { fontSize: 48, marginBottom: 12 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151" },
@@ -168,19 +201,19 @@ const styles = StyleSheet.create({
   fabBtn: {
     flex: 1,
     backgroundColor: SAMBAL,
-    borderRadius: 14,
+    borderRadius: 18,
     paddingVertical: 14,
     alignItems: "center",
   },
-  fabText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  fabText: { color: "#fff", fontWeight: "900", fontSize: 15 },
   fabBtnSecondary: {
     flex: 1,
     backgroundColor: "#fff",
     borderWidth: 1.5,
-    borderColor: "#E5E7EB",
-    borderRadius: 14,
+    borderColor: CREAM_DEEP,
+    borderRadius: 18,
     paddingVertical: 14,
     alignItems: "center",
   },
-  fabTextSecondary: { color: "#374151", fontWeight: "700", fontSize: 15 },
+  fabTextSecondary: { color: INK, fontWeight: "900", fontSize: 15 },
 });

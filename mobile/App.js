@@ -44,6 +44,7 @@ import WinnerScreen from "./src/screens/WinnerScreen";
 import FavoritesScreen from "./src/screens/FavoritesScreen";
 import RemindersScreen from "./src/screens/RemindersScreen";
 import AuthRequiredScreen from "./src/screens/AuthRequiredScreen";
+import { BrandColors } from "./constants/theme";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -114,18 +115,18 @@ function darkTheme(isDark) {
     dark: isDark,
     colors: {
       ...DefaultTheme.colors,
-      primary: "#DC2626",
-      background: isDark ? "#111827" : "#F9FAFB",
-      card: isDark ? "#1F2937" : "#ffffff",
-      text: isDark ? "#F9FAFB" : "#111827",
-      border: isDark ? "#374151" : "#E5E7EB",
-      notification: "#DC2626",
+      primary: BrandColors.orange,
+      background: isDark ? "#111827" : BrandColors.cream,
+      card: isDark ? "#1F2937" : BrandColors.white,
+      text: isDark ? "#F9FAFB" : BrandColors.ink,
+      border: isDark ? "#374151" : BrandColors.creamDeep,
+      notification: BrandColors.orange,
     },
     fonts: DefaultTheme.fonts,
   };
 }
 
-const SAMBAL = "#DC2626";
+const SAMBAL = BrandColors.orange;
 
 function AuthedTabs() {
   const scheme = useColorScheme();
@@ -146,11 +147,14 @@ function AuthedTabs() {
         tabBarActiveTintColor: SAMBAL,
         tabBarInactiveTintColor: isDark ? "#6B7280" : "#9CA3AF",
         tabBarStyle: {
-          backgroundColor: isDark ? "#1F2937" : "#ffffff",
-          borderTopColor: isDark ? "#374151" : "#F3F4F6",
+          backgroundColor: isDark ? "#1F2937" : "rgba(255, 250, 242, 0.98)",
+          borderTopColor: isDark ? "#374151" : BrandColors.creamDeep,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
         },
-        headerStyle: { backgroundColor: isDark ? "#1F2937" : "#ffffff" },
-        headerTitleStyle: { color: isDark ? "#F9FAFB" : "#111827" },
+        headerStyle: { backgroundColor: isDark ? "#1F2937" : BrandColors.cream },
+        headerTitleStyle: { color: isDark ? "#F9FAFB" : BrandColors.ink, fontWeight: "900" },
         headerTintColor: SAMBAL,
         headerTitleAlign: "center",
       })}
@@ -183,11 +187,14 @@ function GuestTabs() {
         tabBarActiveTintColor: SAMBAL,
         tabBarInactiveTintColor: isDark ? "#6B7280" : "#9CA3AF",
         tabBarStyle: {
-          backgroundColor: isDark ? "#1F2937" : "#ffffff",
-          borderTopColor: isDark ? "#374151" : "#F3F4F6",
+          backgroundColor: isDark ? "#1F2937" : "rgba(255, 250, 242, 0.98)",
+          borderTopColor: isDark ? "#374151" : BrandColors.creamDeep,
+          height: 64,
+          paddingTop: 6,
+          paddingBottom: 8,
         },
-        headerStyle: { backgroundColor: isDark ? "#1F2937" : "#ffffff" },
-        headerTitleStyle: { color: isDark ? "#F9FAFB" : "#111827" },
+        headerStyle: { backgroundColor: isDark ? "#1F2937" : BrandColors.cream },
+        headerTitleStyle: { color: isDark ? "#F9FAFB" : BrandColors.ink, fontWeight: "900" },
         headerTintColor: SAMBAL,
         headerTitleAlign: "center",
       })}

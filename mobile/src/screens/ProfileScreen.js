@@ -20,7 +20,7 @@ import {
 } from "../lib/notifications";
 import { isBiometricAvailable, authenticateWithBiometrics } from "../lib/biometrics";
 
-const SAMBAL = "#DC2626";
+const SAMBAL = "#FF5A00";
 const BIOMETRIC_KEY = "cincailah_biometric_enabled";
 
 export default function ProfileScreen({ navigation }) {

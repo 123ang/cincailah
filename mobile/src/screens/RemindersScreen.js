@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { cancelLunchReminder, getReminderStatus, scheduleLunchReminder } from '../lib/notifications';
 import { useAuth } from '../context/AuthContext';
 
-const SAMBAL = '#DC2626';
+const SAMBAL = '#FF5A00';
 
 export default function RemindersScreen() {
   const { mode } = useAuth();
