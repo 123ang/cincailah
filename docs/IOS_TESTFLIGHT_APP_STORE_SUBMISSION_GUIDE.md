@@ -11,7 +11,7 @@ Project folder:
 Current iOS Bundle ID from `mobile/app.json`:
 
 ```text
-com.jiakhami.cincailah
+com.suntzutechnologies.cincailah
 ```
 
 Current production API URL from `mobile/app.json`:
@@ -74,7 +74,7 @@ Important values:
     "slug": "cincailah",
     "version": "1.0.0",
     "ios": {
-      "bundleIdentifier": "com.jiakhami.cincailah",
+      "bundleIdentifier": "com.suntzutechnologies.cincailah",
       "supportsTablet": false
     }
   }
@@ -163,14 +163,14 @@ Steps:
 Platform: iOS
 Name: Cincailah
 Primary Language: English (U.S.)
-Bundle ID: com.jiakhami.cincailah
+Bundle ID: com.suntzutechnologies.cincailah
 SKU: cincailah-ios-001
 User Access: Full Access
 ```
 
 5. Click **Create**.
 
-If `com.jiakhami.cincailah` is not shown, create/register it in Apple Developer or let EAS register it during build.
+If `com.suntzutechnologies.cincailah` is not shown, create/register it in Apple Developer or let EAS register it during build.
 
 ---
 
@@ -189,19 +189,19 @@ Example URL:
 https://appstoreconnect.apple.com/apps/1234567890/appstore/ios/version/deliverable
 ```
 
-Then:
+For this project, EAS created/found:
 
 ```text
-ASC App ID = 1234567890
+ASC App ID = 6773548061
 ```
 
-Update `mobile/eas.json` later if you want automatic submit:
+Keep `mobile/eas.json` set like this for automatic submit:
 
 ```json
 "ios": {
-  "appleId": "YOUR_APPLE_ID_EMAIL",
-  "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID",
-  "appleTeamId": "YOUR_TEAM_ID"
+  "appleId": "admin@suntzutechnologies.com",
+  "ascAppId": "6773548061",
+  "appleTeamId": "X33G4A6WK8"
 }
 ```
 
@@ -213,12 +213,12 @@ After EAS iOS build succeeds, submit it:
 
 ```bash
 cd /Users/123ang/Desktop/Websites/cincailah/mobile
-npx eas submit --platform ios --latest
+npx eas submit --platform ios --latest --profile production
 ```
 
 If EAS asks for Apple login, follow the prompts.
 
-If it asks for App Store Connect App ID, paste the numeric ID from Step 8.
+If it asks for App Store Connect App ID, paste the numeric ID from Step 8. With the checked-in config above, EAS should already know it.
 
 After upload, wait for Apple processing. This can take 5–30 minutes or longer.
 
@@ -1005,7 +1005,7 @@ npx eas whoami
 npx eas build --platform ios --profile production
 
 # Submit latest successful iOS build to App Store Connect
-npx eas submit --platform ios --latest
+npx eas submit --platform ios --latest --profile production
 
 # Build Android preview APK if needed
 npm run build:apk

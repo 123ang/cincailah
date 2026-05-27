@@ -216,7 +216,7 @@ Next.js. See `nginx.conf.example` at the repo root.
   - returns `{ ok, status, data, networkError }` instead of throwing
 - Auth is gated on biometric unlock (`expo-local-authentication`) when the
   user has opted in — see `mobile/src/context/AuthContext.tsx`.
-- Deep links: `jiakhami://join/<code>`, `https://cincailah.com/join/<code>`,
+- Deep links: `cincailah://join/<code>`, `https://cincailah.com/join/<code>`,
   and the Expo dev URL — see `linking` config in `mobile/App.js`.
 - Screens live under `mobile/src/screens/`. Before creating a new one, check
   whether an existing screen already covers the navigation target; three

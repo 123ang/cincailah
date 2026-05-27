@@ -80,7 +80,7 @@ const linking = {
     prefix,
     "https://cincailah.suntzutechnologies.com",
     "https://cincailah.com",
-    "jiakhami://",
+    "cincailah://",
   ],
   config: {
     screens: {

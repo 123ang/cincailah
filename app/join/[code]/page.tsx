@@ -6,7 +6,7 @@ import { getSession } from '@/lib/session';
 import JoinInvitePage from '@/components/JoinInvitePage';
 
 export const metadata: Metadata = {
-  title: 'Join Makan Group — Cincailah',
+  title: 'Join Makan Group',
 };
 
 function NotFound({ code }: { code: string }) {

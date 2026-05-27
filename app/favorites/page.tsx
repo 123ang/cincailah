@@ -5,7 +5,7 @@ import type { Metadata } from 'next';
 import FavoritesPageClient from '@/components/FavoritesPageClient';
 
 export const metadata: Metadata = {
-  title: 'My Favourites — Cincailah',
+  title: 'My Favourites',
   description: 'All the restaurants you have hearted across your groups.',
 };
 

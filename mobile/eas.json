@@ -23,7 +23,9 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "APP_ENV": "production"
+        "APP_ENV": "production",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true",
+        "SENTRY_DISABLE_NATIVE_DEBUG_UPLOAD": "true"
       }
     },
     "production-apk": {
@@ -41,8 +43,8 @@
       },
       "ios": {
         "appleId": "admin@suntzutechnologies.com",
-        "ascAppId": "YOUR_APP_STORE_APP_ID",
-        "appleTeamId": "YOUR_TEAM_ID"
+        "ascAppId": "6773548061",
+        "appleTeamId": "X33G4A6WK8"
       }
     }
   }

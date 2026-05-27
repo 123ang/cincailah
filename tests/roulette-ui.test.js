@@ -106,3 +106,13 @@ test('root layout does not depend on remote Google font fetches', () => {
   assert.doesNotMatch(source, /next\/font\/google/);
   assert.doesNotMatch(source, /Inter\(/);
 });
+
+test('page metadata avoids duplicating the Cincailah title suffix', () => {
+  const solo = read('app/solo/page.tsx');
+  const favorites = read('app/favorites/page.tsx');
+  const join = read('app/join/[code]/page.tsx');
+
+  for (const source of [solo, favorites, join]) {
+    assert.doesNotMatch(source, /title:\s*['"].*— Cincailah['"]/);
+  }
+});
