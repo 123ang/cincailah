@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import AuthBrandHeader from '@/components/AuthBrandHeader';
+import PublicSiteNav from '@/components/PublicSiteNav';
 
 interface LoginPageClientProps {
   redirectTo: string;
@@ -83,25 +85,21 @@ export default function LoginPageClient({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-cream">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <span className="text-5xl block mb-3">🍛</span>
-            <h1 className="text-3xl font-black text-slate">cincailah</h1>
-          </Link>
-          <p className="text-gray-500 text-sm mt-2">Welcome back!</p>
-        </div>
+    <div className="min-h-screen bg-cream text-slate transition-colors dark:bg-gray-950 dark:text-gray-100">
+      <PublicSiteNav />
+      <main className="flex min-h-[calc(100vh-73px)] items-center justify-center p-4 py-10">
+        <div className="w-full max-w-md">
+          <AuthBrandHeader subtitle="Welcome back to the makan roulette." />
 
-        {pendingCode && (
-          <div className="mb-4 bg-pandan/10 border border-pandan/30 rounded-xl px-4 py-3 text-sm text-slate">
-            <span className="font-bold">🤝 Joining group</span>{' '}
-            <span className="font-mono font-bold">{pendingCode}</span> after
-            you log in.
-          </div>
-        )}
+          {pendingCode && (
+            <div className="mb-4 rounded-xl border border-pandan/30 bg-pandan/10 px-4 py-3 text-sm text-slate dark:text-gray-100">
+              <span className="font-bold">Joining group</span>{' '}
+              <span className="font-mono font-bold">{pendingCode}</span> after
+              you log in.
+            </div>
+          )}
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               {error}
@@ -170,8 +168,9 @@ export default function LoginPageClient({
               </Link>
             </p>
           </div>
+          </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -48,7 +48,7 @@ npx prisma generate
 npx prisma db push            # or: npx prisma migrate deploy in prod
 
 # Day-to-day
-npm run dev                   # web on http://localhost:3000
+npm run dev                   # web on http://127.0.0.1:3001
 cd mobile && npm run start    # Expo on :8081
 ```
 
@@ -59,7 +59,7 @@ Minimum set for local dev:
 ```env
 DATABASE_URL="postgresql://user:pass@localhost:5432/cincailah"
 SESSION_SECRET="at-least-32-chars-of-random-bytes-here"
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://127.0.0.1:3001"
 ```
 
 Recommended additions: `JWT_SECRET` (separate from SESSION_SECRET),

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
+import PublicSiteNav from '@/components/PublicSiteNav';
 
 export const metadata: Metadata = {
   title: 'About',
@@ -8,22 +10,19 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-mamak/20 to-cream">
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🍛</span>
-            <span className="text-xl font-black text-slate">cincailah</span>
-          </Link>
-          <Link href="/" className="text-sm text-gray-500 hover:text-slate transition">
-            ← Home
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-cream via-mamak/20 to-cream transition-colors dark:from-gray-950 dark:via-sambal/10 dark:to-gray-950 dark:text-gray-100">
+      <PublicSiteNav />
 
       <main className="max-w-3xl mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <div className="text-7xl mb-4">🍜</div>
+          <Image
+            src="/brand/cincailah-logo.jpeg"
+            alt=""
+            width={96}
+            height={96}
+            className="brand-logo mx-auto mb-4 h-24 w-24 rounded-[1.7rem] object-cover shadow-xl shadow-sambal/20"
+            priority
+          />
           <h1 className="text-4xl font-black text-slate mb-4">About Cincailah</h1>
           <p className="text-xl text-gray-600">
             The story behind Malaysia&apos;s favourite lunch-decision engine

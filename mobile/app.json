@@ -16,7 +16,13 @@
       "**/*"
     ],
     "plugins": [
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
       "expo-secure-store",
       [
         "expo-notifications",
@@ -43,16 +49,16 @@
       "apiUrl": "https://cincailah.suntzutechnologies.com",
       "sentryDsn": "",
       "eas": {
-        "projectId": "377df96a-a84c-4c03-bd17-ddc4813f2a89"
+        "projectId": "173c4921-1450-43b3-9c31-c4a8ddfedcf6"
       }
     },
     "updates": {
-      "url": "https://u.expo.dev/377df96a-a84c-4c03-bd17-ddc4813f2a89"
+      "url": "https://u.expo.dev/173c4921-1450-43b3-9c31-c4a8ddfedcf6"
     },
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "owner": "jiak-hami",
+    "owner": "suntzutechnologies",
     "android": {
       "package": "com.jiakhami.cincailah",
       "adaptiveIcon": {
@@ -62,9 +68,7 @@
       },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
-        "VIBRATE",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT"
+        "VIBRATE"
       ]
     },
     "ios": {

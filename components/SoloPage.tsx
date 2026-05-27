@@ -17,6 +17,7 @@ import {
 } from '@/lib/soloData';
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import MakanCodeInput from '@/components/MakanCodeInput';
+import PublicSiteNav from '@/components/PublicSiteNav';
 
 type Mode = 'food' | 'favorite' | 'category';
 
@@ -27,6 +28,14 @@ type Picked =
 
 const SHUFFLE_DURATION_MS = 2800;
 const SHUFFLE_TICK_MS = 80;
+
+const soloWheelTokens = [
+  { label: 'Malay', mark: '🍛', className: 'left-[55%] top-[11%]' },
+  { label: 'Western', mark: '🍔', className: 'right-[11%] top-[39%]' },
+  { label: 'Chinese', mark: '🥢', className: 'bottom-[17%] right-[23%]' },
+  { label: 'Japan', mark: '🍣', className: 'bottom-[18%] left-[17%]' },
+  { label: 'Indian', mark: '🫓', className: 'left-[10%] top-[39%]' },
+];
 
 function makeId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -311,143 +320,137 @@ export default function SoloPage() {
       : picked.kind === 'food'
         ? picked.item.name
         : picked.item.name;
-  const pickedEmoji =
-    picked.kind === 'food'
-      ? picked.item.emoji
-      : picked.kind === 'favorite'
-        ? '📍'
-        : '🤔';
   const pickedCategory =
     picked.kind === 'food' ? picked.item.category : null;
   const pickedNote =
     picked.kind === 'favorite' ? picked.item.note : undefined;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-sambal/10 to-cream">
-      {/* Top bar */}
-      <nav className="glass border-b border-white/70 sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <Image
-              src="/brand/cincailah-logo.jpeg"
-              alt=""
-              width={40}
-              height={40}
-              className="rounded-2xl"
-            />
-            <span className="text-lg font-black text-slate">cincailah</span>
-          </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="text-sm font-semibold text-gray-600 hover:text-sambal px-3 py-1.5"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/register"
-              className="btn-cincai text-white font-bold text-sm px-4 py-2 rounded-xl"
-            >
-              Sign Up
-            </Link>
-          </div>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-cream via-sambal/10 to-cream transition-colors dark:from-gray-950 dark:via-sambal/10 dark:to-gray-950 dark:text-gray-100">
+      <PublicSiteNav />
 
       <main className="max-w-2xl mx-auto px-4 pt-6 pb-24">
-        <header className="brand-card overflow-hidden rounded-[1.75rem] px-6 py-8 mb-5 text-white relative">
-          <div className="absolute -right-16 top-10 h-44 w-44 rounded-full border-[22px] border-white/70 border-l-transparent rotate-[-24deg]" />
-          <div className="relative max-w-sm">
-            <p className="inline-flex rounded-full bg-white/20 px-3 py-1.5 text-xs font-black uppercase tracking-[0.16em]">
-              Solo food roulette
-            </p>
-            <h1 className="mt-5 text-5xl font-black leading-[0.9] tracking-tight">
-              Spin once. Go makan.
-            </h1>
-            <p className="text-white/80 mt-4 text-sm md:text-base font-bold leading-6">
-              No account. No group. The button stays first, and the food pool sits underneath when you need it.
-            </p>
-          </div>
-        </header>
-
-        {/* Winner card */}
-        <div
-          className={`relative bg-white rounded-3xl border shadow-sm overflow-hidden mb-4 transition-transform ${
-            justWon ? 'scale-[1.02] border-sambal' : 'border-gray-200'
+        <section
+          className={`relative mb-8 overflow-hidden rounded-[2rem] bg-sambal p-5 pt-6 text-white shadow-2xl shadow-sambal/20 transition-transform ${
+            justWon ? 'scale-[1.01]' : ''
           }`}
         >
-          <div className="relative aspect-[4/3] bg-gradient-to-br from-mamak/30 to-cream">
-            {pickedImage && picked.kind !== 'empty' ? (
-              <Image
-                src={pickedImage}
-                alt={pickedName}
-                fill
-                sizes="(max-width: 768px) 100vw, 640px"
-                className={`object-cover transition-opacity ${
-                  isShuffling ? 'opacity-60' : 'opacity-100'
-                }`}
-                priority
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-7xl">
-                {pickedEmoji}
-              </div>
-            )}
+          <div className="pointer-events-none absolute -right-36 top-24 h-80 w-80 rotate-[-24deg] rounded-full border-[34px] border-white/70 border-l-transparent" />
+          <div className="pointer-events-none absolute -left-16 bottom-28 h-36 w-36 rounded-full bg-white/10" />
 
-            {isShuffling && (
-              <div className="absolute top-3 right-3 bg-black/60 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse"></span>
-                Shuffling…
-              </div>
-            )}
-            {justWon && !isShuffling && (
-              <div className="absolute top-3 left-3 bg-pandan text-white text-xs font-black px-3 py-1.5 rounded-full shadow">
-                🎉 Winner!
-              </div>
-            )}
-          </div>
-
-          <div className="p-5 text-center">
-            <div className="text-2xl md:text-3xl font-black text-slate">
-              {pickedName}
+          <div className="relative z-[1]">
+            <div className="flex items-center justify-between gap-3">
+              <span className="rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em]">
+                Solo food roulette
+              </span>
+              <button
+                onClick={startShuffle}
+                disabled={isShuffling}
+                className="rounded-full bg-white px-4 py-2 text-xs font-black text-sambal shadow-lg shadow-slate/10 transition hover:scale-[1.03] disabled:opacity-60"
+              >
+                {isShuffling ? 'Spinning...' : 'Spin again'}
+              </button>
             </div>
-            {pickedCategory && (
-              <div className="mt-1 text-xs font-bold text-sambal uppercase tracking-wider">
-                {pickedCategory}
+
+            <div className="mt-6 max-w-sm">
+              <h1 className="text-5xl font-black leading-[0.9] tracking-tight">
+                Spin once. Go makan.
+              </h1>
+              <p className="mt-4 text-sm font-bold leading-6 text-white/80 md:text-base">
+                No account. No group. The wheel lands and tells you the answer right here.
+              </p>
+            </div>
+
+            <div className="relative mx-auto mt-8 h-72 w-72 max-w-full">
+              <div className={`${isShuffling ? 'needle-tick' : ''} absolute left-1/2 top-[-0.45rem] z-[4] h-16 w-10 -translate-x-1/2 drop-shadow-lg`}>
+                <div className="h-full w-full rounded-2xl bg-white [clip-path:polygon(50%_100%,8%_12%,92%_12%)]" />
+                <div className="absolute left-1/2 top-5 h-3 w-3 -translate-x-1/2 rounded-full bg-sambal" />
               </div>
-            )}
-            {pickedNote && (
-              <div className="mt-1 text-sm text-gray-500">{pickedNote}</div>
-            )}
+
+              <div
+                key={`${pickedName}-${isShuffling ? 'spinning' : 'landed'}`}
+                className={`absolute inset-0 rounded-full border-[10px] border-white bg-[conic-gradient(from_-30deg,#ffc233_0deg_60deg,#ff5a00_60deg_120deg,#e9321b_120deg_180deg,#6d2cb7_180deg_240deg,#078bce_240deg_300deg,#45b619_300deg_360deg)] shadow-2xl shadow-black/25 ${
+                  isShuffling ? 'logo-preview-wheel' : ''
+                }`}
+              >
+                <div className="absolute inset-0 rounded-full bg-[repeating-conic-gradient(from_-30deg,transparent_0deg_58deg,rgba(255,255,255,.82)_58deg_60deg)]" />
+                <div className="absolute inset-[28%] rounded-full border-[18px] border-white/95 bg-transparent" />
+                {pickedImage && picked.kind !== 'empty' ? (
+                  <Image
+                    src={pickedImage}
+                    alt=""
+                    width={96}
+                    height={96}
+                    className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-2xl border-4 border-white object-cover shadow-lg"
+                    priority
+                  />
+                ) : (
+                  <Image
+                    src="/brand/cincailah-logo.jpeg"
+                    alt=""
+                    width={96}
+                    height={96}
+                    className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-2xl border-4 border-white object-cover shadow-lg"
+                    priority
+                  />
+                )}
+                {soloWheelTokens.map((token) => (
+                  <span
+                    key={token.label}
+                    aria-label={token.label}
+                    className={`absolute flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-white/90 text-lg shadow-lg ${token.className}`}
+                  >
+                    {token.mark}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="-mt-9 rounded-[1.6rem] bg-white/95 p-4 text-slate shadow-2xl shadow-black/20 backdrop-blur dark:bg-gray-950/95 dark:text-white">
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sambal">
+                The needle says
+              </p>
+              <div className="mt-1 text-3xl font-black leading-tight tracking-[-0.02em]">
+                {pickedName}
+              </div>
+              {pickedCategory && (
+                <div className="mt-1 text-xs font-black uppercase tracking-wider text-sambal">
+                  {pickedCategory}
+                </div>
+              )}
+              {pickedNote && (
+                <div className="mt-1 text-sm font-semibold text-gray-500 dark:text-gray-300">{pickedNote}</div>
+              )}
+              {picked.kind !== 'empty' && (
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <button
+                    onClick={startShuffle}
+                    disabled={isShuffling}
+                    className="rounded-2xl bg-pandan px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-pandan/20 transition hover:scale-[1.02] disabled:opacity-60"
+                  >
+                    {isShuffling ? 'Spinning...' : 'Spin again'}
+                  </button>
+                  <button
+                    onClick={rerollQuick}
+                    disabled={isShuffling || currentPool.length === 0}
+                    className="rounded-2xl bg-slate/10 px-4 py-3 text-center text-sm font-black text-slate transition hover:bg-slate/15 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+                  >
+                    Not this
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-3 mb-8">
-          <button
-            onClick={startShuffle}
-            disabled={isShuffling}
-            className="btn-cincai text-white font-black text-lg py-4 rounded-2xl disabled:opacity-60"
-          >
-            {isShuffling ? 'Shuffling…' : 'Spin once'}
-          </button>
-          <button
-            onClick={rerollQuick}
-            disabled={isShuffling || currentPool.length === 0}
-            className="bg-white border-2 border-gray-200 text-slate font-bold py-3 rounded-2xl hover:bg-gray-50 disabled:opacity-60"
-          >
-            Not this, try another
-          </button>
-        </div>
-
-        <section className="mb-4 rounded-3xl border border-sambal/10 bg-white p-4 shadow-sm">
+        <section className="mb-4 rounded-3xl border border-sambal/10 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3">
-            <h2 className="text-base font-black text-slate">Tune the roulette</h2>
-            <p className="mt-1 text-xs font-semibold text-gray-500">
+            <h2 className="text-base font-black text-slate dark:text-white">Tune the roulette</h2>
+            <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
               Leave this alone for pure cincai mode.
             </p>
           </div>
-          <div className="mb-4 flex gap-1 rounded-2xl bg-cream p-1.5">
+          <div className="mb-4 flex gap-1 rounded-2xl bg-cream p-1.5 dark:bg-gray-950">
             {(
               [
                 { key: 'food', label: 'Spin' },
@@ -462,7 +465,7 @@ export default function SoloPage() {
                 className={`flex-1 rounded-xl py-2.5 text-sm font-black transition ${
                   mode === m.key
                     ? 'bg-sambal text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-white'
+                    : 'text-gray-500 hover:bg-white dark:text-gray-300 dark:hover:bg-white/10'
                 } disabled:opacity-60`}
               >
                 {m.label}
@@ -473,7 +476,7 @@ export default function SoloPage() {
           {mode === 'category' && (
             <div>
               <div className="mb-3 flex items-center justify-between">
-                <span className="text-sm font-bold text-gray-700">
+                <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
                   Pick your cuisines
                 </span>
                 <button
@@ -493,7 +496,7 @@ export default function SoloPage() {
                       className={`rounded-full px-3 py-1.5 text-sm font-semibold transition ${
                         active
                           ? 'bg-sambal text-white'
-                          : 'bg-cream text-gray-700 hover:bg-sambal-soft'
+                          : 'bg-cream text-gray-700 hover:bg-sambal-soft dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-white/10'
                       }`}
                     >
                       {cat}
@@ -506,38 +509,38 @@ export default function SoloPage() {
         </section>
 
         {/* Favorites manager */}
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-4">
+        <section className="mb-4 rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <button
             onClick={() => setShowFavorites((v) => !v)}
             className="w-full flex items-center justify-between px-5 py-4"
           >
-            <span className="font-bold text-slate">
+            <span className="font-bold text-slate dark:text-white">
               ❤️ My Favorite Spots
-              <span className="ml-2 text-xs font-semibold text-gray-400">
+              <span className="ml-2 text-xs font-semibold text-gray-400 dark:text-gray-500">
                 {favorites.length}
               </span>
             </span>
-            <span className="text-gray-400 text-sm">
+            <span className="text-gray-400 text-sm dark:text-gray-500">
               {showFavorites ? 'Hide' : 'Manage'}
             </span>
           </button>
 
           {showFavorites && (
-            <div className="px-5 pb-5 border-t border-gray-100 pt-4 space-y-3">
+            <div className="space-y-3 border-t border-gray-100 px-5 pb-5 pt-4 dark:border-gray-800">
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   value={newFavName}
                   onChange={(e) => setNewFavName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveFavorite()}
                   placeholder="Restaurant / spot name"
-                  className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-sambal"
+                  className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-sambal focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
                 />
                 <input
                   value={newFavNote}
                   onChange={(e) => setNewFavNote(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveFavorite()}
                   placeholder="Note (optional)"
-                  className="sm:w-48 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-sambal"
+                  className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-sambal focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white sm:w-48"
                 />
                 <button
                   onClick={saveFavorite}
@@ -550,7 +553,7 @@ export default function SoloPage() {
                   <button
                     type="button"
                     onClick={cancelFavoriteEdit}
-                    className="text-xs font-semibold text-gray-500 hover:text-gray-700 px-2 py-2"
+                    className="px-2 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >
                     Cancel
                   </button>
@@ -558,22 +561,22 @@ export default function SoloPage() {
               </div>
 
               {favorites.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-3">
+                <p className="py-3 text-center text-sm text-gray-400 dark:text-gray-500">
                   No favorites yet. Add your regular spots above.
                 </p>
               ) : (
-                <ul className="divide-y divide-gray-100">
+                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                   {favorites.map((f) => (
                     <li
                       key={f.id}
                       className="flex items-center justify-between py-3"
                     >
                       <div className="min-w-0">
-                        <div className="font-semibold text-sm truncate">
+                        <div className="truncate text-sm font-semibold dark:text-white">
                           {f.name}
                         </div>
                         {f.note && (
-                          <div className="text-xs text-gray-400 truncate">
+                          <div className="truncate text-xs text-gray-400 dark:text-gray-500">
                             {f.note}
                           </div>
                         )}
@@ -582,14 +585,14 @@ export default function SoloPage() {
                         <button
                           type="button"
                           onClick={() => beginEditFavorite(f)}
-                          className="text-xs font-semibold text-sambal hover:bg-red-50 px-3 py-1.5 rounded-lg"
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-sambal hover:bg-red-50 dark:hover:bg-white/10"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteFavorite(f.id)}
-                          className="text-xs font-semibold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg"
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-white/10"
                         >
                           Remove
                         </button>
@@ -603,31 +606,31 @@ export default function SoloPage() {
         </section>
 
         {/* History */}
-        <section className="bg-white rounded-2xl border border-gray-100 shadow-sm mb-6">
+        <section className="mb-6 rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <button
             onClick={() => setShowHistory((v) => !v)}
             className="w-full flex items-center justify-between px-5 py-4"
           >
-            <span className="font-bold text-slate">
+            <span className="font-bold text-slate dark:text-white">
               🕐 Recent Picks
-              <span className="ml-2 text-xs font-semibold text-gray-400">
+              <span className="ml-2 text-xs font-semibold text-gray-400 dark:text-gray-500">
                 {history.length}
               </span>
             </span>
-            <span className="text-gray-400 text-sm">
+            <span className="text-gray-400 text-sm dark:text-gray-500">
               {showHistory ? 'Hide' : 'Show'}
             </span>
           </button>
 
           {showHistory && (
-            <div className="px-5 pb-5 border-t border-gray-100 pt-4">
+            <div className="border-t border-gray-100 px-5 pb-5 pt-4 dark:border-gray-800">
               {history.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-3">
+                <p className="py-3 text-center text-sm text-gray-400 dark:text-gray-500">
                   No picks yet — spin above to get started!
                 </p>
               ) : (
                 <>
-                  <ul className="divide-y divide-gray-100">
+                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
                     {history.map((h) => (
                       <li
                         key={h.id}
@@ -636,10 +639,10 @@ export default function SoloPage() {
                         <div className="min-w-0 flex items-center gap-2">
                           <span className="text-lg">{h.emoji ?? '📍'}</span>
                           <div className="min-w-0">
-                            <div className="font-semibold text-sm truncate">
+                            <div className="truncate text-sm font-semibold dark:text-white">
                               {h.name}
                             </div>
-                            <div className="text-[11px] text-gray-400">
+                            <div className="text-[11px] text-gray-400 dark:text-gray-500">
                               {new Date(h.time).toLocaleString()}
                               {h.category ? ` · ${h.category}` : ''}
                               {h.mode === 'favorite' ? ' · Favorite' : ''}
@@ -651,7 +654,7 @@ export default function SoloPage() {
                   </ul>
                   <button
                     onClick={clearHistory}
-                    className="mt-3 text-xs font-semibold text-red-600 hover:underline"
+                    className="mt-3 text-xs font-semibold text-red-600 hover:underline dark:text-red-300"
                   >
                     Clear history
                   </button>
@@ -683,6 +686,34 @@ export default function SoloPage() {
           </Link>
         </div>
       </main>
+
+      <style jsx>{`
+        .logo-preview-wheel {
+          animation: solo-logo-spin 2.45s cubic-bezier(0.13, 0.9, 0.22, 1) both;
+        }
+
+        .needle-tick {
+          animation: solo-needle-tick 0.16s steps(2, end) 0s 14 alternate;
+        }
+
+        @keyframes solo-logo-spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(1578deg);
+          }
+        }
+
+        @keyframes solo-needle-tick {
+          from {
+            transform: translateX(-50%) rotate(-5deg);
+          }
+          to {
+            transform: translateX(-50%) rotate(5deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
-
-const inter = Inter({ subsets: ["latin"] });
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cincailah.com';
 
@@ -77,7 +74,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <ServiceWorkerRegister />
         {children}
       </body>

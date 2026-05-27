@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { formatPrice, haversineKm } from '@/lib/utils';
 import { fireConfetti } from '@/lib/confetti';
@@ -356,9 +357,13 @@ export default function RouletteSpinner({
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
           <div className="relative">
             <div className="w-32 h-32 rounded-full border-4 border-gray-200 border-t-sambal animate-spin"></div>
-            <span className="absolute inset-0 flex items-center justify-center text-5xl">
-              🍛
-            </span>
+            <Image
+              src="/brand/cincailah-logo.jpeg"
+              alt=""
+              width={64}
+              height={64}
+              className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-2xl object-cover shadow-lg shadow-sambal/20"
+            />
           </div>
           <p className="mt-8 text-lg font-bold text-gray-700 animate-pulse">
             {loadingText}
@@ -402,7 +407,13 @@ export default function RouletteSpinner({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <span className="text-6xl">🍜</span>
+                <Image
+                  src="/brand/cincailah-logo.jpeg"
+                  alt=""
+                  width={88}
+                  height={88}
+                  className="h-[88px] w-[88px] rounded-[1.4rem] object-cover shadow-lg shadow-sambal/20"
+                />
               )}
             </div>
           ) : (

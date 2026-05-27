@@ -70,7 +70,7 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000)
+Visit [http://127.0.0.1:3001](http://127.0.0.1:3001)
 
 ## Database Schema
 
@@ -204,7 +204,7 @@ cincailah/
 ## Scripts
 
 ```bash
-npm run dev          # Start dev server
+npm run dev          # Start dev server on http://127.0.0.1:3001
 npm run build        # Build for production
 npm run start        # Start production server
 npm run lint         # Run ESLint

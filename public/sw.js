@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cincailah-v2';
+const CACHE_NAME = 'cincailah-v3';
 const OFFLINE_ASSETS = [
   '/',
   '/solo',

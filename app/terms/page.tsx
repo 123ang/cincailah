@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import PublicSiteNav from '@/components/PublicSiteNav';
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
@@ -10,18 +11,8 @@ export default function TermsPage() {
   const lastUpdated = 'April 17, 2026';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-cream via-mamak/20 to-cream">
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="text-2xl">🍛</span>
-            <span className="text-xl font-black text-slate">cincailah</span>
-          </Link>
-          <Link href="/" className="text-sm text-gray-500 hover:text-slate transition">
-            ← Home
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gradient-to-br from-cream via-mamak/20 to-cream transition-colors dark:from-gray-950 dark:via-sambal/10 dark:to-gray-950 dark:text-gray-100">
+      <PublicSiteNav />
 
       <main className="max-w-3xl mx-auto px-4 py-16">
         <h1 className="text-4xl font-black text-slate mb-2">Terms of Service</h1>

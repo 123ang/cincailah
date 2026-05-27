@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function JoinGroupClient() {
   const router = useRouter();
@@ -54,7 +55,14 @@ export default function JoinGroupClient() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <span className="text-5xl block mb-3">🤝</span>
+          <Image
+            src="/brand/cincailah-logo.jpeg"
+            alt=""
+            width={72}
+            height={72}
+            className="brand-logo mx-auto mb-3 h-[72px] w-[72px] rounded-[1.35rem] object-cover shadow-xl shadow-sambal/20"
+            priority
+          />
           <h1 className="text-3xl font-black text-slate mb-2">Join Makan Group</h1>
           <p className="text-gray-500 text-sm">Enter the Makan Code to join</p>
         </div>

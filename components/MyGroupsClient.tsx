@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Group {
   id: string;
@@ -59,7 +60,14 @@ export default function MyGroupsClient({
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8 pt-8">
-          <span className="text-5xl block mb-3">🍛</span>
+          <Image
+            src="/brand/cincailah-logo.jpeg"
+            alt=""
+            width={72}
+            height={72}
+            className="brand-logo mx-auto mb-3 h-[72px] w-[72px] rounded-[1.35rem] object-cover shadow-xl shadow-sambal/20"
+            priority
+          />
           <h1 className="text-3xl font-black text-slate mb-2">My Makan Groups</h1>
           <p className="text-gray-500 text-sm">
             Logged in as <span className="font-semibold">{displayName}</span> ({userEmail})

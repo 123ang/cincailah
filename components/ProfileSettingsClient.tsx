@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import ImageUpload from '@/components/ImageUpload';
 
 interface User {
@@ -155,7 +156,13 @@ export default function ProfileSettingsClient({
       <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/groups" className="flex items-center gap-2">
-            <span className="text-xl">🍛</span>
+            <Image
+              src="/brand/cincailah-logo.jpeg"
+              alt=""
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-xl object-cover shadow-md shadow-sambal/20"
+            />
             <span className="text-lg font-black text-slate">cincailah</span>
           </Link>
           <Link href="/groups" className="text-sm text-gray-500 hover:text-slate transition">

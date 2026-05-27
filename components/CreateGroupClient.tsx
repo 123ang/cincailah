@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function CreateGroupClient() {
   const router = useRouter();
@@ -68,7 +69,14 @@ export default function CreateGroupClient() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-cream dark:bg-gray-950">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <span className="text-5xl block mb-3">🎉</span>
+            <Image
+              src="/brand/cincailah-logo.jpeg"
+              alt=""
+              width={72}
+              height={72}
+              className="brand-logo mx-auto mb-3 h-[72px] w-[72px] rounded-[1.35rem] object-cover shadow-xl shadow-sambal/20"
+              priority
+            />
             <h1 className="text-3xl font-black text-slate dark:text-white mb-2">Group Created!</h1>
             <p className="text-gray-500 dark:text-gray-400 text-sm">
               Your makan group is ready. Want a head start?
@@ -131,7 +139,14 @@ export default function CreateGroupClient() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <span className="text-5xl block mb-3">🍽️</span>
+          <Image
+            src="/brand/cincailah-logo.jpeg"
+            alt=""
+            width={72}
+            height={72}
+            className="brand-logo mx-auto mb-3 h-[72px] w-[72px] rounded-[1.35rem] object-cover shadow-xl shadow-sambal/20"
+            priority
+          />
           <h1 className="text-3xl font-black text-slate dark:text-white mb-2">Create Makan Group</h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm">Start a new lunch decision group</p>
         </div>

@@ -40,7 +40,7 @@
         "track": "internal"
       },
       "ios": {
-        "appleId": "your@apple.id",
+        "appleId": "admin@suntzutechnologies.com",
         "ascAppId": "YOUR_APP_STORE_APP_ID",
         "appleTeamId": "YOUR_TEAM_ID"
       }
