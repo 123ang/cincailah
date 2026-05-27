@@ -45,6 +45,7 @@ export default function ProfileSettingsClient({
   });
   const [reminderSaving, setReminderSaving] = useState(false);
   const [pushMsg, setPushMsg] = useState('');
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const handleAvatarChange = async (url: string | null) => {
     setAvatarUrl(url);
@@ -148,6 +149,27 @@ export default function ProfileSettingsClient({
       setPushMsg('Browser push enabled.');
     } catch {
       setPushMsg('Unable to enable push. Configure VAPID key on server.');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      'Delete your Cincailah account permanently? This deletes your profile, preferences, votes, favourites, comments, and restaurants or groups you created. This cannot be undone.'
+    );
+    if (!confirmed) return;
+
+    setDeletingAccount(true);
+    setError('');
+    try {
+      const res = await fetch('/api/user/account', { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to delete account');
+        return;
+      }
+      window.location.href = '/';
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -370,6 +392,24 @@ export default function ProfileSettingsClient({
             Change password
           </Link>
         </div>
+
+        <section className="bg-red-50 rounded-2xl p-5 border border-red-100 shadow-sm">
+          <h2 className="text-sm font-bold text-red-700 uppercase tracking-wider mb-2">
+            Delete Account
+          </h2>
+          <p className="text-sm text-red-700/80">
+            Permanently delete your account and account-linked Cincailah data. This action cannot
+            be undone.
+          </p>
+          <button
+            onClick={handleDeleteAccount}
+            disabled={deletingAccount}
+            className="mt-4 w-full bg-red-600 text-white font-bold py-2.5 rounded-xl disabled:opacity-50"
+            type="button"
+          >
+            {deletingAccount ? 'Deleting…' : 'Delete Account'}
+          </button>
+        </section>
       </main>
     </div>
   );

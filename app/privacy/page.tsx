@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  const lastUpdated = 'April 17, 2026';
+  const lastUpdated = 'May 27, 2026';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cream via-mamak/20 to-cream transition-colors dark:from-gray-950 dark:via-sambal/10 dark:to-gray-950 dark:text-gray-100">
@@ -28,6 +28,8 @@ export default function PrivacyPage() {
               <li><strong>Restaurant data:</strong> Restaurants you add to your groups, including tags and preferences.</li>
               <li><strong>Decision history:</strong> Records of lunch decisions and votes to power anti-repeat logic.</li>
               <li><strong>Favourites:</strong> Restaurants you heart.</li>
+              <li><strong>Profile media:</strong> Optional avatar, group, or restaurant images you upload.</li>
+              <li><strong>Notification data:</strong> Optional push tokens and reminder settings if you enable notifications.</li>
             </ul>
           </section>
 
@@ -62,7 +64,7 @@ export default function PrivacyPage() {
           <section className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
             <h2 className="text-xl font-black text-slate mb-3">5. Your Rights</h2>
             <ul className="list-disc pl-5 space-y-2 text-sm">
-              <li>You can delete your account and all associated data by contacting us.</li>
+              <li>You can delete your account from the Profile page in the app or website.</li>
               <li>You can leave any group at any time from the group settings page.</li>
               <li>You can remove favourites at any time from the Favourites page.</li>
             </ul>

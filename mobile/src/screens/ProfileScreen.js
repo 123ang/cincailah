@@ -24,8 +24,9 @@ const SAMBAL = "#FF5A00";
 const BIOMETRIC_KEY = "cincailah_biometric_enabled";
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout, mode } = useAuth();
+  const { user, logout, mode, deleteAccount } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
   const [reminderEnabled, setReminderEnabled] = useState(false);
@@ -68,6 +69,28 @@ export default function ProfileScreen({ navigation }) {
         },
       },
     ]);
+  };
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Delete Account",
+      "This permanently deletes your account, profile, preferences, votes, favourites, comments, and restaurants or groups you created. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            setDeletingAccount(true);
+            const { error } = await deleteAccount();
+            setDeletingAccount(false);
+            if (error) {
+              Alert.alert("Could not delete account", error);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handlePushToggle = async (val) => {
@@ -194,6 +217,20 @@ export default function ProfileScreen({ navigation }) {
           <Text style={styles.logoutText}>Sign Out</Text>
         )}
       </Pressable>
+
+      {mode === "authed" ? (
+        <Pressable
+          style={[styles.deleteAccountBtn, deletingAccount && styles.logoutBtnDisabled]}
+          onPress={handleDeleteAccount}
+          disabled={deletingAccount}
+        >
+          {deletingAccount ? (
+            <ActivityIndicator color="#DC2626" />
+          ) : (
+            <Text style={styles.deleteAccountText}>Delete Account</Text>
+          )}
+        </Pressable>
+      ) : null}
     </ScrollView>
   );
 }
@@ -326,4 +363,14 @@ const styles = StyleSheet.create({
   },
   logoutBtnDisabled: { opacity: 0.5 },
   logoutText: { color: SAMBAL, fontWeight: "700", fontSize: 15 },
+  deleteAccountBtn: {
+    marginTop: 12,
+    borderWidth: 1.5,
+    borderColor: "#FCA5A5",
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "#FEF2F2",
+  },
+  deleteAccountText: { color: "#DC2626", fontWeight: "800", fontSize: 15 },
 });

@@ -25,6 +25,7 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<{ error?: string }>;
   register: (email: string, password: string, displayName: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -183,8 +184,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await AsyncStorage.removeItem(GUEST_FLAG_KEY);
   }, []);
 
+  const deleteAccount = useCallback(async () => {
+    try {
+      const { data, ok, networkError } = await apiFetch<{ error?: string }>('/api/user/account', {
+        method: 'DELETE',
+        token,
+      });
+      if (!ok) {
+        return {
+          error: networkError
+            ? 'Network error. Check your connection.'
+            : data.error || 'Failed to delete account',
+        };
+      }
+      await clearToken();
+      setToken(null);
+      setUser(null);
+      setMode(null);
+      await AsyncStorage.removeItem(GUEST_FLAG_KEY);
+      await AsyncStorage.removeItem(BIOMETRIC_KEY);
+      return {};
+    } catch {
+      return { error: 'Network error. Check your connection.' };
+    }
+  }, [token]);
+
   return (
-    <AuthContext.Provider value={{ user, token, mode, loading, continueAsGuest, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, mode, loading, continueAsGuest, login, register, logout, deleteAccount }}
+    >
       {children}
     </AuthContext.Provider>
   );
