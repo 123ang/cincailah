@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { Resend } from 'resend';
 import { logger } from '@/lib/logger';
+import { escapeHtml } from '@/lib/security';
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Cincailah <onboarding@resend.dev>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -119,6 +120,7 @@ function stripHtml(html: string): string {
 // Email templates
 
 export function getPasswordResetEmail(resetUrl: string, displayName: string) {
+  const safeDisplayName = escapeHtml(displayName);
   const html = `
 <!DOCTYPE html>
 <html>
@@ -136,7 +138,7 @@ export function getPasswordResetEmail(resetUrl: string, displayName: string) {
             <td style="padding: 48px 40px; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">🍛</div>
               <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: #26140B;">Reset your password</h1>
-              <p style="margin: 0; font-size: 16px; color: #7A6254;">Hi ${displayName},</p>
+              <p style="margin: 0; font-size: 16px; color: #7A6254;">Hi ${safeDisplayName},</p>
             </td>
           </tr>
           <tr>
@@ -180,6 +182,7 @@ export function getPasswordResetEmail(resetUrl: string, displayName: string) {
 }
 
 export function getWelcomeEmail(displayName: string) {
+  const safeDisplayName = escapeHtml(displayName);
   const html = `
 <!DOCTYPE html>
 <html>
@@ -197,7 +200,7 @@ export function getWelcomeEmail(displayName: string) {
             <td style="padding: 48px 40px; text-align: center;">
               <div style="font-size: 64px; margin-bottom: 16px;">🎉</div>
               <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 800; color: #26140B;">Welcome to ${APP_NAME}!</h1>
-              <p style="margin: 0; font-size: 18px; color: #7A6254;">Hi ${displayName}, glad you're here! 👋</p>
+              <p style="margin: 0; font-size: 18px; color: #7A6254;">Hi ${safeDisplayName}, glad you're here! 👋</p>
             </td>
           </tr>
           <tr>
@@ -252,6 +255,7 @@ export function getWelcomeEmail(displayName: string) {
 }
 
 export function getVerificationEmail(verifyUrl: string, displayName: string) {
+  const safeDisplayName = escapeHtml(displayName);
   const html = `
 <!DOCTYPE html>
 <html>
@@ -269,7 +273,7 @@ export function getVerificationEmail(verifyUrl: string, displayName: string) {
             <td style="padding: 48px 40px; text-align: center;">
               <div style="font-size: 48px; margin-bottom: 16px;">✉️</div>
               <h1 style="margin: 0 0 8px 0; font-size: 28px; font-weight: 800; color: #26140B;">Verify your email</h1>
-              <p style="margin: 0; font-size: 16px; color: #7A6254;">Hi ${displayName},</p>
+              <p style="margin: 0; font-size: 16px; color: #7A6254;">Hi ${safeDisplayName},</p>
             </td>
           </tr>
           <tr>

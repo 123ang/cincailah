@@ -2,18 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, isValidPassword } from '@/lib/auth';
 import { reportError } from '@/lib/logger';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
+import { ResetPasswordSchema, zodError } from '@/lib/schemas';
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { token, password } = body;
+  const ip = getClientIp(request);
+  const rl = await rateLimit(`reset-password:${ip}`, 10, 15 * 60 * 1000);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many reset attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
 
-    if (!token || !password) {
-      return NextResponse.json(
-        { error: 'Token and password are required' },
-        { status: 400 }
-      );
+  try {
+    const parsed = ResetPasswordSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
+    const { token, password } = parsed.data;
 
     if (!isValidPassword(password)) {
       return NextResponse.json(
@@ -47,6 +54,7 @@ export async function POST(request: NextRequest) {
         passwordHash,
         resetToken: null,
         resetTokenExpires: null,
+        tokenVersion: { increment: 1 },
       },
     });
 

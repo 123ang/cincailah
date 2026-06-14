@@ -5,6 +5,7 @@ import { trackEvent } from '@/lib/analytics';
 import { getDecisionWithMembership } from '@/lib/group-access';
 import { reportError } from '@/lib/logger';
 import { publicVoteUserSelect } from '@/lib/response-shapes';
+import { getVoteExpiry } from '@/lib/vote-resolution';
 
 export async function GET(
   request: NextRequest,
@@ -48,41 +49,19 @@ export async function GET(
     }
 
     // Check if expired
-    const constraints = decision.constraintsUsed as any;
-    const expiresAt = constraints?.expiresAt ? new Date(constraints.expiresAt) : null;
+    const expiresAt = getVoteExpiry(decision.constraintsUsed);
     const isExpired = expiresAt ? new Date() > expiresAt : false;
-
-    // Calculate winner if expired
-    let winner = null;
-    if (isExpired && !decision.chosenRestaurantId) {
-      const voteCounts = decision.decisionOptions.map((option) => ({
-        optionId: option.id,
-        restaurantId: option.restaurantId,
-        count: option.votes.filter((v) => v.vote === 'yes').length,
-      }));
-
-      const maxVotes = Math.max(...voteCounts.map((v) => v.count));
-      const tiedOptions = voteCounts.filter((v) => v.count === maxVotes);
-      const winningOption = tiedOptions[Math.floor(Math.random() * tiedOptions.length)];
-
-      if (winningOption) {
-        await prisma.lunchDecision.update({
-          where: { id: decisionId },
-          data: {
-            chosenRestaurantId: winningOption.restaurantId,
-          },
-        });
-        winner = decision.decisionOptions.find(
-          (o) => o.id === winningOption.optionId
-        )?.restaurant;
-      }
-    }
+    const winner = decision.chosenRestaurantId
+      ? decision.decisionOptions.find(
+          (option) => option.restaurantId === decision.chosenRestaurantId,
+        )?.restaurant ?? null
+      : null;
 
     return NextResponse.json({
       decision,
       expiresAt: expiresAt?.toISOString(),
       isExpired,
-      winner: winner || (decision.chosenRestaurantId ? decision.decisionOptions.find(o => o.restaurantId === decision.chosenRestaurantId)?.restaurant : null),
+      winner,
     });
   } catch (error) {
     reportError(error, { route: 'vote/get' });
@@ -131,8 +110,7 @@ export async function POST(
       return NextResponse.json({ error: 'Decision not found' }, { status: 404 });
     }
 
-    const constraints = decision.constraintsUsed as any;
-    const expiresAt = constraints?.expiresAt ? new Date(constraints.expiresAt) : null;
+    const expiresAt = getVoteExpiry(decision.constraintsUsed);
     const isExpired = expiresAt ? new Date() > expiresAt : false;
 
     if (isExpired) {

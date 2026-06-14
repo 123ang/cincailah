@@ -67,9 +67,19 @@ export default function VotePageClient({
 
     try {
       const res = await fetch(`/api/vote/${targetId}`);
-      const data = await res.json();
+      let data = await res.json();
 
       if (res.ok) {
+        if (data.isExpired && !data.winner) {
+          const resolveRes = await fetch(`/api/vote/${targetId}/resolve`, {
+            method: 'POST',
+          });
+          if (resolveRes.ok) {
+            const resolved = await resolveRes.json();
+            data = { ...data, winner: resolved.winner };
+          }
+        }
+
         setOptions(data.decision.decisionOptions);
         setExpiresAt(data.expiresAt);
         setIsExpired(data.isExpired);

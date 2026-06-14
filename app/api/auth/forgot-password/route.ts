@@ -7,7 +7,7 @@ import { logger, reportError } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const rl = rateLimit(`forgot-password:${ip}`, 5);
+  const rl = await rateLimit(`forgot-password:${ip}`, 5);
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many requests. Please try again in a minute.' },

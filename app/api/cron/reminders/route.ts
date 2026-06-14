@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
+import { escapeHtml, timingSafeSecretEqual } from '@/lib/security';
 
 function isDueNow(reminderTimeLocal: string, timezone: string, weekdaysOnly: boolean): boolean {
   const now = new Date();
@@ -22,8 +23,8 @@ function isDueNow(reminderTimeLocal: string, timezone: string, weekdaysOnly: boo
 }
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('x-cron-secret') ?? request.nextUrl.searchParams.get('secret');
-  if (!process.env.CRON_SECRET || token !== process.env.CRON_SECRET) {
+  const token = request.headers.get('x-cron-secret');
+  if (!timingSafeSecretEqual(token, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -65,7 +66,7 @@ export async function GET(request: NextRequest) {
     await sendEmail({
       to: user.email,
       subject: 'Lunch reminder — time to cincai lah 🍛',
-      html: `<p>Hi ${user.displayName},</p><p>It's lunch time. Open Cincailah and decide in 10 seconds.</p><p><a href="${deepLink}">Open Cincailah</a></p>`,
+      html: `<p>Hi ${escapeHtml(user.displayName)},</p><p>It's lunch time. Open Cincailah and decide in 10 seconds.</p><p><a href="${deepLink}">Open Cincailah</a></p>`,
     });
     sent += 1;
   }

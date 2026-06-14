@@ -11,7 +11,7 @@ import { trackEvent } from '@/lib/analytics';
 export async function POST(request: NextRequest) {
   logRequest(request);
   const ip = getClientIp(request);
-  const rl = rateLimit(`register:${ip}`, 5);
+  const rl = await rateLimit(`register:${ip}`, 5);
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many registration attempts. Please try again in a minute.' },
@@ -60,6 +60,7 @@ export async function POST(request: NextRequest) {
     session.userId = user.id;
     session.email = user.email;
     session.displayName = user.displayName;
+    session.tokenVersion = user.tokenVersion;
     session.isLoggedIn = true;
     await session.save();
 
@@ -87,6 +88,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      requiresVerification: true,
       user: {
         id: user.id,
         email: user.email,

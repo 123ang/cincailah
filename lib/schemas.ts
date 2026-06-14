@@ -12,6 +12,10 @@ const RestaurantPhotoUrlSchema = z.union([
   z.string().regex(/^\/uploads\/restaurants\/[A-Za-z0-9._-]+$/, 'Invalid restaurant photo path'),
 ]);
 
+const GroupCoverUrlSchema = z
+  .string()
+  .regex(/^\/uploads\/group-covers\/[A-Za-z0-9._-]+$/, 'Invalid group cover path');
+
 const nullableOptional = <T extends z.ZodTypeAny>(schema: T) =>
   z.union([schema, z.null()]).optional();
 
@@ -54,6 +58,7 @@ export const UpdateGroupSchema = z.object({
   noRepeatDays: z.number().int().min(0).max(30).optional(),
   maxReroll: z.number().int().min(3).max(3).optional(),
   decisionModeDefault: z.enum(['you_pick', 'we_fight']).optional(),
+  coverUrl: z.union([GroupCoverUrlSchema, z.null()]).optional(),
 });
 
 export const TransferAdminSchema = z.object({

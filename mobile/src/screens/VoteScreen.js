@@ -60,18 +60,27 @@ export default function VoteScreen({ route, navigation }) {
     try {
       const { data, ok } = await apiFetch(`/api/vote/${id}`);
       if (!ok) return;
-      const nextOptions = normalizeOptions(data);
+      let payload = data;
+      if (isVoteClosed(data) && !data?.winner) {
+        const resolved = await apiFetch(`/api/vote/${id}/resolve`, {
+          method: "POST",
+        });
+        if (resolved.ok) {
+          payload = { ...data, winner: resolved.data?.winner ?? null };
+        }
+      }
+      const nextOptions = normalizeOptions(payload);
       setOptions(nextOptions);
-      if (data?.winner) {
+      if (payload?.winner) {
         clearInterval(pollRef.current);
         clearInterval(countdownRef.current);
         navigation.replace("FinalDecision", {
-          winnerName: data.winner?.name,
-          winnerVotes: nextOptions.find((o) => o.restaurantId === data.winner?.id)?.yesCount ?? 0,
+          winnerName: payload.winner?.name,
+          winnerVotes: nextOptions.find((o) => o.restaurantId === payload.winner?.id)?.yesCount ?? 0,
         });
         return;
       }
-      if (final || isVoteClosed(data)) {
+      if (final || isVoteClosed(payload)) {
         clearInterval(pollRef.current);
         setResults(nextOptions);
         setPhase("results");

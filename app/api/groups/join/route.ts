@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
 
-    const rl = rateLimit(`join:${userId}`, 10);
+    const rl = await rateLimit(`join:${userId}`, 10);
     if (!rl.success) {
       return NextResponse.json(
         { error: 'Too many join attempts. Please try again in a minute.' },

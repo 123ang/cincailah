@@ -21,6 +21,7 @@ model User {
   emailVerified         Boolean   @default(false) @map("email_verified")
   emailVerifyToken      String?   @map("email_verify_token")
   emailVerifyExpires    DateTime? @map("email_verify_expires")
+  tokenVersion          Int       @default(0) @map("token_version")
   createdAt             DateTime  @default(now()) @map("created_at")
   
   groupsCreated      Group[]          @relation("GroupCreator")
@@ -224,4 +225,13 @@ model PushSubscription {
   @@index([userId])
   @@index([platform])
   @@map("push_subscriptions")
+}
+
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  resetAt   DateTime @map("reset_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("rate_limit_buckets")
 }

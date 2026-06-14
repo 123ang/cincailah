@@ -9,7 +9,7 @@ import { logRequest, reportError } from '@/lib/logger';
 export async function POST(request: NextRequest) {
   logRequest(request);
   const ip = getClientIp(request);
-  const rl = rateLimit(`login:${ip}`, 5);
+  const rl = await rateLimit(`login:${ip}`, 5);
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many login attempts. Please try again in a minute.' },
@@ -55,6 +55,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!user.emailVerified) {
+      return NextResponse.json(
+        {
+          error: 'Please verify your email before logging in.',
+          requiresVerification: true,
+        },
+        { status: 403 },
+      );
+    }
+
     // Find user's most recent group
     const recentMembership = await prisma.groupMember.findFirst({
       where: { userId: user.id },
@@ -67,6 +77,7 @@ export async function POST(request: NextRequest) {
     session.userId = user.id;
     session.email = user.email;
     session.displayName = user.displayName;
+    session.tokenVersion = user.tokenVersion;
     session.isLoggedIn = true;
     
     // Set activeGroupId if user has groups

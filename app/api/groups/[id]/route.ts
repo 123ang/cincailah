@@ -101,18 +101,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     const raw = await request.json();
     const parsed = UpdateGroupSchema.safeParse(raw);
-    if (!parsed.success && raw?.coverUrl === undefined) {
+    if (!parsed.success) {
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
 
-    const { name, noRepeatDays, maxReroll, decisionModeDefault } = parsed.success ? parsed.data : raw;
-    const coverUrl = raw?.coverUrl;
-
-    if (coverUrl !== undefined && coverUrl !== null) {
-      if (typeof coverUrl !== 'string' || !coverUrl.startsWith('/uploads/group-covers/')) {
-        return NextResponse.json({ error: 'Invalid cover path' }, { status: 400 });
-      }
-    }
+    const { name, noRepeatDays, maxReroll, decisionModeDefault, coverUrl } = parsed.data;
 
     const updated = await prisma.group.update({
       where: { id },

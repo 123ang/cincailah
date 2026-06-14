@@ -1,16 +1,30 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { generateResetToken } from '@/lib/auth';
 import { sendEmail, getVerificationEmail } from '@/lib/email';
 import { reportError } from '@/lib/logger';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
 
     if (!session.isLoggedIn || !session.userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const ip = getClientIp(request);
+    const rl = await rateLimit(
+      `send-verification:${session.userId}:${ip}`,
+      3,
+      60 * 60 * 1000
+    );
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: 'Too many verification emails requested. Please try again later.' },
+        { status: 429 }
+      );
     }
 
     const user = await prisma.user.findUnique({

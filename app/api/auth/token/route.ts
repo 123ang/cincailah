@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   logRequest(request, { endpoint: 'auth/token' });
 
   const ip = getClientIp(request);
-  const rl = rateLimit(`token:${ip}`, 5);
+  const rl = await rateLimit(`token:${ip}`, 5);
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many attempts. Please try again in a minute.' },
@@ -50,6 +50,16 @@ export async function POST(request: NextRequest) {
     const valid = await verifyPassword(password, user.passwordHash);
     if (!valid) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+    }
+
+    if (!user.emailVerified) {
+      return NextResponse.json(
+        {
+          error: 'Please verify your email before logging in.',
+          requiresVerification: true,
+        },
+        { status: 403 },
+      );
     }
 
     const token = signMobileToken(user);

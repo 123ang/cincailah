@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   logRequest(request, { endpoint: 'upload' });
 
   const ip = getClientIp(request);
-  const rl = rateLimit(`upload:${ip}`, 20); // 20 uploads/min/IP
+  const rl = await rateLimit(`upload:${ip}`, 20); // 20 uploads/min/IP
   if (!rl.success) {
     return NextResponse.json(
       { error: 'Too many uploads. Please slow down.' },

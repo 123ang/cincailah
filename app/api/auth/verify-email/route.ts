@@ -1,15 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { reportError } from '@/lib/logger';
+import { getClientIp, rateLimit } from '@/lib/ratelimit';
+import { VerifyEmailSchema, zodError } from '@/lib/schemas';
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { token } = body;
+  const ip = getClientIp(request);
+  const rl = await rateLimit(`verify-email:${ip}`, 20, 15 * 60 * 1000);
+  if (!rl.success) {
+    return NextResponse.json(
+      { error: 'Too many verification attempts. Please try again later.' },
+      { status: 429 }
+    );
+  }
 
-    if (!token) {
-      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+  try {
+    const parsed = VerifyEmailSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
+    const { token } = parsed.data;
 
     const user = await prisma.user.findFirst({
       where: { emailVerifyToken: token },

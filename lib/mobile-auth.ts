@@ -20,6 +20,7 @@ export interface MobileTokenPayload {
   sub: string;
   email: string;
   displayName: string;
+  tokenVersion: number;
 }
 
 function isProdRuntime(): boolean {
@@ -52,11 +53,13 @@ export function signMobileToken(user: {
   id: string;
   email: string;
   displayName: string;
+  tokenVersion: number;
 }): string {
   const payload: MobileTokenPayload = {
     sub: user.id,
     email: user.email,
     displayName: user.displayName,
+    tokenVersion: user.tokenVersion,
   };
   return jwt.sign(payload, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
 }
@@ -64,7 +67,7 @@ export function signMobileToken(user: {
 export function verifyMobileToken(token: string): MobileTokenPayload | null {
   try {
     const decoded = jwt.verify(token, getJwtSecret()) as MobileTokenPayload;
-    if (!decoded?.sub) return null;
+    if (!decoded?.sub || !Number.isInteger(decoded.tokenVersion)) return null;
     return decoded;
   } catch {
     return null;

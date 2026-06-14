@@ -111,12 +111,24 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const restaurantId = searchParams.get('restaurantId');
 
-    const where = restaurantId
-      ? { userId, restaurantId }
-      : { userId };
+    const memberships = await prisma.groupMember.findMany({
+      where: { userId },
+      select: { groupId: true },
+    });
+    const accessibleGroupIds = memberships.map((membership) => membership.groupId);
+
+    if (accessibleGroupIds.length === 0) {
+      return NextResponse.json({ ratings: [] });
+    }
 
     const ratings = await prisma.rating.findMany({
-      where,
+      where: {
+        userId,
+        ...(restaurantId ? { restaurantId } : {}),
+        restaurant: {
+          groupId: { in: accessibleGroupIds },
+        },
+      },
       include: {
         restaurant: {
           select: { id: true, groupId: true },
@@ -124,14 +136,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const accessible = await Promise.all(
-      ratings.map(async (rating) => {
-        const restaurant = await ensureRestaurantAccessible(rating.restaurantId, userId);
-        return restaurant ? rating : null;
-      })
-    );
-
-    return NextResponse.json({ ratings: accessible.filter(Boolean) });
+    return NextResponse.json({ ratings });
   } catch (error) {
     reportError(error, { route: 'ratings/get' });
     return NextResponse.json({ error: 'Failed to fetch ratings' }, { status: 500 });

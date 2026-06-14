@@ -6,8 +6,11 @@ const test = require('node:test');
 const {
   CreateRestaurantSchema,
   RatingSchema,
+  UpdateGroupSchema,
   UpdateRestaurantSchema,
 } = require('../lib/schemas.ts');
+const { getClientIp } = require('../lib/ratelimit.ts');
+const { escapeHtml, timingSafeSecretEqual } = require('../lib/security.ts');
 const {
   memberUserSelect,
   publicVoteUserSelect,
@@ -37,6 +40,51 @@ test('restaurant update schema supports partial updates but keeps invariants', (
   assert.equal(UpdateRestaurantSchema.safeParse({ photoUrl: '/uploads/restaurants/a.jpg' }).success, true);
   assert.equal(UpdateRestaurantSchema.safeParse({ photoUrl: 'https://example.com/a.jpg' }).success, true);
   assert.equal(UpdateRestaurantSchema.safeParse({ photoUrl: 'javascript:alert(1)' }).success, false);
+});
+
+test('group update schema validates coverUrl together with every other field', () => {
+  assert.equal(UpdateGroupSchema.safeParse({
+    coverUrl: '/uploads/group-covers/group_1.jpg',
+    name: 'Lunch Crew',
+    noRepeatDays: 7,
+  }).success, true);
+
+  assert.equal(UpdateGroupSchema.safeParse({
+    coverUrl: '/uploads/group-covers/group_1.jpg',
+    name: 123,
+    noRepeatDays: 999,
+  }).success, false);
+
+  assert.equal(UpdateGroupSchema.safeParse({
+    coverUrl: '../../secret',
+  }).success, false);
+});
+
+test('getClientIp selects the client before the configured trusted proxy hops', () => {
+  const previous = process.env.TRUSTED_PROXY_HOPS;
+  process.env.TRUSTED_PROXY_HOPS = '1';
+  try {
+    const request = new Request('https://example.com', {
+      headers: {
+        'x-forwarded-for': 'spoofed-client, 203.0.113.5',
+        'x-real-ip': '198.51.100.2',
+      },
+    });
+    assert.equal(getClientIp(request), '203.0.113.5');
+  } finally {
+    if (previous === undefined) delete process.env.TRUSTED_PROXY_HOPS;
+    else process.env.TRUSTED_PROXY_HOPS = previous;
+  }
+});
+
+test('security helpers escape email HTML and compare equal-length secrets safely', () => {
+  assert.equal(
+    escapeHtml('<b>A & "B"</b>'),
+    '&lt;b&gt;A &amp; &quot;B&quot;&lt;/b&gt;'
+  );
+  assert.equal(timingSafeSecretEqual('same-secret', 'same-secret'), true);
+  assert.equal(timingSafeSecretEqual('wrong', 'same-secret'), false);
+  assert.equal(timingSafeSecretEqual(null, 'same-secret'), false);
 });
 
 test('rating schema requires UUID ids and thumbs direction', () => {

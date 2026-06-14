@@ -2,12 +2,14 @@ import { getIronSession, IronSession, SessionOptions } from 'iron-session';
 import { cookies } from 'next/headers';
 import { verifyMobileToken } from '@/lib/mobile-auth';
 import { isBuildLike } from '@/lib/next-phase';
+import { prisma } from '@/lib/prisma';
 
 export interface SessionData {
   userId?: string;
   email?: string;
   displayName?: string;
   activeGroupId?: string;
+  tokenVersion?: number;
   isLoggedIn: boolean;
 }
 
@@ -49,7 +51,36 @@ export function getSessionOptions(): SessionOptions {
 
 export async function getSession(): Promise<IronSession<SessionData>> {
   const cookieStore = await cookies();
-  return getIronSession<SessionData>(cookieStore, getSessionOptions());
+  const session = await getIronSession<SessionData>(cookieStore, getSessionOptions());
+
+  if (session.isLoggedIn && session.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { tokenVersion: true },
+    });
+    if (!user || session.tokenVersion !== user.tokenVersion) {
+      session.destroy();
+    }
+  }
+
+  return session;
+}
+
+async function resolveMobileUserId(request?: Request): Promise<string | null> {
+  const authHeader = request?.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+
+  const token = authHeader.slice('Bearer '.length).trim();
+  const payload = verifyMobileToken(token);
+  if (!payload?.sub) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+    select: { tokenVersion: true, emailVerified: true },
+  });
+  return user?.tokenVersion === payload.tokenVersion && user.emailVerified
+    ? payload.sub
+    : null;
 }
 
 /**
@@ -63,15 +94,17 @@ export async function getSession(): Promise<IronSession<SessionData>> {
  * route that must be reachable from both the web and mobile clients.
  */
 export async function resolveUserId(request?: Request): Promise<string | null> {
-  const authHeader = request?.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice('Bearer '.length).trim();
-    const payload = verifyMobileToken(token);
-    if (payload?.sub) return payload.sub;
-  }
+  const mobileUserId = await resolveMobileUserId(request);
+  if (mobileUserId) return mobileUserId;
 
   const session = await getSession();
-  if (session?.isLoggedIn && session.userId) return session.userId;
+  if (session?.isLoggedIn && session.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { emailVerified: true },
+    });
+    if (user?.emailVerified) return session.userId;
+  }
 
   return null;
 }
@@ -86,16 +119,18 @@ export async function resolveUserId(request?: Request): Promise<string | null> {
 export async function resolveUserIdWithSession(
   request?: Request
 ): Promise<{ userId: string | null; session: IronSession<SessionData> | null }> {
-  const authHeader = request?.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    const token = authHeader.slice('Bearer '.length).trim();
-    const payload = verifyMobileToken(token);
-    if (payload?.sub) return { userId: payload.sub, session: null };
-  }
+  const mobileUserId = await resolveMobileUserId(request);
+  if (mobileUserId) return { userId: mobileUserId, session: null };
 
   const session = await getSession();
   if (session?.isLoggedIn && session.userId) {
-    return { userId: session.userId, session };
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { emailVerified: true },
+    });
+    if (user?.emailVerified) {
+      return { userId: session.userId, session };
+    }
   }
   return { userId: null, session: null };
 }
