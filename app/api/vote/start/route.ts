@@ -7,6 +7,7 @@ import { requireGroupMembership } from '@/lib/group-access';
 import { getEligibleRestaurants } from '@/lib/decision-service';
 import { StartVoteSchema, zodError } from '@/lib/schemas';
 import { reportError, logger } from '@/lib/logger';
+import { findActiveGroupVote, getVoteStartResponse } from '@/lib/vote-session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,6 +26,11 @@ export async function POST(request: NextRequest) {
     const membership = await requireGroupMembership(userId, groupId);
     if (!membership) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const activeVote = await findActiveGroupVote(prisma, groupId);
+    if (activeVote) {
+      return NextResponse.json(getVoteStartResponse(activeVote));
     }
 
     const { group, candidates } = await getEligibleRestaurants({
@@ -110,6 +116,7 @@ export async function POST(request: NextRequest) {
       success: true,
       decisionId: decision.id,
       expiresAt: expiresAt.toISOString(),
+      reused: false,
     });
   } catch (error) {
     reportError(error, { route: 'vote/start' });

@@ -106,6 +106,7 @@ const linking = {
       },
       JoinGroup: "join/:code",
       Decide: "group/:groupId",
+      Vote: "group/:groupId/vote/:decisionId",
     },
   },
 };

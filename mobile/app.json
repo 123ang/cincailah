@@ -81,7 +81,7 @@
         "NSFaceIDUsageDescription": "Cincailah uses Face ID for quick, secure sign-in.",
         "ITSAppUsesNonExemptEncryption": false
       },
-      "buildNumber": "4"
+      "buildNumber": "5"
     }
   }
 }

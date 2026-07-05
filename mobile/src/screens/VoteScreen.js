@@ -16,7 +16,7 @@ import { apiFetch } from "../lib/api";
 const SAMBAL = "#FF5A00";
 
 export default function VoteScreen({ route, navigation }) {
-  const { groupId, groupName, filters = {} } = route.params || {};
+  const { groupId, groupName, filters = {}, decisionId: initialDecisionId = null } = route.params || {};
 
   const [phase, setPhase] = useState("starting"); // starting | voting | results
   const [decisionId, setDecisionId] = useState(null);
@@ -59,7 +59,7 @@ export default function VoteScreen({ route, navigation }) {
   const fetchResults = useCallback(async (id, final = false) => {
     try {
       const { data, ok } = await apiFetch(`/api/vote/${id}`);
-      if (!ok) return;
+      if (!ok) return null;
       let payload = data;
       if (isVoteClosed(data) && !data?.winner) {
         const resolved = await apiFetch(`/api/vote/${id}/resolve`, {
@@ -68,6 +68,10 @@ export default function VoteScreen({ route, navigation }) {
         if (resolved.ok) {
           payload = { ...data, winner: resolved.data?.winner ?? null };
         }
+      }
+      if (payload?.expiresAt) {
+        const left = Math.max(0, Math.round((new Date(payload.expiresAt).getTime() - Date.now()) / 1000));
+        setSecondsLeft(left);
       }
       const nextOptions = normalizeOptions(payload);
       setOptions(nextOptions);
@@ -78,20 +82,51 @@ export default function VoteScreen({ route, navigation }) {
           winnerName: payload.winner?.name,
           winnerVotes: nextOptions.find((o) => o.restaurantId === payload.winner?.id)?.yesCount ?? 0,
         });
-        return;
+        return payload;
       }
       if (final || isVoteClosed(payload)) {
         clearInterval(pollRef.current);
         setResults(nextOptions);
         setPhase("results");
       }
+      return payload;
     } catch (error) {
       console.debug('Failed to fetch vote results', error);
+      return null;
     }
   }, [isVoteClosed, navigation, normalizeOptions]);
 
+  const startTimers = useCallback((id, expiresAtValue) => {
+    clearInterval(pollRef.current);
+    clearInterval(countdownRef.current);
+
+    pollRef.current = setInterval(() => fetchResults(id), 3000);
+
+    const expiresAt = expiresAtValue ? new Date(expiresAtValue).getTime() : Date.now() + 900_000;
+    const tick = () => {
+      const left = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
+      setSecondsLeft(left);
+      if (left <= 0) {
+        clearInterval(countdownRef.current);
+        clearInterval(pollRef.current);
+        fetchResults(id, true);
+      }
+    };
+
+    tick();
+    countdownRef.current = setInterval(tick, 1000);
+  }, [fetchResults]);
+
   const startVote = useCallback(async () => {
     try {
+      if (initialDecisionId) {
+        setDecisionId(initialDecisionId);
+        setPhase("voting");
+        const payload = await fetchResults(initialDecisionId);
+        startTimers(initialDecisionId, payload?.expiresAt);
+        return;
+      }
+
       const { data, ok } = await apiFetch("/api/vote/start", {
         method: "POST",
         body: { groupId, filters },
@@ -102,25 +137,12 @@ export default function VoteScreen({ route, navigation }) {
       }
       setDecisionId(data.decisionId);
       setPhase("voting");
-      // Fetch initial options
       fetchResults(data.decisionId);
-      // Poll every 3s
-      pollRef.current = setInterval(() => fetchResults(data.decisionId), 3000);
-      // Countdown
-      const expiresAt = data.expiresAt ? new Date(data.expiresAt).getTime() : Date.now() + 900_000;
-      countdownRef.current = setInterval(() => {
-        const left = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
-        setSecondsLeft(left);
-        if (left <= 0) {
-          clearInterval(countdownRef.current);
-          clearInterval(pollRef.current);
-          fetchResults(data.decisionId, true);
-        }
-      }, 1000);
+      startTimers(data.decisionId, data.expiresAt);
     } catch {
       setError("Network error. Check your connection.");
     }
-  }, [fetchResults, filters, groupId]);
+  }, [fetchResults, filters, groupId, initialDecisionId, startTimers]);
 
   // Start vote on mount
   useEffect(() => {

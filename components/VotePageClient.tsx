@@ -39,6 +39,7 @@ interface VotePageClientProps {
   userId: string;
   displayName: string;
   filters: any;
+  initialDecisionId?: string | null;
 }
 
 export default function VotePageClient({
@@ -46,11 +47,14 @@ export default function VotePageClient({
   userId,
   displayName,
   filters,
+  initialDecisionId = null,
 }: VotePageClientProps) {
   const router = useRouter();
   const { toasts, toast, dismiss } = useToast();
-  const [phase, setPhase] = useState<'start' | 'voting' | 'results'>('start');
-  const [decisionId, setDecisionId] = useState<string | null>(null);
+  const [phase, setPhase] = useState<'start' | 'voting' | 'results'>(
+    initialDecisionId ? 'voting' : 'start',
+  );
+  const [decisionId, setDecisionId] = useState<string | null>(initialDecisionId);
   const [options, setOptions] = useState<DecisionOption[]>([]);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<string>('');
@@ -101,6 +105,11 @@ export default function VotePageClient({
       console.error('Fetch vote error:', err);
     }
   }, [decisionId, userId]);
+
+  useEffect(() => {
+    if (!initialDecisionId) return;
+    fetchVoteData(initialDecisionId);
+  }, [fetchVoteData, initialDecisionId]);
 
   // Timer countdown
   useEffect(() => {
@@ -167,7 +176,14 @@ export default function VotePageClient({
       setExpiresAt(data.expiresAt);
       await fetchVoteData(data.decisionId);
       setPhase('voting');
-      toast('🗳️ Vote is live! Share the link so your group can vote.', 'info', 8000);
+      router.replace(`/group/${groupId}/vote/${data.decisionId}`);
+      toast(
+        data.reused
+          ? '🗳️ Joined the live group vote.'
+          : '🗳️ Vote is live! Share the link so your group can vote.',
+        'info',
+        8000,
+      );
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -241,7 +257,7 @@ export default function VotePageClient({
         <div className="mt-6 bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
           <div className="text-center">
             <span className="text-5xl block mb-4">🗳️</span>
-            <h2 className="text-xl font-black text-slate mb-2">Start Group Voting</h2>
+            <h2 className="text-xl font-black text-slate mb-2">Start or Join Group Voting</h2>
             <p className="text-sm text-gray-500 mb-4">
               We'll pick 3-5 restaurants based on your filters. Everyone votes, majority wins!
             </p>
