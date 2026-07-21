@@ -52,16 +52,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
     }
 
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        {
-          error: 'Please verify your email before logging in.',
-          requiresVerification: true,
-        },
-        { status: 403 },
-      );
-    }
-
     const token = signMobileToken(user);
 
     return NextResponse.json({
@@ -71,7 +61,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
-        emailVerified: user.emailVerified,
+        emailVerified: true,
       },
     });
   } catch (error) {

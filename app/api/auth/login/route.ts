@@ -55,16 +55,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!user.emailVerified) {
-      return NextResponse.json(
-        {
-          error: 'Please verify your email before logging in.',
-          requiresVerification: true,
-        },
-        { status: 403 },
-      );
-    }
-
     // Find user's most recent group
     const recentMembership = await prisma.groupMember.findFirst({
       where: { userId: user.id },

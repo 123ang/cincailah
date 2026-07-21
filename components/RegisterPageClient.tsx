@@ -59,11 +59,6 @@ export default function RegisterPageClient({
         throw new Error(data.error || 'Failed to register');
       }
 
-      if (data.requiresVerification) {
-        router.push('/settings/profile');
-        return;
-      }
-
       if (pendingCode) {
         try {
           const joinRes = await fetch('/api/groups/join', {

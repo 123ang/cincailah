@@ -81,15 +81,21 @@ test('ratings GET scopes access with one membership query instead of per-rating 
   assert.doesNotMatch(getHandler, /ratings\.map\(async/);
 });
 
-test('email verification gates normal login and redirects new web accounts to verification UI', () => {
+test('email verification does not gate login or ask users to verify', () => {
   const loginRoute = readFileSync(join(root, 'app/api/auth/login/route.ts'), 'utf8');
   const tokenRoute = readFileSync(join(root, 'app/api/auth/token/route.ts'), 'utf8');
+  const registerRoute = readFileSync(join(root, 'app/api/auth/register/route.ts'), 'utf8');
   const registerClient = readFileSync(join(root, 'components/RegisterPageClient.tsx'), 'utf8');
   const session = readFileSync(join(root, 'lib/session.ts'), 'utf8');
+  const profileClient = readFileSync(join(root, 'components/ProfileSettingsClient.tsx'), 'utf8');
+  const mobileProfile = readFileSync(join(root, 'mobile/src/screens/ProfileScreen.js'), 'utf8');
 
-  assert.match(loginRoute, /user\.emailVerified/);
-  assert.match(tokenRoute, /user\.emailVerified/);
-  assert.match(registerClient, /requiresVerification/);
-  assert.match(registerClient, /\/settings\/profile/);
-  assert.match(session, /emailVerified:\s*true/);
+  assert.doesNotMatch(loginRoute, /requiresVerification|Please verify your email before logging in/);
+  assert.doesNotMatch(tokenRoute, /requiresVerification|Please verify your email before logging in/);
+  assert.match(registerRoute, /emailVerified:\s*true/);
+  assert.doesNotMatch(registerRoute, /getVerificationEmail|emailVerifyToken|requiresVerification:\s*true/);
+  assert.doesNotMatch(registerClient, /requiresVerification|\/settings\/profile/);
+  assert.doesNotMatch(session, /emailVerified:\s*true|&&\s*user\.emailVerified/);
+  assert.doesNotMatch(profileClient, /Resend verification email|Unverified/);
+  assert.doesNotMatch(mobileProfile, /Email not verified/);
 });

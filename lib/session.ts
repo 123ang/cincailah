@@ -76,11 +76,9 @@ async function resolveMobileUserId(request?: Request): Promise<string | null> {
 
   const user = await prisma.user.findUnique({
     where: { id: payload.sub },
-    select: { tokenVersion: true, emailVerified: true },
+    select: { tokenVersion: true },
   });
-  return user?.tokenVersion === payload.tokenVersion && user.emailVerified
-    ? payload.sub
-    : null;
+  return user?.tokenVersion === payload.tokenVersion ? payload.sub : null;
 }
 
 /**
@@ -99,11 +97,7 @@ export async function resolveUserId(request?: Request): Promise<string | null> {
 
   const session = await getSession();
   if (session?.isLoggedIn && session.userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { emailVerified: true },
-    });
-    if (user?.emailVerified) return session.userId;
+    return session.userId;
   }
 
   return null;
@@ -124,13 +118,7 @@ export async function resolveUserIdWithSession(
 
   const session = await getSession();
   if (session?.isLoggedIn && session.userId) {
-    const user = await prisma.user.findUnique({
-      where: { id: session.userId },
-      select: { emailVerified: true },
-    });
-    if (user?.emailVerified) {
-      return { userId: session.userId, session };
-    }
+    return { userId: session.userId, session };
   }
   return { userId: null, session: null };
 }

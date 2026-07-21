@@ -18,7 +18,7 @@ export default async function ProfileSettingsPage() {
   const [user, prefs] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.userId },
-      select: { id: true, email: true, displayName: true, emailVerified: true, avatarUrl: true },
+      select: { id: true, email: true, displayName: true, avatarUrl: true },
     }),
     prisma.userPreferences.findUnique({
       where: { userId: session.userId },

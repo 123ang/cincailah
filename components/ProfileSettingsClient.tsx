@@ -9,7 +9,6 @@ interface User {
   id: string;
   email: string;
   displayName: string;
-  emailVerified: boolean;
   avatarUrl?: string | null;
 }
 
@@ -35,8 +34,6 @@ export default function ProfileSettingsClient({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
-  const [verifyLoading, setVerifyLoading] = useState(false);
-  const [verifyMsg, setVerifyMsg] = useState('');
   const [reminder, setReminder] = useState({
     enabled: initialPrefs.reminderEnabled ?? false,
     reminderTimeLocal: initialPrefs.reminderTimeLocal ?? '11:45',
@@ -76,18 +73,6 @@ export default function ProfileSettingsClient({
       setTimeout(() => setSaved(false), 3000);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleResendVerification = async () => {
-    setVerifyLoading(true);
-    setVerifyMsg('');
-    try {
-      const res = await fetch('/api/auth/send-verification', { method: 'POST' });
-      const data = await res.json();
-      setVerifyMsg(res.ok ? 'Verification email sent! Check your inbox.' : (data.error || 'Failed to send.'));
-    } finally {
-      setVerifyLoading(false);
     }
   };
 
@@ -223,30 +208,7 @@ export default function ProfileSettingsClient({
             </div>
             <div>
               <p className="text-xs text-gray-400">Email</p>
-              <div className="flex items-center gap-2">
-                <p className="font-semibold text-slate">{user.email}</p>
-                {user.emailVerified ? (
-                  <span className="text-xs bg-green-100 text-green-700 font-medium px-2 py-0.5 rounded-full">
-                    ✓ Verified
-                  </span>
-                ) : (
-                  <span className="text-xs bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded-full">
-                    Unverified
-                  </span>
-                )}
-              </div>
-              {!user.emailVerified && (
-                <div className="mt-2">
-                  <button
-                    onClick={handleResendVerification}
-                    disabled={verifyLoading}
-                    className="text-xs text-sambal hover:underline font-medium disabled:opacity-50"
-                  >
-                    {verifyLoading ? 'Sending…' : 'Resend verification email'}
-                  </button>
-                  {verifyMsg && <p className="text-xs text-gray-500 mt-1">{verifyMsg}</p>}
-                </div>
-              )}
+              <p className="font-semibold text-slate">{user.email}</p>
             </div>
           </div>
         </section>

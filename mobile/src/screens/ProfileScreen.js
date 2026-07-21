@@ -149,11 +149,6 @@ export default function ProfileScreen({ navigation }) {
         </View>
         <Text style={styles.displayName}>{user?.displayName ?? "—"}</Text>
         <Text style={styles.email}>{user?.email ?? ""}</Text>
-        {!user?.emailVerified && (
-          <View style={styles.unverifiedBadge}>
-            <Text style={styles.unverifiedText}>⚠️ Email not verified</Text>
-          </View>
-        )}
       </View>
 
       {/* Notifications */}

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { hashPassword, generateResetToken } from '@/lib/auth';
-import { sendEmail, getWelcomeEmail, getVerificationEmail } from '@/lib/email';
+import { hashPassword } from '@/lib/auth';
+import { sendEmail, getWelcomeEmail } from '@/lib/email';
 import { rateLimit, getClientIp } from '@/lib/ratelimit';
 import { RegisterSchema, zodError } from '@/lib/schemas';
 import { logRequest, reportError } from '@/lib/logger';
@@ -42,16 +42,13 @@ export async function POST(request: NextRequest) {
 
     // Create user
     const passwordHash = await hashPassword(password);
-    const emailVerifyToken = generateResetToken();
-    const emailVerifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
 
     const user = await prisma.user.create({
       data: {
         email: emailLower,
         passwordHash,
         displayName: displayName.trim(),
-        emailVerifyToken,
-        emailVerifyExpires,
+        emailVerified: true,
       },
     });
 
@@ -64,21 +61,12 @@ export async function POST(request: NextRequest) {
     session.isLoggedIn = true;
     await session.save();
 
-    // Send welcome + verification emails (fire-and-forget)
+    // Send welcome email (fire-and-forget)
     const welcomeContent = getWelcomeEmail(user.displayName);
     void sendEmail({
       to: user.email,
       subject: welcomeContent.subject,
       html: welcomeContent.html,
-    });
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const verifyUrl = `${appUrl}/verify/${emailVerifyToken}`;
-    const verifyContent = getVerificationEmail(verifyUrl, user.displayName);
-    void sendEmail({
-      to: user.email,
-      subject: verifyContent.subject,
-      html: verifyContent.html,
     });
 
     void trackEvent(user.id, 'signup', {
@@ -88,11 +76,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      requiresVerification: true,
       user: {
         id: user.id,
         email: user.email,
         displayName: user.displayName,
+        emailVerified: true,
       },
     });
   } catch (error) {

@@ -37,7 +37,7 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-black text-slate mb-3">2. How We Use Your Information</h2>
             <ul className="list-disc pl-5 space-y-2 text-sm">
               <li>To provide and improve the Cincailah service.</li>
-              <li>To send transactional emails (password reset, email verification).</li>
+              <li>To send transactional emails such as password resets and account updates.</li>
               <li>To power anti-repeat and personalisation features.</li>
               <li>We do <strong>not</strong> sell your data to third parties.</li>
               <li>We do <strong>not</strong> run advertising.</li>
