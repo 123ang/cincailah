@@ -232,9 +232,9 @@ export default function VotePageClient({
 
   const getLeadingOption = () => {
     if (options.length === 0) return null;
-    return options.reduce((max, option) =>
-      getVoteCount(option) > getVoteCount(max) ? option : max
-    );
+    const maxVotes = Math.max(...options.map(getVoteCount));
+    const topOptions = options.filter((option) => getVoteCount(option) === maxVotes);
+    return topOptions.length === 1 ? topOptions[0] : null;
   };
 
   if (phase === 'start') {
@@ -447,6 +447,9 @@ export default function VotePageClient({
   }
 
   const leading = getLeadingOption();
+  const voteUrl = decisionId
+    ? `${window.location.origin}/group/${groupId}/vote/${decisionId}`
+    : `${window.location.origin}/group/${groupId}/vote`;
 
   return (
     <div className="max-w-md mx-auto px-4 pb-6">
@@ -560,15 +563,13 @@ export default function VotePageClient({
         <div className="flex items-center gap-2 mb-2">
           <input
             type="text"
-            value={`${window.location.origin}/group/${groupId}/vote`}
+            value={voteUrl}
             readOnly
             className="flex-1 bg-white border border-amber-200 rounded-lg px-3 py-2 text-xs font-mono text-gray-600"
           />
           <button
             onClick={() => {
-              navigator.clipboard.writeText(
-                `${window.location.origin}/group/${groupId}/vote`
-              );
+              navigator.clipboard.writeText(voteUrl);
             }}
             className="bg-mamak hover:bg-mamak-dark text-slate font-bold px-4 py-2 rounded-lg text-xs transition"
           >
@@ -576,7 +577,7 @@ export default function VotePageClient({
           </button>
         </div>
         <a
-          href={`https://wa.me/?text=${encodeURIComponent(`🗳️ Vote now! Where shall we makan? ${window.location.origin}/group/${groupId}/vote`)}`}
+          href={`https://wa.me/?text=${encodeURIComponent(`🗳️ Vote now! Where shall we makan? ${voteUrl}`)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full bg-[#25D366] text-white font-bold py-2 rounded-lg text-xs hover:bg-[#20bd5a] transition"

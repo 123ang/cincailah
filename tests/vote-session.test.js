@@ -74,3 +74,19 @@ test('vote invite links can open an existing group decision', () => {
   assert.equal(existsSync(dynamicVotePage), true);
   assert.match(readFileSync(dynamicVotePage, 'utf8'), /initialDecisionId/);
 });
+
+test('vote sharing uses the live decision link instead of a fresh start link', () => {
+  const webClient = readFileSync(join(root, 'components/VotePageClient.tsx'), 'utf8');
+
+  assert.match(webClient, /const voteUrl = decisionId/);
+  assert.match(webClient, /\/vote\/\$\{decisionId\}/);
+  assert.match(webClient, /value=\{voteUrl\}/);
+  assert.match(webClient, /writeText\(voteUrl\)/);
+});
+
+test('vote UI does not mark one option as leading when top votes are tied', () => {
+  const webClient = readFileSync(join(root, 'components/VotePageClient.tsx'), 'utf8');
+
+  assert.match(webClient, /const topOptions = options\.filter/);
+  assert.match(webClient, /topOptions\.length === 1/);
+});
