@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { type Transporter } from 'nodemailer';
 import { Resend } from 'resend';
 import { logger } from '@/lib/logger';
 import { escapeHtml } from '@/lib/security';
@@ -8,7 +8,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const APP_NAME = 'Cincailah';
 
 let resendClient: Resend | null = null;
-let smtpTransporter: nodemailer.Transporter | null = null;
+let smtpTransporter: Transporter | null = null;
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY;
@@ -38,7 +38,7 @@ function smtpPartiallyConfigured(): boolean {
   return any && !smtpFullyConfigured();
 }
 
-function getSmtpTransporter(): nodemailer.Transporter | null {
+function getSmtpTransporter(): Transporter | null {
   if (!smtpFullyConfigured()) return null;
   if (smtpTransporter) return smtpTransporter;
 
