@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { MAX_FILE_SIZE } from '@/lib/upload-constants';
+import { useT } from '@/components/LocaleProvider';
 
 type UploadType = 'restaurant' | 'avatar' | 'group_cover';
 
@@ -26,6 +27,7 @@ export default function ImageUpload({
   helpText,
   onClear,
 }: ImageUploadProps) {
+  const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,11 +47,11 @@ export default function ImageUpload({
       const res = await fetch('/api/upload', { method: 'POST', body: form });
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      if (!res.ok) throw new Error(data.error ? t(data.error) : t('Upload failed'));
 
       onChange(data.url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Upload failed');
+      setError(err instanceof Error ? err.message : t('Upload failed'));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -78,7 +80,7 @@ export default function ImageUpload({
           if (f) void handleFile(f);
         }}
         className="hidden"
-        aria-label={`Upload ${label}`}
+        aria-label={`${t('Upload')}: ${label}`}
       />
 
       {value ? (
@@ -99,7 +101,7 @@ export default function ImageUpload({
               disabled={uploading}
               className="flex-1 text-xs font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded-lg transition disabled:opacity-50"
             >
-              {uploading ? 'Uploading…' : 'Replace'}
+              {uploading ? t('Uploading…') : t('Replace')}
             </button>
             <button
               type="button"
@@ -107,7 +109,7 @@ export default function ImageUpload({
               disabled={uploading}
               className="text-xs font-bold text-sambal bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 px-3 py-2 rounded-lg transition disabled:opacity-50"
             >
-              Remove
+              {t('Remove')}
             </button>
           </div>
         </div>
@@ -117,18 +119,18 @@ export default function ImageUpload({
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
           className={`${previewClassName} flex flex-col items-center justify-center gap-1 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition disabled:opacity-50 ${isCircle ? 'rounded-full' : ''}`}
-          aria-label={`Upload ${label}`}
+          aria-label={`${t('Upload')}: ${label}`}
         >
           {uploading ? (
             <>
               <div className="w-6 h-6 border-2 border-sambal border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs text-gray-500 dark:text-gray-400">Uploading…</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{t('Uploading…')}</span>
             </>
           ) : (
             <>
               <span className="text-2xl">📸</span>
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                {isCircle ? 'Upload' : 'Click to upload'}
+                {isCircle ? t('Upload') : t('Click to upload')}
               </span>
             </>
           )}

@@ -59,6 +59,16 @@
     color: white;
   }
 
+  /* Dark mode: a dark card with orange accents instead of a bright orange slab. */
+  .dark .brand-card {
+    background:
+      radial-gradient(circle at 16% 18%, rgba(255, 122, 0, 0.22), transparent 12rem),
+      radial-gradient(circle at 90% 100%, rgba(255, 61, 0, 0.18), transparent 14rem),
+      linear-gradient(135deg, #1f2937 0%, #111827 60%, #1c1410 100%);
+    border: 1px solid rgba(255, 122, 0, 0.35);
+    color: #f9fafb;
+  }
+
   .brand-logo {
     object-fit: cover;
     box-shadow: 0 16px 38px rgba(255, 90, 0, 0.22);

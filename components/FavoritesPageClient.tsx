@@ -64,7 +64,7 @@ export default function FavoritesPageClient({
       {/* Header */}
       <div className="pt-6 pb-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate">❤️ My Favourites</h1>
+          <h1 className="text-2xl font-extrabold text-slate dark:text-white">❤️ My Favourites</h1>
           <p className="text-sm text-gray-400 mt-0.5">
             {favorites.length} restaurant{favorites.length !== 1 ? 's' : ''} across all groups
           </p>
@@ -80,7 +80,7 @@ export default function FavoritesPageClient({
       {favorites.length === 0 && (
         <div className="mt-16 text-center">
           <div className="text-6xl mb-4">💔</div>
-          <h2 className="text-xl font-black text-slate mb-2">No favourites yet</h2>
+          <h2 className="text-xl font-black text-slate mb-2 dark:text-white">No favourites yet</h2>
           <p className="text-gray-500 mb-6">
             Tap the ❤️ on any restaurant in your groups to add it here.
           </p>
@@ -103,12 +103,12 @@ export default function FavoritesPageClient({
             return (
               <div
                 key={fav.id}
-                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition"
+                className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition dark:bg-gray-800 dark:border-gray-700"
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-slate text-base">{r.name}</h3>
+                      <h3 className="font-bold text-slate text-base dark:text-white">{r.name}</h3>
                       {r.halal && (
                         <span className="text-xs bg-green-100 text-green-700 font-medium px-1.5 py-0.5 rounded-full">
                           Halal

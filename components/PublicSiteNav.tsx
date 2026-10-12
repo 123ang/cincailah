@@ -4,6 +4,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import DarkModeToggle from '@/components/DarkModeToggle';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import SoundToggle from '@/components/SoundToggle';
+import { useT } from '@/components/LocaleProvider';
 
 const navLinks = [
   { href: '/solo', label: 'Solo', className: 'inline-flex' },
@@ -23,6 +26,7 @@ function navLinkClass(isActive: boolean, extra = '') {
 
 export default function PublicSiteNav() {
   const pathname = usePathname();
+  const t = useT();
 
   return (
     <nav
@@ -51,13 +55,15 @@ export default function PublicSiteNav() {
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <DarkModeToggle />
+          {pathname === '/solo' && <SoundToggle />}
+          <LanguageSwitcher />
           {navLinks.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={navLinkClass(pathname === item.href, item.className)}
             >
-              {item.label}
+              {t(item.label)}
             </Link>
           ))}
           <Link
@@ -67,7 +73,7 @@ export default function PublicSiteNav() {
               pathname === '/register' ? 'ring-2 ring-white/80 ring-offset-2 ring-offset-cream dark:ring-offset-gray-950' : '',
             ].join(' ')}
           >
-            Start
+            {t('Start')}
           </Link>
         </div>
       </div>

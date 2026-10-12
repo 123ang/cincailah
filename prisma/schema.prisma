@@ -81,7 +81,9 @@ model Restaurant {
   priceMax     Int      @map("price_max")
   halal        Boolean  @default(false)
   vegOptions   Boolean  @default(false) @map("veg_options")
-  walkMinutes  Int      @map("walk_minutes")
+  // Legacy field: the web app now records an area instead. Kept for the mobile app.
+  walkMinutes  Int      @default(0) @map("walk_minutes")
+  area         String   @default("")
   mapsUrl      String?  @map("maps_url")
   photoUrl     String?  @map("photo_url")
   latitude     Float?

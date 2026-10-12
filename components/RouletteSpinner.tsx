@@ -3,7 +3,10 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { formatPrice, haversineKm } from '@/lib/utils';
+import { haversineKm } from '@/lib/utils';
+import { playSoundEffect } from '@/lib/sound';
+import { PRICE_LEVEL_HINT, PRICE_LEVEL_LABEL, priceLevelFromRange, tagsFromJson } from '@/lib/restaurant-meta';
+import { useT } from '@/components/LocaleProvider';
 import { fireConfetti } from '@/lib/confetti';
 import RatingPrompt, { schedulePendingRating } from '@/components/RatingPrompt';
 
@@ -16,7 +19,7 @@ interface Restaurant {
   priceMax: number;
   halal: boolean;
   vegOptions: boolean;
-  walkMinutes: number;
+  area?: string;
   mapsUrl: string | null;
   photoUrl?: string | null;
   latitude?: number | null;
@@ -45,6 +48,7 @@ export default function RouletteSpinner({
   filters,
 }: RouletteSpinnerProps) {
   const router = useRouter();
+  const t = useT();
   const allowRepeatPicks = useMemo(() => {
     if (!filters || typeof filters !== 'object') return false;
     return (filters as Record<string, unknown>).allowRepeatPicks === true;
@@ -59,6 +63,7 @@ export default function RouletteSpinner({
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
   const [maxReroll, setMaxReroll] = useState<number>(3);
   const [rerollsUsed, setRerollsUsed] = useState<number>(0);
+  const [confirmed, setConfirmed] = useState(false);
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rotationRef = useRef(0);
@@ -82,14 +87,7 @@ export default function RouletteSpinner({
   }, []);
 
   const celebrate = useCallback(() => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        void audioRef.current.play();
-      }
-    } catch {
-      // autoplay blocked; ignore
-    }
+    playSoundEffect(audioRef.current);
     try {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate?.([80, 40, 140]);
@@ -258,7 +256,7 @@ export default function RouletteSpinner({
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Failed to get decision');
+          throw new Error(data.error ? t(data.error) : t('Failed to get decision'));
         }
 
         setCandidates(data.candidates);
@@ -270,11 +268,11 @@ export default function RouletteSpinner({
           setPhase('spinning');
         }, 800);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Something went wrong');
+        setError(err instanceof Error ? err.message : t('Something went wrong'));
         setPhase('result');
       }
     },
-    [groupId, filters]
+    [groupId, filters, t]
   );
 
   // Kick off (or re-attempt) the canvas spin only once the `spinning` phase
@@ -356,7 +354,7 @@ export default function RouletteSpinner({
       <div className="max-w-md mx-auto px-4">
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
           <div className="relative">
-            <div className="w-32 h-32 rounded-full border-4 border-gray-200 border-t-sambal animate-spin"></div>
+            <div className="w-32 h-32 rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-sambal animate-spin"></div>
             <Image
               src="/brand/cincailah-logo.jpeg"
               alt=""
@@ -365,13 +363,13 @@ export default function RouletteSpinner({
               className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-2xl object-cover shadow-lg shadow-sambal/20"
             />
           </div>
-          <p className="mt-8 text-lg font-bold text-gray-700 animate-pulse">
-            {loadingText}
+          <p className="mt-8 text-lg font-bold text-gray-700 dark:text-gray-200 animate-pulse">
+            {t(loadingText)}
           </p>
           <p className="text-sm text-gray-400 mt-2">
             {rerollsUsed > 0
-              ? `Rerolling (${rerollsUsed}/${maxReroll})…`
-              : 'Applying filters & anti-repeat…'}
+              ? t('Rerolling ({used}/{max})…', { used: rerollsUsed, max: maxReroll })
+              : t('Applying filters & anti-repeat…')}
           </p>
           <div className="mt-6 flex gap-1">
             <div className="w-2 h-2 rounded-full bg-sambal animate-bounce" />
@@ -394,8 +392,8 @@ export default function RouletteSpinner({
     return (
       <div className="max-w-md mx-auto px-4">
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
-          <h2 className="text-2xl font-black text-slate mb-6">
-            {onlyOne ? 'Only one match — easy!' : 'Spinning the wheel…'}
+          <h2 className="text-2xl font-black text-slate dark:text-white mb-6">
+            {onlyOne ? t('Only one match — easy!') : t('Spinning the wheel…')}
           </h2>
           {onlyOne ? (
             <div className="w-40 h-40 rounded-full overflow-hidden shadow-lg ring-4 ring-sambal/30 animate-pulse bg-gradient-to-br from-sambal to-red-400 flex items-center justify-center">
@@ -425,7 +423,9 @@ export default function RouletteSpinner({
             />
           )}
           <p className="text-sm text-gray-400 mt-4">
-            {candidates.length} option{candidates.length === 1 ? '' : 's'} in the mix!
+            {candidates.length === 1
+              ? t('1 option in the mix!')
+              : t('{count} options in the mix!', { count: candidates.length })}
           </p>
         </div>
       </div>
@@ -437,13 +437,13 @@ export default function RouletteSpinner({
       <div className="max-w-md mx-auto px-4">
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
           <span className="text-6xl mb-4">😔</span>
-          <h2 className="text-2xl font-black text-slate mb-2">Aiyah…</h2>
-          <p className="text-gray-500 text-center max-w-xs">{error}</p>
+          <h2 className="text-2xl font-black text-slate dark:text-white mb-2">{t('Aiyah…')}</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-center max-w-xs">{error}</p>
           <button
             onClick={() => router.push(`/group/${groupId}`)}
             className="mt-6 bg-sambal hover:bg-sambal-dark text-white font-bold px-6 py-3 rounded-xl transition"
           >
-            ← Try Again
+            ← {t('Try Again')}
           </button>
         </div>
       </div>
@@ -461,7 +461,7 @@ export default function RouletteSpinner({
           className="relative overflow-hidden rounded-[2rem] bg-sambal p-5 pt-6 text-white shadow-2xl shadow-sambal/25 animate-bounce-in"
           role="status"
           aria-live="assertive"
-          aria-label={`Winner: ${winner.name}`}
+          aria-label={t('Winner: {name}', { name: winner.name })}
         >
           <div className="pointer-events-none absolute -right-36 top-20 h-80 w-80 rotate-[-22deg] rounded-full border-[34px] border-white/70 border-l-transparent" />
           <div className="pointer-events-none absolute -left-16 bottom-20 h-36 w-36 rounded-full bg-white/10" />
@@ -469,24 +469,24 @@ export default function RouletteSpinner({
           <div className="relative z-[1]">
             <div className="flex items-center justify-between gap-3">
               <span className="rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em]">
-                Fast food roulette
+                {t('Fast food roulette')}
               </span>
               <div className="rounded-full bg-white/20 px-3 py-1.5 text-xs font-black">
-                You Pick
+                {t('You Pick')}
               </div>
               {rerollsUsed > 0 && (
                 <div className="rounded-full bg-black/25 px-3 py-1.5 text-xs font-black">
-                  Reroll {rerollsUsed}/{maxReroll}
+                  {t('Reroll {used}/{max}', { used: rerollsUsed, max: maxReroll })}
                 </div>
               )}
             </div>
 
             <div className="mt-5">
               <h2 className="max-w-[13rem] text-4xl font-black leading-[0.92] tracking-[-0.06em]">
-                The wheel has spoken.
+                {t('The wheel has spoken.')}
               </h2>
               <p className="mt-3 max-w-[17rem] text-sm font-bold leading-5 text-white/78">
-                No pop-up. The needle lands and your makan answer stays right here.
+                {t('Happy with it? Confirm, or spin again.')}
               </p>
             </div>
 
@@ -517,95 +517,89 @@ export default function RouletteSpinner({
               </div>
             </div>
 
-            <div className="-mt-10 rounded-[1.6rem] bg-white/95 p-4 text-slate shadow-2xl shadow-black/20 backdrop-blur">
+            <div className="-mt-10 rounded-[1.6rem] bg-white/95 p-4 text-slate shadow-2xl shadow-black/20 backdrop-blur dark:bg-gray-900/95 dark:text-white">
               <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sambal">
-                The needle says
+                {t('The needle says')}
               </p>
               <h3 className="mt-1 text-3xl font-black leading-none tracking-[-0.05em]">
                 {winner.name}
               </h3>
-              <p className="mt-2 text-sm font-semibold text-gray-500">
-                {Array.isArray(winner.cuisineTags) && winner.cuisineTags.length > 0
-                  ? (winner.cuisineTags as string[]).join(' · ')
-                  : 'Restaurant'}
+              <p className="mt-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+                {tagsFromJson(winner.cuisineTags).length > 0
+                  ? tagsFromJson(winner.cuisineTags).map((tag) => t(tag)).join(' · ')
+                  : t('Restaurant')}
               </p>
               {userCoords && winner.latitude != null && winner.longitude != null && (
                 <p className="mt-1 text-xs font-bold text-blue-500">
-                  {haversineKm(userCoords.lat, userCoords.lng, winner.latitude, winner.longitude).toFixed(1)} km away
+                  {t('{km} km away', { km: haversineKm(userCoords.lat, userCoords.lng, winner.latitude, winner.longitude).toFixed(1) })}
                 </p>
               )}
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {winner.halal && (
-                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">
-                    Halal
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                    {t('Halal')}
                   </span>
                 )}
                 {winner.vegOptions && (
-                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700">
-                    Veg options
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                    {t('Veg options')}
                   </span>
                 )}
                 {Array.isArray(winner.vibeTags) &&
                   (winner.vibeTags as string[]).slice(0, 3).map((tag: string) => (
                     <span
                       key={tag}
-                      className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700"
+                      className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
                     >
-                      {tag}
+                      {t(tag)}
                     </span>
                   ))}
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <div className="rounded-2xl bg-gray-50 p-3 text-center">
-                  <p className="text-xs font-semibold text-gray-400">Budget</p>
-                  <p className="mt-0.5 text-sm font-black text-slate">
-                    {formatPrice(winner.priceMin, winner.priceMax)}
+                <div className="rounded-2xl bg-gray-50 p-3 text-center dark:bg-gray-800">
+                  <p className="text-xs font-semibold text-gray-400">{t('Price')}</p>
+                  <p className="mt-0.5 text-sm font-black text-slate dark:text-white">
+                    {t(PRICE_LEVEL_LABEL[priceLevelFromRange(winner.priceMin, winner.priceMax)])}{' '}
+                    <span className="text-xs font-medium text-gray-400">
+                      {PRICE_LEVEL_HINT[priceLevelFromRange(winner.priceMin, winner.priceMax)]}
+                    </span>
                   </p>
                 </div>
-                <div className="rounded-2xl bg-gray-50 p-3 text-center">
-                  <p className="text-xs font-semibold text-gray-400">Walk</p>
-                  <p className="mt-0.5 text-sm font-black text-slate">
-                    {winner.walkMinutes} min
+                <div className="rounded-2xl bg-gray-50 p-3 text-center dark:bg-gray-800">
+                  <p className="text-xs font-semibold text-gray-400">{t('Area')}</p>
+                  <p className="mt-0.5 truncate text-sm font-black text-slate dark:text-white">
+                    {winner.area ? `📍 ${winner.area}` : '—'}
                   </p>
                 </div>
               </div>
 
               <div className="mt-5 flex gap-3">
-                {winner.mapsUrl ? (
-                  <a
-                    href={winner.mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex flex-1 items-center justify-center rounded-2xl bg-pandan py-3 text-center text-sm font-black text-white shadow-lg shadow-pandan/30 transition hover:bg-pandan-dark"
-                  >
-                    Let&apos;s go
-                  </a>
-                ) : (
-                  <button
-                    onClick={() => router.push(`/group/${groupId}`)}
-                    className="flex-1 rounded-2xl bg-pandan py-3 text-center text-sm font-black text-white transition hover:bg-pandan-dark"
-                  >
-                    Confirmed
-                  </button>
-                )}
+                <button
+                  onClick={() => setConfirmed(true)}
+                  className="flex-1 rounded-2xl bg-pandan py-3 text-center text-sm font-black text-white shadow-lg shadow-pandan/30 transition hover:bg-pandan-dark"
+                >
+                  {t('Confirm')} ✅
+                </button>
                 <button
                   onClick={handleNotThis}
                   disabled={!canReroll}
-                  className="flex-1 rounded-2xl bg-gray-100 py-3 text-center text-sm font-black text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 rounded-2xl bg-gray-100 py-3 text-center text-sm font-black text-gray-700 transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                 >
                   {canReroll ? (
                     <>
-                      Spin again
-                      <span className="block text-[11px] font-medium text-gray-500">
-                        {rerollsLeft} reroll{rerollsLeft === 1 ? '' : 's'} left
+                      {t('Spin again')}
+                      <span className="block text-[11px] font-medium text-gray-500 dark:text-gray-400">
+                        {rerollsLeft === 1
+                          ? t('1 reroll left')
+                          : t('{count} rerolls left', { count: rerollsLeft })}
                       </span>
                     </>
                   ) : (
                     <>
-                      No more rerolls
-                      <span className="block text-[11px] font-medium text-gray-500">
+                      {t('No more rerolls')}
+                      <span className="block text-[11px] font-medium text-gray-500 dark:text-gray-400">
                         Cincailah lah!
                       </span>
                     </>
@@ -617,12 +611,55 @@ export default function RouletteSpinner({
         </div>
 
         <button
-          onClick={() => router.push(`/group/${groupId}/decide`)}
-          className="mt-6 text-sm font-semibold text-gray-400 transition hover:text-gray-600"
+          onClick={() => router.push(`/group/${groupId}`)}
+          className="mt-6 text-sm font-semibold text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-200"
         >
-          ← Back to filters
+          ← {t('Back to filters')}
         </button>
       </div>
+
+      {confirmed && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirmed-title"
+        >
+          <div className="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-2xl dark:bg-gray-900">
+            <div className="text-5xl" aria-hidden="true">🎉</div>
+            <h2 id="confirmed-title" className="mt-3 text-xl font-black text-slate dark:text-white">
+              {t('Confirmed!')}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t('{name} is today’s makan. Saved to history.', { name: winner.name })}
+            </p>
+            <div className="mt-5 grid gap-2">
+              {winner.mapsUrl && (
+                <a
+                  href={winner.mapsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-2xl bg-pandan py-3 text-sm font-black text-white transition hover:bg-pandan-dark"
+                >
+                  {t("Let's go")} 📍
+                </a>
+              )}
+              <button
+                onClick={() => router.push(`/group/${groupId}/history`)}
+                className="rounded-2xl bg-gray-100 py-3 text-sm font-black text-gray-700 transition hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-200"
+              >
+                {t('View history')}
+              </button>
+              <button
+                onClick={() => router.push(`/group/${groupId}`)}
+                className="py-2 text-sm font-semibold text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                {t('Done')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <RatingPrompt />
 

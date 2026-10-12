@@ -18,6 +18,8 @@ import {
 import { useLocalStorage } from '@/lib/useLocalStorage';
 import MakanCodeInput from '@/components/MakanCodeInput';
 import PublicSiteNav from '@/components/PublicSiteNav';
+import { playSoundEffect } from '@/lib/sound';
+import { useT } from '@/components/LocaleProvider';
 
 type Mode = 'food' | 'favorite' | 'category';
 
@@ -42,6 +44,7 @@ function makeId() {
 }
 
 export default function SoloPage() {
+  const t = useT();
   const [mode, setMode] = useState<Mode>('food');
   const [selectedCategories, setSelectedCategories] = useState<FoodCategory[]>([
     'Malay',
@@ -197,14 +200,7 @@ export default function SoloPage() {
   };
 
   const celebrate = () => {
-    try {
-      if (audioRef.current) {
-        audioRef.current.currentTime = 0;
-        void audioRef.current.play();
-      }
-    } catch {
-      // autoplay can fail silently; user can still see the result
-    }
+    playSoundEffect(audioRef.current);
     try {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate?.([80, 40, 140]);
@@ -308,7 +304,7 @@ export default function SoloPage() {
   };
 
   const clearHistory = () => {
-    if (!confirm('Clear all solo history?')) return;
+    if (!confirm(t('Clear all solo history?'))) return;
     setHistory([]);
   };
 
@@ -316,7 +312,7 @@ export default function SoloPage() {
     picked.kind === 'food' ? picked.item.image : null;
   const pickedName =
     picked.kind === 'empty'
-      ? picked.message
+      ? t(picked.message)
       : picked.kind === 'food'
         ? picked.item.name
         : picked.item.name;
@@ -331,7 +327,7 @@ export default function SoloPage() {
 
       <main className="max-w-2xl mx-auto px-4 pt-6 pb-24">
         <section
-          className={`relative mb-8 overflow-hidden rounded-[2rem] bg-sambal p-5 pt-6 text-white shadow-2xl shadow-sambal/20 transition-transform ${
+          className={`relative mb-8 overflow-hidden rounded-[2rem] bg-sambal p-5 dark:bg-gray-900 dark:ring-1 dark:ring-orange-500/30 pt-6 text-white shadow-2xl shadow-sambal/20 transition-transform ${
             justWon ? 'scale-[1.01]' : ''
           }`}
         >
@@ -341,23 +337,23 @@ export default function SoloPage() {
           <div className="relative z-[1]">
             <div className="flex items-center justify-between gap-3">
               <span className="rounded-full bg-white/20 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em]">
-                Solo food roulette
+                {t('Solo food roulette')}
               </span>
               <button
                 onClick={startShuffle}
                 disabled={isShuffling}
                 className="rounded-full bg-white px-4 py-2 text-xs font-black text-sambal shadow-lg shadow-slate/10 transition hover:scale-[1.03] disabled:opacity-60"
               >
-                {isShuffling ? 'Spinning...' : 'Spin again'}
+                {isShuffling ? t('Spinning...') : t('Spin again')}
               </button>
             </div>
 
             <div className="mt-6 max-w-sm">
               <h1 className="text-5xl font-black leading-[0.9] tracking-tight">
-                Spin once. Go makan.
+                {t('Spin once. Go makan.')}
               </h1>
               <p className="mt-4 text-sm font-bold leading-6 text-white/80 md:text-base">
-                No account. No group. The wheel lands and tells you the answer right here.
+                {t('No account. No group. The wheel lands and tells you the answer right here.')}
               </p>
             </div>
 
@@ -408,14 +404,14 @@ export default function SoloPage() {
 
             <div className="-mt-9 rounded-[1.6rem] bg-white/95 p-4 text-slate shadow-2xl shadow-black/20 backdrop-blur dark:bg-gray-950/95 dark:text-white">
               <p className="text-[11px] font-black uppercase tracking-[0.14em] text-sambal">
-                The needle says
+                {t('The needle says')}
               </p>
               <div className="mt-1 text-3xl font-black leading-tight tracking-[-0.02em]">
                 {pickedName}
               </div>
               {pickedCategory && (
                 <div className="mt-1 text-xs font-black uppercase tracking-wider text-sambal">
-                  {pickedCategory}
+                  {t(pickedCategory)}
                 </div>
               )}
               {pickedNote && (
@@ -428,14 +424,14 @@ export default function SoloPage() {
                     disabled={isShuffling}
                     className="rounded-2xl bg-pandan px-4 py-3 text-center text-sm font-black text-white shadow-lg shadow-pandan/20 transition hover:scale-[1.02] disabled:opacity-60"
                   >
-                    {isShuffling ? 'Spinning...' : 'Spin again'}
+                    {isShuffling ? t('Spinning...') : t('Spin again')}
                   </button>
                   <button
                     onClick={rerollQuick}
                     disabled={isShuffling || currentPool.length === 0}
                     className="rounded-2xl bg-slate/10 px-4 py-3 text-center text-sm font-black text-slate transition hover:bg-slate/15 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
                   >
-                    Not this
+                    {t('Not this')}
                   </button>
                 </div>
               )}
@@ -445,9 +441,9 @@ export default function SoloPage() {
 
         <section className="mb-4 rounded-3xl border border-sambal/10 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
           <div className="mb-3">
-            <h2 className="text-base font-black text-slate dark:text-white">Tune the roulette</h2>
+            <h2 className="text-base font-black text-slate dark:text-white">{t('Tune the roulette')}</h2>
             <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-              Leave this alone for pure cincai mode.
+              {t('Leave this alone for pure cincai mode.')}
             </p>
           </div>
           <div className="mb-4 flex gap-1 rounded-2xl bg-cream p-1.5 dark:bg-gray-950">
@@ -468,7 +464,7 @@ export default function SoloPage() {
                     : 'text-gray-500 hover:bg-white dark:text-gray-300 dark:hover:bg-white/10'
                 } disabled:opacity-60`}
               >
-                {m.label}
+                {t(m.label)}
               </button>
             ))}
           </div>
@@ -477,13 +473,13 @@ export default function SoloPage() {
             <div>
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-                  Pick your cuisines
+                  {t('Pick your cuisines')}
                 </span>
                 <button
                   onClick={() => setSelectedCategories([])}
                   className="text-xs font-semibold text-sambal hover:underline"
                 >
-                  Clear
+                  {t('Clear')}
                 </button>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -499,7 +495,7 @@ export default function SoloPage() {
                           : 'bg-cream text-gray-700 hover:bg-sambal-soft dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-white/10'
                       }`}
                     >
-                      {cat}
+                      {t(cat)}
                     </button>
                   );
                 })}
@@ -515,13 +511,13 @@ export default function SoloPage() {
             className="w-full flex items-center justify-between px-5 py-4"
           >
             <span className="font-bold text-slate dark:text-white">
-              ❤️ My Favorite Spots
+              ❤️ {t('My Favorite Spots')}
               <span className="ml-2 text-xs font-semibold text-gray-400 dark:text-gray-500">
                 {favorites.length}
               </span>
             </span>
             <span className="text-gray-400 text-sm dark:text-gray-500">
-              {showFavorites ? 'Hide' : 'Manage'}
+              {showFavorites ? t('Hide') : t('Manage')}
             </span>
           </button>
 
@@ -532,14 +528,14 @@ export default function SoloPage() {
                   value={newFavName}
                   onChange={(e) => setNewFavName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveFavorite()}
-                  placeholder="Restaurant / spot name"
+                  placeholder={t('Restaurant / spot name')}
                   className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-sambal focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white"
                 />
                 <input
                   value={newFavNote}
                   onChange={(e) => setNewFavNote(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveFavorite()}
-                  placeholder="Note (optional)"
+                  placeholder={t('Note (optional)')}
                   className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-sambal focus:outline-none dark:border-gray-700 dark:bg-gray-950 dark:text-white sm:w-48"
                 />
                 <button
@@ -547,7 +543,7 @@ export default function SoloPage() {
                   disabled={!newFavName.trim()}
                   className="btn-cincai text-white font-bold px-4 py-2.5 rounded-xl disabled:opacity-50"
                 >
-                  {editingFavId ? 'Save' : 'Add'}
+                  {editingFavId ? t('Save') : t('Add')}
                 </button>
                 {editingFavId && (
                   <button
@@ -555,14 +551,14 @@ export default function SoloPage() {
                     onClick={cancelFavoriteEdit}
                     className="px-2 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   >
-                    Cancel
+                    {t('Cancel')}
                   </button>
                 )}
               </div>
 
               {favorites.length === 0 ? (
                 <p className="py-3 text-center text-sm text-gray-400 dark:text-gray-500">
-                  No favorites yet. Add your regular spots above.
+                  {t('No favorites yet. Add your regular spots above.')}
                 </p>
               ) : (
                 <ul className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -587,14 +583,14 @@ export default function SoloPage() {
                           onClick={() => beginEditFavorite(f)}
                           className="rounded-lg px-3 py-1.5 text-xs font-semibold text-sambal hover:bg-red-50 dark:hover:bg-white/10"
                         >
-                          Edit
+                          {t('Edit')}
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteFavorite(f.id)}
                           className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-white/10"
                         >
-                          Remove
+                          {t('Remove')}
                         </button>
                       </div>
                     </li>
@@ -612,13 +608,13 @@ export default function SoloPage() {
             className="w-full flex items-center justify-between px-5 py-4"
           >
             <span className="font-bold text-slate dark:text-white">
-              🕐 Recent Picks
+              🕐 {t('Recent Picks')}
               <span className="ml-2 text-xs font-semibold text-gray-400 dark:text-gray-500">
                 {history.length}
               </span>
             </span>
             <span className="text-gray-400 text-sm dark:text-gray-500">
-              {showHistory ? 'Hide' : 'Show'}
+              {showHistory ? t('Hide') : t('Show')}
             </span>
           </button>
 
@@ -626,7 +622,7 @@ export default function SoloPage() {
             <div className="border-t border-gray-100 px-5 pb-5 pt-4 dark:border-gray-800">
               {history.length === 0 ? (
                 <p className="py-3 text-center text-sm text-gray-400 dark:text-gray-500">
-                  No picks yet — spin above to get started!
+                  {t('No picks yet — spin above to get started!')}
                 </p>
               ) : (
                 <>
@@ -644,8 +640,8 @@ export default function SoloPage() {
                             </div>
                             <div className="text-[11px] text-gray-400 dark:text-gray-500">
                               {new Date(h.time).toLocaleString()}
-                              {h.category ? ` · ${h.category}` : ''}
-                              {h.mode === 'favorite' ? ' · Favorite' : ''}
+                              {h.category ? ` · ${t(h.category)}` : ''}
+                              {h.mode === 'favorite' ? ` · ${t('Favorite')}` : ''}
                             </div>
                           </div>
                         </div>
@@ -656,7 +652,7 @@ export default function SoloPage() {
                     onClick={clearHistory}
                     className="mt-3 text-xs font-semibold text-red-600 hover:underline dark:text-red-300"
                   >
-                    Clear history
+                    {t('Clear history')}
                   </button>
                 </>
               )}
@@ -673,16 +669,16 @@ export default function SoloPage() {
         <div className="brand-card text-white rounded-3xl p-6 text-center shadow-md">
           <div className="text-3xl mb-2">👥</div>
           <h3 className="font-black text-xl mb-1">
-            Deciding with your crew?
+            {t('Deciding with your crew?')}
           </h3>
           <p className="text-sm opacity-90 mb-4">
-            Create a Makan group and let everyone vote — or spin together.
+            {t('Create a Makan group and let everyone vote — or spin together.')}
           </p>
           <Link
             href="/register"
             className="inline-block bg-white text-sambal font-black px-6 py-3 rounded-2xl shadow hover:shadow-lg transition"
           >
-            Create free account →
+            {t('Create free account')} →
           </Link>
         </div>
       </main>

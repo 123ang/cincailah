@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import LocaleProvider from '@/components/LocaleProvider';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://cincailah.com';
 
@@ -46,6 +47,13 @@ export const metadata: Metadata = {
   },
 };
 
+// viewport-fit=cover lets the fixed bottom bar pad for the home indicator.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,7 +84,7 @@ export default function RootLayout({
       </head>
       <body className="font-sans">
         <ServiceWorkerRegister />
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );

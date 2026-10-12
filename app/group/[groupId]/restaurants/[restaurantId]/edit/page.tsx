@@ -3,6 +3,7 @@ import { getSession } from '@/lib/session';
 import { prisma } from '@/lib/prisma';
 import { ensureRestaurantAccessible } from '@/lib/group-access';
 import AddRestaurantForm from '@/components/AddRestaurantForm';
+import { getGroupAreas } from '@/lib/restaurant-areas';
 
 export default async function EditRestaurantPage({
   params,
@@ -29,5 +30,9 @@ export default async function EditRestaurantPage({
     notFound();
   }
 
-  return <AddRestaurantForm groupId={groupId} initialRestaurant={restaurant} />;
+  const areaSuggestions = await getGroupAreas(groupId);
+
+  return (
+    <AddRestaurantForm groupId={groupId} initialRestaurant={restaurant} areaSuggestions={areaSuggestions} />
+  );
 }

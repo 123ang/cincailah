@@ -33,11 +33,11 @@ export default function MakanCodeInput({
     return (
       <form
         onSubmit={handleSubmit}
-        className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4"
+        className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 dark:bg-gray-800 dark:border-gray-700"
       >
         <div className="flex items-center gap-2 mb-2">
           <span className="text-lg">🤝</span>
-          <span className="text-sm font-bold text-slate">
+          <span className="text-sm font-bold text-slate dark:text-white">
             Got a Makan Code from a friend?
           </span>
         </div>
@@ -47,7 +47,7 @@ export default function MakanCodeInput({
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder={placeholder}
             maxLength={12}
-            className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-bold tracking-widest text-center focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none"
+            className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-bold tracking-widest text-center focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none dark:bg-gray-800 dark:border-gray-700"
           />
           <button
             type="submit"
@@ -66,7 +66,7 @@ export default function MakanCodeInput({
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-md mx-auto">
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 dark:bg-gray-800 dark:border-gray-700">
         <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
           Have a Makan Code?
         </label>
@@ -76,7 +76,7 @@ export default function MakanCodeInput({
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder={placeholder}
             maxLength={12}
-            className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-base font-mono font-bold tracking-widest text-center focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none"
+            className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-base font-mono font-bold tracking-widest text-center focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none dark:bg-gray-800 dark:border-gray-700"
           />
           <button
             type="submit"

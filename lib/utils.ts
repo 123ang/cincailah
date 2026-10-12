@@ -7,20 +7,25 @@ export function generateMakanCode(): string {
   return code;
 }
 
-export function formatDate(date: Date): string {
+type Translate = (text: string, vars?: Record<string, string | number>) => string;
+
+const englishOnly: Translate = (text, vars) =>
+  text.replace(/\{(\w+)\}/g, (match, key: string) => (vars && key in vars ? String(vars[key]) : match));
+
+export function formatDate(date: Date, t: Translate = englishOnly): string {
   const now = new Date();
   const diffTime = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  
-  return date.toLocaleDateString('en-MY', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  if (diffDays === 0) return t('Today');
+  if (diffDays === 1) return t('Yesterday');
+  if (diffDays < 7) return t('{count} days ago', { count: diffDays });
+  if (diffDays < 30) return t('{count} weeks ago', { count: Math.floor(diffDays / 7) });
+
+  return date.toLocaleDateString('en-MY', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   });
 }
 

@@ -68,7 +68,7 @@ export default function MyGroupsClient({
             className="brand-logo mx-auto mb-3 h-[72px] w-[72px] rounded-[1.35rem] object-cover shadow-xl shadow-sambal/20"
             priority
           />
-          <h1 className="text-3xl font-black text-slate mb-2">My Makan Groups</h1>
+          <h1 className="text-3xl font-black text-slate mb-2 dark:text-white">My Makan Groups</h1>
           <p className="text-gray-500 text-sm">
             Logged in as <span className="font-semibold">{displayName}</span> ({userEmail})
           </p>
@@ -84,7 +84,7 @@ export default function MyGroupsClient({
           </Link>
           <Link
             href="/groups/join"
-            className="flex-1 bg-white border-2 border-sambal text-sambal font-bold py-3.5 rounded-xl text-sm text-center hover:bg-sambal hover:text-white transition"
+            className="flex-1 bg-white border-2 border-sambal text-sambal font-bold py-3.5 rounded-xl text-sm text-center hover:bg-sambal hover:text-white transition dark:bg-gray-900"
           >
             Join Existing Group
           </Link>
@@ -92,7 +92,7 @@ export default function MyGroupsClient({
 
         {/* Groups List */}
         {groups.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center">
+          <div className="bg-white rounded-2xl border border-gray-200 p-8 text-center dark:bg-gray-800 dark:border-gray-700">
             <p className="text-gray-500 mb-4">You haven't joined any groups yet</p>
             <p className="text-sm text-gray-400">
               Create a new group or join an existing one using a Makan Code
@@ -103,17 +103,17 @@ export default function MyGroupsClient({
             {groups.map((group) => (
               <div
                 key={group.id}
-                className={`bg-white rounded-2xl border-2 p-5 transition cursor-pointer ${
+                className={`bg-white dark:bg-gray-800 rounded-2xl border-2 p-5 transition cursor-pointer ${
                   activeGroupId === group.id
                     ? 'border-pandan shadow-md'
-                    : 'border-gray-200 hover:border-sambal/30'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-sambal/30'
                 }`}
                 onClick={() => handleSelectGroup(group.id)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-black text-slate">{group.name}</h3>
+                      <h3 className="text-lg font-black text-slate dark:text-white">{group.name}</h3>
                       {activeGroupId === group.id && (
                         <span className="text-xs bg-pandan text-white px-2 py-0.5 rounded-full font-bold">
                           Active

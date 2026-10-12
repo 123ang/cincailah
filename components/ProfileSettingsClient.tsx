@@ -170,7 +170,7 @@ export default function ProfileSettingsClient({
               height={32}
               className="h-8 w-8 rounded-xl object-cover shadow-md shadow-sambal/20"
             />
-            <span className="text-lg font-black text-slate">cincailah</span>
+            <span className="text-lg font-black text-slate dark:text-white">cincailah</span>
           </Link>
           <Link href="/groups" className="text-sm text-gray-500 hover:text-slate transition">
             ← My Groups
@@ -180,12 +180,12 @@ export default function ProfileSettingsClient({
 
       <main className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate">Profile & Preferences</h1>
+          <h1 className="text-2xl font-extrabold text-slate dark:text-white">Profile & Preferences</h1>
           <p className="text-sm text-gray-400 mt-1">Manage your account and dietary defaults</p>
         </div>
 
         {/* Account info */}
-        <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Account</h2>
           <div className="space-y-3">
             <div className="flex items-center gap-4">
@@ -204,17 +204,17 @@ export default function ProfileSettingsClient({
             </div>
             <div>
               <p className="text-xs text-gray-400">Display Name</p>
-              <p className="font-semibold text-slate">{user.displayName}</p>
+              <p className="font-semibold text-slate dark:text-white">{user.displayName}</p>
             </div>
             <div>
               <p className="text-xs text-gray-400">Email</p>
-              <p className="font-semibold text-slate">{user.email}</p>
+              <p className="font-semibold text-slate dark:text-white">{user.email}</p>
             </div>
           </div>
         </section>
 
         {/* Dietary preferences */}
-        <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">
             Dietary Preferences
           </h2>
@@ -289,7 +289,7 @@ export default function ProfileSettingsClient({
         </section>
 
         {/* Lunch reminder */}
-        <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+        <section className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">
             Lunch Reminder
           </h2>
@@ -342,7 +342,7 @@ export default function ProfileSettingsClient({
           <button
             onClick={enableBrowserPush}
             type="button"
-            className="mt-2 w-full border border-slate text-slate font-bold py-2.5 rounded-xl"
+            className="mt-2 w-full border border-slate text-slate font-bold py-2.5 rounded-xl dark:text-white"
           >
             Enable Browser Push
           </button>

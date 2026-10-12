@@ -63,12 +63,12 @@ export default function JoinGroupClient() {
             className="brand-logo mx-auto mb-3 h-[72px] w-[72px] rounded-[1.35rem] object-cover shadow-xl shadow-sambal/20"
             priority
           />
-          <h1 className="text-3xl font-black text-slate mb-2">Join Makan Group</h1>
+          <h1 className="text-3xl font-black text-slate mb-2 dark:text-white">Join Makan Group</h1>
           <p className="text-gray-500 text-sm">Enter the Makan Code to join</p>
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 dark:bg-gray-800 dark:border-gray-700">
           {error && (
             <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
               {error}
@@ -87,7 +87,7 @@ export default function JoinGroupClient() {
                 onChange={(e) => setMakanCode(e.target.value.toUpperCase())}
                 disabled={loading}
                 maxLength={6}
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono font-bold text-center text-lg tracking-widest focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition disabled:opacity-50"
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono font-bold text-center text-lg tracking-widest focus:ring-2 focus:ring-sambal/30 focus:border-sambal outline-none transition disabled:opacity-50 dark:bg-gray-800 dark:border-gray-700"
               />
               <p className="text-xs text-gray-400 mt-2">
                 Ask your group admin for the 6-character code

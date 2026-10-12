@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '@/components/LocaleProvider';
 
 interface PendingRating {
   decisionId: string;
@@ -27,6 +28,7 @@ export function schedulePendingRating(
 }
 
 export default function RatingPrompt() {
+  const t = useT();
   const [pending, setPending] = useState<PendingRating | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -95,23 +97,23 @@ export default function RatingPrompt() {
         className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-5 w-full max-w-sm pointer-events-auto animate-slide-up"
         role="dialog"
         aria-modal="true"
-        aria-label="Rate your recent meal"
+        aria-label={t('Rate your recent meal')}
       >
         {submitted ? (
           <div className="text-center">
             <p className="text-2xl mb-1">🙏</p>
-            <p className="font-bold text-slate dark:text-white text-sm">Thanks for rating!</p>
+            <p className="font-bold text-slate dark:text-white text-sm">{t('Thanks for rating!')}</p>
           </div>
         ) : (
           <>
             <div className="flex items-start justify-between mb-3">
               <div>
-                <p className="font-black text-slate dark:text-white text-sm">How was it? 🍽️</p>
+                <p className="font-black text-slate dark:text-white text-sm">{t('How was it?')} 🍽️</p>
                 <p className="text-xs text-gray-400 mt-0.5">{pending.restaurantName}</p>
               </div>
               <button
                 onClick={dismiss}
-                aria-label="Dismiss"
+                aria-label={t('Dismiss')}
                 className="text-gray-300 hover:text-gray-500 text-lg leading-none"
               >
                 ×
@@ -123,15 +125,15 @@ export default function RatingPrompt() {
                 onClick={() => rate('up')}
                 disabled={submitting}
                 className="flex-1 bg-pandan/10 hover:bg-pandan/20 text-pandan font-bold py-3 rounded-xl text-2xl transition disabled:opacity-50"
-                aria-label="Thumbs up"
+                aria-label={t('Thumbs up')}
               >
                 👍
               </button>
               <button
                 onClick={() => rate('down')}
                 disabled={submitting}
-                className="flex-1 bg-red-50 hover:bg-red-100 text-sambal font-bold py-3 rounded-xl text-2xl transition disabled:opacity-50"
-                aria-label="Thumbs down"
+                className="flex-1 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 text-sambal font-bold py-3 rounded-xl text-2xl transition disabled:opacity-50"
+                aria-label={t('Thumbs down')}
               >
                 👎
               </button>

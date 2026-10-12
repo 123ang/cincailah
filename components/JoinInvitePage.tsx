@@ -23,16 +23,16 @@ export default function JoinInvitePage({
           <p className="text-sm text-gray-500 uppercase tracking-wider font-bold">
             You&apos;re invited to join
           </p>
-          <h1 className="text-3xl md:text-4xl font-black text-slate mt-2">
+          <h1 className="text-3xl md:text-4xl font-black text-slate mt-2 dark:text-white">
             {groupName}
           </h1>
           <p className="text-gray-500 text-sm mt-2">
             {memberCount} {memberCount === 1 ? 'member' : 'members'} ·{' '}
-            <span className="font-mono font-bold text-slate">{makanCode}</span>
+            <span className="font-mono font-bold text-slate dark:text-white">{makanCode}</span>
           </p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-3 dark:bg-gray-800 dark:border-gray-700">
           <p className="text-sm text-gray-600 text-center mb-2">
             Sign up free in 30 seconds to join and start deciding.
           </p>
@@ -46,7 +46,7 @@ export default function JoinInvitePage({
 
           <Link
             href={`/login?${params}`}
-            className="block w-full bg-white border-2 border-gray-200 text-slate font-bold py-3.5 rounded-xl text-center text-sm hover:bg-gray-50"
+            className="block w-full bg-white border-2 border-gray-200 text-slate font-bold py-3.5 rounded-xl text-center text-sm hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:hover:bg-gray-700"
           >
             I already have an account
           </Link>

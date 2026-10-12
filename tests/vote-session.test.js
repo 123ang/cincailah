@@ -78,7 +78,8 @@ test('vote invite links can open an existing group decision', () => {
 test('vote sharing uses the live decision link instead of a fresh start link', () => {
   const webClient = readFileSync(join(root, 'components/VotePageClient.tsx'), 'utf8');
 
-  assert.match(webClient, /const voteUrl = decisionId/);
+  // Built after mount (window is not available during server rendering).
+  assert.match(webClient, /setVoteUrl\(\s*decisionId/);
   assert.match(webClient, /\/vote\/\$\{decisionId\}/);
   assert.match(webClient, /value=\{voteUrl\}/);
   assert.match(webClient, /writeText\(voteUrl\)/);

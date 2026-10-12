@@ -1,6 +1,8 @@
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import AddRestaurantForm from '@/components/AddRestaurantForm';
+import { getGroupAreas } from '@/lib/restaurant-areas';
+import { requireGroupMembership } from '@/lib/group-access';
 
 export default async function AddRestaurant({
   params,
@@ -14,5 +16,8 @@ export default async function AddRestaurant({
     redirect('/');
   }
 
-  return <AddRestaurantForm groupId={groupId} />;
+  const membership = await requireGroupMembership(session.userId, groupId);
+  const areaSuggestions = membership ? await getGroupAreas(groupId) : [];
+
+  return <AddRestaurantForm groupId={groupId} areaSuggestions={areaSuggestions} />;
 }

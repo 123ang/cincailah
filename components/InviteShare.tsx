@@ -2,6 +2,7 @@
 
 import { QRCodeSVG } from 'qrcode.react';
 import { useEffect, useRef, useState } from 'react';
+import { useT } from '@/components/LocaleProvider';
 
 interface InviteShareProps {
   makanCode: string;
@@ -9,6 +10,7 @@ interface InviteShareProps {
 }
 
 export default function InviteShare({ makanCode, groupName }: InviteShareProps) {
+  const t = useT();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
@@ -69,16 +71,16 @@ export default function InviteShare({ makanCode, groupName }: InviteShareProps) 
   };
 
   return (
-    <div className="bg-gradient-to-br from-sambal to-red-500 rounded-2xl p-5 text-white shadow-lg">
+    <div className="bg-gradient-to-br from-sambal to-red-500 rounded-2xl p-5 text-white shadow-lg dark:from-gray-800 dark:to-gray-900 dark:ring-1 dark:ring-orange-500/30">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium opacity-80">Your Makan Code</p>
+          <p className="text-sm font-medium opacity-80">{t('Your Makan Code')}</p>
           <div className="flex items-center gap-3 mt-2">
             <p className="text-3xl font-black tracking-widest">{makanCode}</p>
             <button
               onClick={() => copy(makanCode, 'code')}
               className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition"
-              aria-label="Copy Makan Code"
+              aria-label={t('Copy Makan Code')}
             >
               {copied ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,7 +101,7 @@ export default function InviteShare({ makanCode, groupName }: InviteShareProps) 
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zm0 10h6v6h-6v-6zM4 14h6v6H4v-6z" />
           </svg>
-          {showQr ? 'Hide QR' : 'QR'}
+          {showQr ? t('Hide QR') : 'QR'}
         </button>
       </div>
 
@@ -117,13 +119,13 @@ export default function InviteShare({ makanCode, groupName }: InviteShareProps) 
             fgColor="#26140B"
           />
           <p className="text-[11px] text-gray-500 mt-2 text-center">
-            Scan to join <span className="font-semibold">{groupName}</span>
+            {t('Scan to join')} <span className="font-semibold">{groupName}</span>
           </p>
           <button
             onClick={downloadQr}
             className="mt-2 text-xs text-slate font-semibold hover:underline"
           >
-            Download QR
+            {t('Download QR')}
           </button>
         </div>
       )}
@@ -136,13 +138,13 @@ export default function InviteShare({ makanCode, groupName }: InviteShareProps) 
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
-          {canShare ? 'Share invite' : 'Copy link'}
+          {canShare ? t('Share invite') : t('Copy link')}
         </button>
         <button
           onClick={() => copy(inviteUrl, 'link')}
           className="sm:w-auto bg-white/20 hover:bg-white/30 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition"
         >
-          {linkCopied ? 'Link copied ✓' : 'Copy link'}
+          {linkCopied ? `${t('Link copied')} ✓` : t('Copy link')}
         </button>
       </div>
 

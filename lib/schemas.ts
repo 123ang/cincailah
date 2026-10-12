@@ -74,7 +74,9 @@ const RestaurantFieldsSchema = z.object({
   priceMax: z.number().int().min(1).max(500),
   halal: z.boolean().default(false),
   vegOptions: z.boolean().default(false),
-  walkMinutes: z.number().int().min(1).max(60),
+  // Legacy (mobile app); the web form sends `area` instead.
+  walkMinutes: z.number().int().min(0).max(60).optional(),
+  area: z.string().trim().max(60, 'Area is too long').optional(),
   mapsUrl: nullableOptional(HttpUrlSchema),
   photoUrl: nullableOptional(RestaurantPhotoUrlSchema),
   latitude: z.number().min(-90).max(90).nullable().optional(),

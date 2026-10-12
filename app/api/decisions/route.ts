@@ -37,6 +37,7 @@ export async function GET(request: NextRequest) {
             priceMin: true,
             priceMax: true,
             walkMinutes: true,
+            area: true,
             mapsUrl: true,
           },
         },
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
               priceMin: d.chosenRestaurant.priceMin,
               priceMax: d.chosenRestaurant.priceMax,
               walkMinutes: d.chosenRestaurant.walkMinutes,
+              area: d.chosenRestaurant.area,
               mapsUrl: d.chosenRestaurant.mapsUrl,
             }
           : constraints.soloName

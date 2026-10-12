@@ -5,7 +5,7 @@ import { trackEvent } from '@/lib/analytics';
 import { getDecisionWithMembership } from '@/lib/group-access';
 import { reportError } from '@/lib/logger';
 import { publicVoteUserSelect } from '@/lib/response-shapes';
-import { getVoteExpiry } from '@/lib/vote-resolution';
+import { canFinalizeVote, getTieBreak, getVoteExpiry } from '@/lib/vote-resolution';
 
 export async function GET(
   request: NextRequest,
@@ -62,6 +62,12 @@ export async function GET(
       expiresAt: expiresAt?.toISOString(),
       isExpired,
       winner,
+      tiedRestaurantIds: getTieBreak(decision.constraintsUsed),
+      canFinalize: canFinalizeVote({
+        userId,
+        decisionCreatorId: decision.createdBy,
+        groupOwnerId: decision.group?.createdBy,
+      }),
     });
   } catch (error) {
     reportError(error, { route: 'vote/get' });

@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import InviteShare from '@/components/InviteShare';
 import ImageUpload from '@/components/ImageUpload';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import SoundToggle from '@/components/SoundToggle';
+import { useLocale, useT } from '@/components/LocaleProvider';
+import { HTML_LANG } from '@/lib/i18n';
 
 interface Member {
   id: string;
@@ -36,6 +40,8 @@ export default function SettingsPage({
   currentUserId: string;
 }) {
   const router = useRouter();
+  const t = useT();
+  const { locale } = useLocale();
   const [group, setGroup] = useState(initialGroup);
 
   // Rename state
@@ -189,7 +195,7 @@ export default function SettingsPage({
             <input
               value={newName}
               onChange={e => setNewName(e.target.value)}
-              className="flex-1 text-xl font-extrabold border-b-2 border-sambal outline-none bg-transparent"
+              className="flex-1 text-xl font-extrabold border-b-2 border-sambal outline-none bg-transparent dark:text-white"
               autoFocus
             />
             <button
@@ -197,27 +203,27 @@ export default function SettingsPage({
               disabled={nameLoading}
               className="text-sm font-bold text-pandan hover:underline"
             >
-              {nameLoading ? '…' : 'Save'}
+              {nameLoading ? '…' : t('Save')}
             </button>
             <button
               onClick={() => { setEditingName(false); setNewName(group.name); }}
               className="text-sm text-gray-400 hover:underline"
             >
-              Cancel
+              {t('Cancel')}
             </button>
           </div>
         ) : (
           <>
             <div>
-              <h1 className="text-2xl font-extrabold">{group.name} 👥</h1>
-              <p className="text-sm text-gray-400 mt-1">Group settings & members</p>
+              <h1 className="text-2xl font-extrabold dark:text-white">{group.name} 👥</h1>
+              <p className="text-sm text-gray-400 mt-1">{t('Group settings & members')}</p>
             </div>
             {isAdmin && (
               <button
                 onClick={() => setEditingName(true)}
                 className="text-xs text-sambal font-bold border border-sambal px-3 py-1 rounded-lg hover:bg-sambal hover:text-white transition"
               >
-                Rename
+                {t('Rename')}
               </button>
             )}
           </>
@@ -225,7 +231,7 @@ export default function SettingsPage({
       </div>
 
       {error && (
-        <div className="mt-3 bg-red-50 text-red-600 text-sm font-medium px-4 py-2 rounded-xl border border-red-100">
+        <div className="mt-3 bg-red-50 text-red-600 text-sm font-medium px-4 py-2 rounded-xl border border-red-100 dark:bg-red-950/40 dark:border-red-900 dark:text-red-300">
           {error}
         </div>
       )}
@@ -237,9 +243,9 @@ export default function SettingsPage({
             type="group_cover"
             value={group.coverUrl ?? null}
             onChange={handleCoverChange}
-            label="Group cover"
+            label={t('Group cover')}
             previewClassName="h-32 w-full"
-            helpText="Auto-resized to 1600px JPEG · max 50 MB"
+            helpText={t('Auto-resized to 1600px JPEG · max 50 MB')}
           />
         </div>
       ) : group.coverUrl ? (
@@ -260,10 +266,10 @@ export default function SettingsPage({
 
       {/* Members */}
       <div className="mt-6">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">
-          Members ({group.members.length})
+        <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          {t('Members ({count})', { count: group.members.length })}
         </h2>
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700 overflow-hidden">
           {group.members.map((member, index) => {
             const isSelf = member.user.id === currentUserId;
             const canKick = isAdmin && !isSelf;
@@ -272,7 +278,7 @@ export default function SettingsPage({
               <div
                 key={member.id}
                 className={`flex items-center gap-3 p-3 ${
-                  index < group.members.length - 1 ? 'border-b border-gray-50' : ''
+                  index < group.members.length - 1 ? 'border-b border-gray-50 dark:border-gray-700' : ''
                 }`}
               >
                 <div
@@ -283,19 +289,19 @@ export default function SettingsPage({
                   {member.user.displayName.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">
+                  <p className="text-sm font-semibold truncate dark:text-white">
                     {member.user.displayName}
                     {(member.role === 'admin' || member.role === 'owner') && (
                       <span className="text-xs bg-sambal/10 text-sambal px-1.5 py-0.5 rounded font-medium ml-1">
-                        {member.role === 'owner' ? 'Owner' : 'Admin'}
+                        {member.role === 'owner' ? t('Owner') : t('Admin')}
                       </span>
                     )}
                     {isSelf && (
-                      <span className="text-xs text-gray-400 ml-1">(You)</span>
+                      <span className="text-xs text-gray-400 ml-1">({t('You')})</span>
                     )}
                   </p>
                   <p className="text-xs text-gray-400">
-                    Joined {new Date(member.joinedAt).toLocaleDateString('en-MY')}
+                    {t('Joined {date}', { date: new Date(member.joinedAt).toLocaleDateString(HTML_LANG[locale]) })}
                   </p>
                 </div>
                 {canKick && (
@@ -304,7 +310,7 @@ export default function SettingsPage({
                     disabled={actionLoading === member.user.id}
                     className="text-xs text-red-500 hover:underline font-medium"
                   >
-                    {actionLoading === member.user.id ? '…' : 'Kick'}
+                    {actionLoading === member.user.id ? '…' : t('Kick')}
                   </button>
                 )}
                 {canLeave && (
@@ -313,7 +319,7 @@ export default function SettingsPage({
                     disabled={actionLoading === member.user.id}
                     className="text-xs text-red-500 hover:underline font-medium"
                   >
-                    {actionLoading === member.user.id ? '…' : 'Leave'}
+                    {actionLoading === member.user.id ? '…' : t('Leave')}
                   </button>
                 )}
                 {!canKick && !canLeave && <span className="w-2 h-2 rounded-full bg-pandan flex-shrink-0"></span>}
@@ -331,17 +337,17 @@ export default function SettingsPage({
               onClick={() => setShowTransfer(true)}
               className="text-xs text-gray-400 hover:text-sambal transition font-medium"
             >
-              Transfer admin role →
+              {t('Transfer admin role')} →
             </button>
           ) : (
-            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3">
-              <p className="text-sm font-bold text-gray-700">Transfer Admin Role</p>
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm space-y-3 dark:bg-gray-800 dark:border-gray-700">
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{t('Transfer Admin Role')}</p>
               <select
                 value={transferTarget}
                 onChange={e => setTransferTarget(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm dark:bg-gray-900 dark:border-gray-600 dark:text-white"
               >
-                <option value="">Select new admin…</option>
+                <option value="">{t('Select new admin…')}</option>
                 {otherMembers.map(m => (
                   <option key={m.id} value={m.user.id}>{m.user.displayName}</option>
                 ))}
@@ -352,13 +358,13 @@ export default function SettingsPage({
                   disabled={!transferTarget || transferLoading}
                   className="flex-1 bg-sambal text-white text-sm font-bold py-2 rounded-lg disabled:opacity-50"
                 >
-                  {transferLoading ? '…' : 'Transfer'}
+                  {transferLoading ? '…' : t('Transfer')}
                 </button>
                 <button
                   onClick={() => { setShowTransfer(false); setTransferTarget(''); }}
-                  className="flex-1 bg-gray-100 text-gray-700 text-sm font-bold py-2 rounded-lg"
+                  className="flex-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 text-sm font-bold py-2 rounded-lg"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
               </div>
             </div>
@@ -366,42 +372,65 @@ export default function SettingsPage({
         </div>
       )}
 
+      {/* Preferences (this device) */}
+      <div className="mt-6">
+        <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+          {t('Preferences')}
+        </h2>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700 divide-y divide-gray-50 dark:divide-gray-700">
+          <div className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{t('Language')}</p>
+              <p className="text-xs text-gray-400">English · Bahasa Melayu · 中文</p>
+            </div>
+            <LanguageSwitcher />
+          </div>
+          <div className="flex items-center justify-between p-4">
+            <div>
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{t('Sound effects')}</p>
+              <p className="text-xs text-gray-400">{t('Winner fanfare after a spin')}</p>
+            </div>
+            <SoundToggle />
+          </div>
+        </div>
+      </div>
+
       {/* Group Rules */}
       <div className="mt-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">
-            Group Rules
+          <h2 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            {t('Group Rules')}
           </h2>
           {isAdmin && !editingRules && (
             <button
               onClick={() => setEditingRules(true)}
               className="text-xs text-sambal font-bold border border-sambal px-3 py-1 rounded-lg hover:bg-sambal hover:text-white transition"
             >
-              Edit
+              {t('Edit')}
             </button>
           )}
         </div>
         <div className="space-y-3">
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm dark:bg-gray-800 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-bold text-gray-700">Default Mode</p>
+                <p className="text-sm font-bold text-gray-700 dark:text-gray-200">{t('Default Mode')}</p>
                 <p className="text-xs text-gray-400">
-                  What happens when you press &quot;Cincai lah!&quot;
+                  {t('What happens when you press “Cincai lah!”')}
                 </p>
               </div>
               {editingRules ? (
                 <select
                   value={rulesForm.decisionModeDefault}
                   onChange={e => setRulesForm(f => ({ ...f, decisionModeDefault: e.target.value }))}
-                  className="border border-gray-200 rounded-lg text-sm px-2 py-1"
+                  className="border border-gray-200 rounded-lg text-sm px-2 py-1 dark:bg-gray-900 dark:border-gray-600 dark:text-white"
                 >
-                  <option value="you_pick">You Pick</option>
-                  <option value="we_fight">We Fight</option>
+                  <option value="you_pick">{t('You Pick')}</option>
+                  <option value="we_fight">{t('We Fight')}</option>
                 </select>
               ) : (
-                <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg">
-                  {group.decisionModeDefault === 'you_pick' ? 'You Pick' : 'We Fight'}
+                <span className="text-sm font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-lg dark:bg-gray-700 dark:text-gray-200">
+                  {group.decisionModeDefault === 'you_pick' ? t('You Pick') : t('We Fight')}
                 </span>
               )}
             </div>
@@ -413,13 +442,13 @@ export default function SettingsPage({
                 disabled={rulesLoading}
                 className="flex-1 bg-sambal text-white font-bold py-2 rounded-xl text-sm disabled:opacity-50"
               >
-                {rulesLoading ? 'Saving…' : 'Save Rules'}
+                {rulesLoading ? t('Saving…') : t('Save Rules')}
               </button>
               <button
                 onClick={() => { setEditingRules(false); setRulesForm({ decisionModeDefault: group.decisionModeDefault }); }}
-                className="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded-xl text-sm"
+                className="flex-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 font-bold py-2 rounded-xl text-sm"
               >
-                Cancel
+                {t('Cancel')}
               </button>
             </div>
           )}
@@ -430,19 +459,19 @@ export default function SettingsPage({
       {isAdmin && (
         <div className="mt-6">
           <h2 className="text-sm font-bold text-red-400 uppercase tracking-wider mb-3">
-            Danger Zone
+            {t('Danger Zone')}
           </h2>
           {!showDeleteConfirm ? (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full border-2 border-red-200 text-red-500 font-bold py-3 rounded-xl hover:bg-red-50 transition text-sm"
+              className="w-full border-2 border-red-200 text-red-500 font-bold py-3 rounded-xl hover:bg-red-50 transition text-sm dark:border-red-900 dark:hover:bg-red-950/40"
             >
-              🗑 Delete Group
+              🗑 {t('Delete Group')}
             </button>
           ) : (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3">
-              <p className="text-sm font-bold text-red-700">
-                Are you sure? This will permanently delete &quot;{group.name}&quot; and all its data.
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-4 space-y-3 dark:bg-red-950/40 dark:border-red-900">
+              <p className="text-sm font-bold text-red-700 dark:text-red-300">
+                {t('Are you sure? This will permanently delete “{name}” and all its data.', { name: group.name })}
               </p>
               <div className="flex gap-2">
                 <button
@@ -450,13 +479,13 @@ export default function SettingsPage({
                   disabled={deleteLoading}
                   className="flex-1 bg-red-600 text-white font-bold py-2 rounded-xl text-sm disabled:opacity-50"
                 >
-                  {deleteLoading ? 'Deleting…' : 'Yes, delete'}
+                  {deleteLoading ? t('Deleting…') : t('Yes, delete')}
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 font-bold py-2 rounded-xl text-sm"
+                  className="flex-1 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 font-bold py-2 rounded-xl text-sm"
                 >
-                  Cancel
+                  {t('Cancel')}
                 </button>
               </div>
             </div>
@@ -468,15 +497,15 @@ export default function SettingsPage({
       <div className="mt-6 space-y-3">
         <button
           onClick={() => router.push('/groups')}
-          className="w-full bg-white border-2 border-sambal text-sambal font-bold py-3 rounded-xl hover:bg-sambal hover:text-white transition"
+          className="w-full bg-white dark:bg-gray-900 border-2 border-sambal text-sambal font-bold py-3 rounded-xl hover:bg-sambal hover:text-white transition"
         >
-          ← Switch Group
+          ← {t('Switch Group')}
         </button>
         <button
           onClick={handleLogout}
           className="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 rounded-xl transition"
         >
-          Logout
+          {t('Logout')}
         </button>
       </div>
     </div>

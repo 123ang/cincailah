@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import TopNav from '@/components/TopNav';
 import BottomNav from '@/components/BottomNav';
+import LocaleProvider from '@/components/LocaleProvider';
+import { LOCALE_COOKIE, isLocale } from '@/lib/i18n';
 
 export default async function GroupLayout({
   children,
@@ -34,14 +37,19 @@ export default async function GroupLayout({
       redirect('/login?redirect=' + encodeURIComponent('/group/' + groupId) + '&reason=not_member');
     }
 
+    const cookieLocale = (await cookies()).get(LOCALE_COOKIE)?.value;
+
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">
-        <TopNav groupName={membership.group.name} makanCode={membership.group.makanCode} />
-        <div className="pt-14 pb-16">
-          {children}
+      <LocaleProvider initialLocale={isLocale(cookieLocale) ? cookieLocale : 'en'}>
+        <div className="min-h-screen bg-white dark:bg-gray-950">
+          <TopNav groupName={membership.group.name} makanCode={membership.group.makanCode} />
+          {/* Bottom padding clears the fixed bottom bar (h-16) plus the safe area. */}
+          <div className="pt-14 pb-[calc(5rem+env(safe-area-inset-bottom))]">
+            {children}
+          </div>
+          <BottomNav groupId={groupId} />
         </div>
-        <BottomNav groupId={groupId} />
-      </div>
+      </LocaleProvider>
     );
   } catch (err) {
     console.error('Group layout error:', err);
